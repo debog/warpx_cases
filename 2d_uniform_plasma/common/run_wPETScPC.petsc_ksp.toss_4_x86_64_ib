@@ -37,5 +37,7 @@ srun -n $NPROC $EXEC $INP \
                max_step = $max_step \
                newton.linear_solver = "petsc_ksp" \
                jacobian.pc_type = "pc_petsc" \
+               -pc_type lu \
+               -log_view \
                2>&1 |tee $outfile
 cd $rootdir

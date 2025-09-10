@@ -40,6 +40,8 @@ srun --cpu-bind=cores -n $NGPU bash -c "
             max_step = $max_step \
             newton.linear_solver = \"petsc_ksp\" \
             jacobian.pc_type = \"pc_petsc\" \
+            -pc_type lu \
+            -log_view \
     ${GPU_AWARE_MPI}" \
     2>&1 |tee $outfile
 cd $rootdir
