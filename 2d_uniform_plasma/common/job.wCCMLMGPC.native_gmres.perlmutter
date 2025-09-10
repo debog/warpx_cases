@@ -61,5 +61,9 @@ srun --cpu-bind=cores bash -c "
             my_constants.nppcz = $np \
             amr.max_grid_size = $(( nx/2 )) \
             max_step = $max_step \
+            jacobian.pc_type = \"pc_curl_curl_mlmg\" \
+            pc_curl_curl_mlmg.verbose = false \
+            pc_curl_curl_mlmg.max_iter = 10 \
+            pc_curl_curl_mlmg.relative_tolerance = 1e-4 \
     ${GPU_AWARE_MPI}" \
     2>&1 |tee $outfile
