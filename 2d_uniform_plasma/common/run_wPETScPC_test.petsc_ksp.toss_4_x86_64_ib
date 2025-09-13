@@ -2,8 +2,8 @@
 
 clear
 
-max_step=10
-NPROC=64
+max_step=1
+NPROC=1
 NNODE=1
 export OMP_NUM_THREADS=1
 
@@ -15,8 +15,8 @@ DIM=2d
 EXEC=$(ls $WARPX_BUILD/build/bin/warpx.${DIM})
 echo "Executable file is ${EXEC}."
 
-nx="256"
-np="32"
+nx="8"
+np="4"
 echo "Creating directory for nx=$nx, np=$np"
 dirname=$dir_prefix$(printf "nx%05d" $nx)$(printf "np%03d" $np)
 if [ -d "$dirname" ]; then
@@ -31,13 +31,14 @@ echo "  creating shortcut for input file"
 cp $INP_FILE .
 INP=$(ls *.in)
 echo "  running WarpX with input file $INP"
-srun -n $NPROC $EXEC $INP \
-               amr.n_cell = $nx $nx \
-               my_constants.nppcz = $np \
-               max_step = $max_step \
-               newton.linear_solver = "petsc_ksp" \
-               jacobian.pc_type = "pc_petsc" \
-               -pc_type lu \
-               -log_view \
-               2>&1 |tee $outfile
+$EXEC $INP \
+    amr.n_cell = $nx $nx \
+    my_constants.nppcz = $np \
+    max_step = $max_step \
+    newton.linear_solver = "petsc_ksp" \
+    jacobian.pc_type = "pc_petsc" \
+    -pc_type lu \
+    -log_view \
+    -mat_view \
+    2>&1 |tee $outfile
 cd $rootdir
