@@ -79,42 +79,7 @@ fi
 dir_prefix=".tmp.${solver_type}.pc_${precon_str}.${SYS_TYPE}."
 wtimes_prefix="wtimes.${solver_type}.pc_${precon_str}.${SYS_TYPE}"
 rootdir=$PWD
-INP_FILE=$rootdir/common/${arg[1]}
 outfile=out.${SYS_TYPE}.log
-jobscript_name="warpx.job"
-
-for (( i = 0; i < count; i += 2 ))
-do
-    nx=${nxnpvals[i + 0]}
-    np=${nxnpvals[i + 1]}
-    for nproc in ${nprocvals[@]}; do
-        echo "Creating directory for nx=$nx, np=$np, nproc=$nproc"
-        dirname=$dir_prefix$(printf "%05d" $nproc).$(printf "nx%05d" $nx)$(printf "np%03d" $np)
-        if [ -d "$dirname" ]; then
-            echo "  deleting existing directory $dirname"
-            rm -rf $dirname
-        fi
-        echo "  creating directory $dirname"
-        mkdir $dirname
-
-        cd $dirname
-        echo "  creating shortcut for input file"
-        cp $INP_FILE .
-        INP=$(ls *.in)
-        ARGS="amr.n_cell = $nx $nx my_constants.nppcz = $np max_step = $num_steps"
-        ARGS_JFNK=$(get_jfnk_args $# ${solver_type})
-        ARGS_PC=$(get_pc_args $# ${precon_type} ${asm_ovlp} ${ilu_level} ${num_vcycl})
-        ARGS="$ARGS $ARGS_JFNK $ARGS_PC"
-        if [[ "$solver_type" == *"petsc"* ]]; then
-            ARGS="$ARGS -log_view"
-        fi
-        echo "  running WarpX with input file $INP"
-        echo "  input file is $INP"
-        echo "  command line args are \"$ARGS\""
-        srun -n $nproc $EXEC $INP $ARGS 2>&1 > $outfile
-        cd $rootdir
-    done
-done
 
 for (( i = 0; i < count; i += 2 ))
 do
