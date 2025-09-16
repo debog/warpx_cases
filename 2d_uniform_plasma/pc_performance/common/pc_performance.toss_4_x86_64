@@ -11,11 +11,12 @@ arg=("$@")
 # argument 1: PC type
 # argument 2: ASM overlap (if applicable)
 # argument 3: ILU factor levels (if applicable)
+# argument 4: Number of V-cycles (if applicable)
 option=${arg[1]}
 if [[ "x$option" == "xnone" ]]; then
     echo "jacobian.pc_type = \"none\""
 elif [[ "x$option" == "xccmlmg" ]]; then
-    echo "jacobian.pc_type = \"pc_curl_curl_mlmg\" pc_curl_curl_mlmg.verbose = false pc_curl_curl_mlmg.max_iter = 10 pc_curl_curl_mlmg.relative_tolerance = 1e-4"
+    echo "jacobian.pc_type = \"pc_curl_curl_mlmg\" pc_curl_curl_mlmg.verbose = false pc_curl_curl_mlmg.max_iter = ${arg[4]} pc_curl_curl_mlmg.relative_tolerance = 1e-4"
 elif [[ "x$option" == "xpetsc_lu" ]]; then
     echo "jacobian.pc_type = \"pc_petsc\" -pc_type lu"
 elif [[ "x$option" == "xpetsc_ilu" ]]; then
@@ -49,11 +50,13 @@ arg=("$@")
 # argument 4: PC solver type
 # argument 5: ASM overlap
 # argument 6: ILU factor levels
+# argument 7: Number of V-cycles
 
 solver_type=${arg[3]}
 precon_type=${arg[4]}
 asm_ovlp=${arg[5]}
 ilu_level=${arg[6]}
+num_vcycl=${arg[7]}
 
 declare -a nprocvals=("64")
 declare -a nxnpvals=("512" "32")
@@ -69,9 +72,12 @@ fi
 if [[ "$precon_type" == *"ilu"* ]]; then
     precon_str="${precon_str}_ilu$(printf "%03d" $ilu_level)"
 fi
+if [[ "$precon_type" == *"mg"* ]]; then
+    precon_str="${precon_str}_nvcyc$(printf "%03d" $num_vcycl)"
+fi
 
 dir_prefix=".tmp.${solver_type}.pc_${precon_str}.${SYS_TYPE}."
-wtimes_prefix="wtimes.${solver_type}.pc_${precon_type}.${SYS_TYPE}"
+wtimes_prefix="wtimes.${solver_type}.pc_${precon_str}.${SYS_TYPE}"
 rootdir=$PWD
 INP_FILE=$rootdir/common/${arg[1]}
 outfile=out.${SYS_TYPE}.log
@@ -97,7 +103,7 @@ do
         INP=$(ls *.in)
         ARGS="amr.n_cell = $nx $nx my_constants.nppcz = $np max_step = $num_steps"
         ARGS_JFNK=$(get_jfnk_args $# ${solver_type})
-        ARGS_PC=$(get_pc_args $# ${precon_type} ${asm_ovlp} ${ilu_level})
+        ARGS_PC=$(get_pc_args $# ${precon_type} ${asm_ovlp} ${ilu_level} ${num_vcycl})
         ARGS="$ARGS $ARGS_JFNK $ARGS_PC"
         if [[ "$solver_type" == *"petsc"* ]]; then
             ARGS="$ARGS -log_view"
@@ -304,10 +310,10 @@ do
 done
 }
 
-#declare -a pctypes=("ccmlmg" "petsc_lu" "petsc_asm_lu" "petsc_asm_ilu" "none")
-declare -a pctypes=("ccmlmg" "petsc_lu" "petsc_asm_lu" "petsc_asm_ilu")
+declare -a pctypes=("ccmlmg" "petsc_lu" "petsc_asm_lu" "petsc_asm_ilu" "none")
 num_pc=${#pctypes[@]}
-declare -a jfnktypes=("native_jfnk" "petsc_ksp" "petsc_snes")
+#declare -a jfnktypes=("native_jfnk" "petsc_ksp" "petsc_snes")
+declare -a jfnktypes=("native_jfnk" "petsc_ksp")
 num_jfnk=${#jfnktypes[@]}
 
 inp_file="uniform_plasma_2d.in"
@@ -316,7 +322,7 @@ max_step=5
 for jfnk_type in ${jfnktypes[@]}; do
     for pc_type in ${pctypes[@]}; do
         if [[ "$pc_type" == *"asm"* ]]; then
-            declare -a asmovlps=("0" "2" "4" "8" "12" "16" "22" "28" "32")
+            declare -a asmovlps=("0" "4" "8" "12" "16" "20" "24" "28" "32")
         else
             declare -a asmovlps=("0")
         fi
@@ -324,6 +330,11 @@ for jfnk_type in ${jfnktypes[@]}; do
             declare -a ilulvls=("0" "2" "4" "8" "16")
         else
             declare -a ilulvls=("0")
+        fi
+        if [[ "$pc_type" == *"mg"* ]]; then
+            declare -a num_vcycles=("1" "2" "4" "8")
+        else
+            declare -a num_vcycles=("0")
         fi
         if [[ "x$jfnk_type" == "xnative_jfnk" ]]; then
             if [[ "$pc_type" == *"petsc"* ]]; then
@@ -333,8 +344,10 @@ for jfnk_type in ${jfnktypes[@]}; do
 
         for ilulvl in ${ilulvls[@]}; do
             for asmovlp in ${asmovlps[@]}; do
-                echo "Running simulation for $jfnk_type, $pc_type ($asmovlp $ilulvl)..."
-                run_simulation $# $inp_file $max_step $jfnk_type $pc_type $asmovlp $ilulvl
+                for nvcycl in ${num_vcycles[@]}; do
+                    echo "Running simulation for $jfnk_type, $pc_type (asm overlap=$asmovlp, ILU levels=$ilulvl, num. V-cycles=$nvcycl)..."
+                    run_simulation $# $inp_file $max_step $jfnk_type $pc_type $asmovlp $ilulvl $nvcycl
+                done
             done
         done
     done
