@@ -160,7 +160,7 @@ max_step=5
 for jfnk_type in ${jfnktypes[@]}; do
     for pc_type in ${pctypes[@]}; do
         if [[ "$pc_type" == *"asm"* ]]; then
-            declare -a asmovlps=("32" "28" "24" "20" "16" "12" "8" "4" "0")
+            declare -a asmovlps=("32" "24" "16" "8" "0")
         else
             declare -a asmovlps=("0")
         fi
