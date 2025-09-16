@@ -1,0 +1,342 @@
+#!/bin/bash
+
+clear
+
+DIM=2d
+EXEC=$(ls $WARPX_BUILD/build/bin/warpx.${DIM})
+echo "Executable file is ${EXEC}."
+
+get_pc_args () {
+arg=("$@")
+# argument 1: PC type
+# argument 2: ASM overlap (if applicable)
+# argument 3: ILU factor levels (if applicable)
+option=${arg[1]}
+if [[ "x$option" == "xnone" ]]; then
+    echo "jacobian.pc_type = \"none\""
+elif [[ "x$option" == "xccmlmg" ]]; then
+    echo "jacobian.pc_type = \"pc_curl_curl_mlmg\" pc_curl_curl_mlmg.verbose = false pc_curl_curl_mlmg.max_iter = 10 pc_curl_curl_mlmg.relative_tolerance = 1e-4"
+elif [[ "x$option" == "xpetsc_lu" ]]; then
+    echo "jacobian.pc_type = \"pc_petsc\" -pc_type lu"
+elif [[ "x$option" == "xpetsc_ilu" ]]; then
+    echo "jacobian.pc_type = \"pc_petsc\" -pc_type ilu -pc_factor_levels ${arg[3]}"
+elif [[ "x$option" == "xpetsc_asm_lu" ]]; then
+    echo "jacobian.pc_type = \"pc_petsc\" -pc_type asm -sub_pc_type lu -pc_asm_overlap ${arg[2]}"
+elif [[ "x$option" == "xpetsc_asm_ilu" ]]; then
+    echo "jacobian.pc_type = \"pc_petsc\" -pc_type asm -sub_pc_type ilu -pc_asm_overlap ${arg[2]} -sub_pc_factor_levels ${arg[3]}"
+fi
+}
+
+get_jfnk_args () {
+arg=("$@")
+# argument 1: JFNK solver type
+option=${arg[1]}
+if [[ "x$option" == "xnative_jfnk" ]]; then
+    echo "implicit_evolve.nonlinear_solver = \"newton\" newton.linear_solver = \"amrex_gmres\""
+elif [[ "x$option" == "xpetsc_ksp" ]]; then
+    echo "implicit_evolve.nonlinear_solver = \"newton\" newton.linear_solver = \"petsc_ksp\""
+elif [[ "x$option" == "xpetsc_snes" ]]; then
+    echo "implicit_evolve.nonlinear_solver = \"petsc_snes\""
+fi
+}
+
+run_simulation () {
+
+arg=("$@")
+# argument 1: input filename
+# argument 2: number of timesteps
+# argument 3: JFNK solver type
+# argument 4: PC solver type
+# argument 5: ASM overlap
+# argument 6: ILU factor levels
+
+solver_type=${arg[3]}
+precon_type=${arg[4]}
+asm_ovlp=${arg[5]}
+ilu_level=${arg[6]}
+
+declare -a nprocvals=("64")
+declare -a nxnpvals=("512" "32")
+count=${#nxnpvals[@]}
+
+num_steps=${arg[2]}
+export OMP_NUM_THREADS=1
+
+precon_str=$precon_type
+if [[ "$precon_type" == *"asm"* ]]; then
+    precon_str="${precon_str}_asmovlp$(printf "%03d" $asm_ovlp)"
+fi
+if [[ "$precon_type" == *"ilu"* ]]; then
+    precon_str="${precon_str}_ilu$(printf "%03d" $ilu_level)"
+fi
+
+dir_prefix=".tmp.${solver_type}.pc_${precon_str}.${SYS_TYPE}."
+wtimes_prefix="wtimes.${solver_type}.pc_${precon_type}.${SYS_TYPE}"
+rootdir=$PWD
+INP_FILE=$rootdir/common/${arg[1]}
+outfile=out.${SYS_TYPE}.log
+jobscript_name="warpx.job"
+
+for (( i = 0; i < count; i += 2 ))
+do
+    nx=${nxnpvals[i + 0]}
+    np=${nxnpvals[i + 1]}
+    for nproc in ${nprocvals[@]}; do
+        echo "Creating directory for nx=$nx, np=$np, nproc=$nproc"
+        dirname=$dir_prefix$(printf "%05d" $nproc).$(printf "nx%05d" $nx)$(printf "np%03d" $np)
+        if [ -d "$dirname" ]; then
+            echo "  deleting existing directory $dirname"
+            rm -rf $dirname
+        fi
+        echo "  creating directory $dirname"
+        mkdir $dirname
+
+        cd $dirname
+        echo "  creating shortcut for input file"
+        cp $INP_FILE .
+        INP=$(ls *.in)
+        ARGS="amr.n_cell = $nx $nx my_constants.nppcz = $np max_step = $num_steps"
+        ARGS_JFNK=$(get_jfnk_args $# ${solver_type})
+        ARGS_PC=$(get_pc_args $# ${precon_type} ${asm_ovlp} ${ilu_level})
+        ARGS="$ARGS $ARGS_JFNK $ARGS_PC"
+        if [[ "$solver_type" == *"petsc"* ]]; then
+            ARGS="$ARGS -log_view"
+        fi
+        echo "  running WarpX with input file $INP"
+        echo "  input file is $INP"
+        echo "  command line args are \"$ARGS\""
+        srun -n $nproc $EXEC $INP $ARGS 2>&1 > $outfile
+        cd $rootdir
+    done
+done
+
+for (( i = 0; i < count; i += 2 ))
+do
+    nx=${nxnpvals[i + 0]}
+    np=${nxnpvals[i + 1]}
+    wtime_file="${wtimes_prefix}.$(printf "nx%05d" $nx).$(printf "np%03d" $np).dat"
+    echo ""
+    echo "Extracting wall times for nx=$nx, np=$np..."
+    if [ -f "$wtime_file" ]; then
+        echo "  deleting old $wtime_file"
+        rm $wtime_file
+    fi
+    touch $wtime_file
+    echo "nx nproc n_ts t_ts n_newton t_newton n_gmres t_gmres n_pc t_pc n_rhs t_rhs n_rhsnl t_rhsnl" >> $wtime_file
+    for nproc in ${nprocvals[@]}; do
+        dirname=$dir_prefix$(printf "%05d" $nproc).$(printf "nx%05d" $nx)$(printf "np%03d" $np)
+
+        ts="ThetaImplicitEM::OneStep()"
+        tstime=$(cat $dirname/$outfile |grep -m2 "$ts" |tail -n1)
+        ncall_ts=$(echo $tstime | awk '{print $2}')
+        wtime_ts=$(echo $tstime | awk '{print $4}')
+        if [ -z "$tstime" ]; then
+            echo "  Warning: unable to find $ts for nx=$nx, np=$np, nproc=$nproc."
+            ncall_ts="0"
+            wtime_ts="0.0"
+        fi
+
+        if [[ "$solver_type" == "petsc_ksp" ]]; then
+
+            newton="NewtonSolver::Solve()"
+            newtontime=$(cat $dirname/$outfile |grep -m2 "$newton" |tail -n1)
+            ncall_newton=$(echo $newtontime | awk '{print $2}')
+            wtime_newton=$(echo $newtontime | awk '{print $4}')
+            if [ -z "$newtontime" ]; then
+                echo "  Warning: unable to find $newton for nx=$nx, np=$np, nproc=$nproc."
+                ncall_newton="0"
+                wtime_newton="0.0"
+            fi
+
+            gmres="KSP_impl::solve()"
+            gmrestime=$(cat $dirname/$outfile |grep -m2 "$gmres" |tail -n1)
+            ncall_gmres=$(echo $gmrestime | awk '{print $2}')
+            wtime_gmres=$(echo $gmrestime | awk '{print $4}')
+            if [ -z "$gmrestime" ]; then
+                echo "  Warning: unable to find $gmres for nx=$nx, np=$np, nproc=$nproc."
+                ncall_gmres="0"
+                wtime_gmres="0.0"
+            fi
+
+            pc="PCApply"
+            pctime=$(cat $dirname/$outfile |grep -m1 "$pc" |tail -n1)
+            ncall_pc=$(echo $pctime | awk '{print $2}')
+            wtime_pc=$(echo $pctime | awk '{print $4}')
+            if [ -z "$pctime" ]; then
+                echo "  Warning: unable to find $pc for nx=$nx, np=$np, nproc=$nproc."
+                ncall_pc="0"
+                wtime_pc="0.0"
+            fi
+
+            rhs="PETScSolver_impl::applyOp()"
+            rhstime=$(cat $dirname/$outfile |grep -m2 "$rhs" |tail -n1)
+            ncall_rhs=$(echo $rhstime | awk '{print $2}')
+            wtime_rhs=$(echo $rhstime | awk '{print $4}')
+            if [ -z "$rhstime" ]; then
+                echo "  Warning: unable to find $rhs for nx=$nx, np=$np, nproc=$nproc."
+                ncall_rhs="0"
+                wtime_rhs="0.0"
+            fi
+
+            rhsnl="NewtonSolver::EvalResidual()"
+            nlrhstime=$(cat $dirname/$outfile |grep -m2 "$rhsnl" |tail -n1)
+            ncall_nlrhs=$(echo $nlrhstime | awk '{print $2}')
+            wtime_nlrhs=$(echo $nlrhstime | awk '{print $4}')
+            if [ -z "$nlrhstime" ]; then
+                echo "  Warning: unable to find $nlrhs for nx=$nx, np=$np, nproc=$nproc."
+                ncall_nlrhs="0"
+                wtime_nlrhs="0.0"
+            fi
+
+        elif [[ "$solver_type" == "petsc_snes" ]]; then
+
+            newton="SNES_impl::solve()"
+            newtontime=$(cat $dirname/$outfile |grep -m2 "$newton" |tail -n1)
+            ncall_newton=$(echo $newtontime | awk '{print $2}')
+            wtime_newton=$(echo $newtontime | awk '{print $4}')
+            if [ -z "$newtontime" ]; then
+                echo "  Warning: unable to find $newton for nx=$nx, np=$np, nproc=$nproc."
+                ncall_newton="0"
+                wtime_newton="0.0"
+            fi
+
+            gmres="KSPSolve"
+            gmrestime=$(cat $dirname/$outfile |grep -m1 "$gmres" |tail -n1)
+            ncall_gmres=$(echo $gmrestime | awk '{print $2}')
+            wtime_gmres=$(echo $gmrestime | awk '{print $4}')
+            if [ -z "$gmrestime" ]; then
+                echo "  Warning: unable to find $gmres for nx=$nx, np=$np, nproc=$nproc."
+                ncall_gmres="0"
+                wtime_gmres="0.0"
+            fi
+
+            pc="PCApply"
+            pctime=$(cat $dirname/$outfile |grep -m1 "$pc" |tail -n1)
+            ncall_pc=$(echo $pctime | awk '{print $2}')
+            wtime_pc=$(echo $pctime | awk '{print $4}')
+            if [ -z "$pctime" ]; then
+                echo "  Warning: unable to find $pc for nx=$nx, np=$np, nproc=$nproc."
+                ncall_pc="0"
+                wtime_pc="0.0"
+            fi
+
+            rhs="PETScSolver_impl::applyOp()"
+            rhstime=$(cat $dirname/$outfile |grep -m2 "$rhs" |tail -n1)
+            ncall_rhs=$(echo $rhstime | awk '{print $2}')
+            wtime_rhs=$(echo $rhstime | awk '{print $4}')
+            if [ -z "$rhstime" ]; then
+                echo "  Warning: unable to find $rhs for nx=$nx, np=$np, nproc=$nproc."
+                ncall_rhs="0"
+                wtime_rhs="0.0"
+            fi
+
+            rhsnl="SNES_impl::computeRHS()"
+            nlrhstime=$(cat $dirname/$outfile |grep -m2 "$rhsnl" |tail -n1)
+            ncall_nlrhs=$(echo $nlrhstime | awk '{print $2}')
+            wtime_nlrhs=$(echo $nlrhstime | awk '{print $4}')
+            if [ -z "$nlrhstime" ]; then
+                echo "  Warning: unable to find $nlrhs for nx=$nx, np=$np, nproc=$nproc."
+                ncall_nlrhs="0"
+                wtime_nlrhs="0.0"
+            fi
+
+        else
+
+            newton="NewtonSolver::Solve()"
+            newtontime=$(cat $dirname/$outfile |grep -m2 "$newton" |tail -n1)
+            ncall_newton=$(echo $newtontime | awk '{print $2}')
+            wtime_newton=$(echo $newtontime | awk '{print $4}')
+            if [ -z "$newtontime" ]; then
+                echo "  Warning: unable to find $newton for nx=$nx, np=$np, nproc=$nproc."
+                ncall_newton="0"
+                wtime_newton="0.0"
+            fi
+
+            gmres="GMRES::solve()"
+            gmrestime=$(cat $dirname/$outfile |grep -m2 "$gmres" |tail -n1)
+            ncall_gmres=$(echo $gmrestime | awk '{print $2}')
+            wtime_gmres=$(echo $gmrestime | awk '{print $4}')
+            if [ -z "$gmrestime" ]; then
+                echo "  Warning: unable to find $gmres for nx=$nx, np=$np, nproc=$nproc."
+                ncall_gmres="0"
+                wtime_gmres="0.0"
+            fi
+
+            pc="CurlCurlMLMGPC::Apply()"
+            pctime=$(cat $dirname/$outfile |grep -m2 "$pc" |tail -n1)
+            ncall_pc=$(echo $pctime | awk '{print $2}')
+            wtime_pc=$(echo $pctime | awk '{print $4}')
+            if [ -z "$pctime" ]; then
+                echo "  Warning: unable to find $pc for nx=$nx, np=$np, nproc=$nproc."
+                ncall_pc="0"
+                wtime_pc="0.0"
+            fi
+
+            rhs="JacobianFunctionMF::apply()"
+            rhstime=$(cat $dirname/$outfile |grep -m2 "$rhs" |tail -n1)
+            ncall_rhs=$(echo $rhstime | awk '{print $2}')
+            wtime_rhs=$(echo $rhstime | awk '{print $4}')
+            if [ -z "$rhstime" ]; then
+                echo "  Warning: unable to find $rhs for nx=$nx, np=$np, nproc=$nproc."
+                ncall_rhs="0"
+                wtime_rhs="0.0"
+            fi
+
+            rhsnl="NewtonSolver::EvalResidual()"
+            nlrhstime=$(cat $dirname/$outfile |grep -m2 "$rhsnl" |tail -n1)
+            ncall_nlrhs=$(echo $nlrhstime | awk '{print $2}')
+            wtime_nlrhs=$(echo $nlrhstime | awk '{print $4}')
+            if [ -z "$nlrhstime" ]; then
+                echo "  Warning: unable to find $nlrhs for nx=$nx, np=$np, nproc=$nproc."
+                ncall_nlrhs="0"
+                wtime_nlrhs="0.0"
+            fi
+        fi
+
+        echo "$nx $nproc $ncall_ts $wtime_ts $ncall_newton $wtime_newton $ncall_gmres $wtime_gmres $ncall_pc $wtime_pc $ncall_rhs $wtime_rhs $ncall_nlrhs $wtime_nlrhs" >> $wtime_file
+    done
+    echo "Done!"
+
+    echo ""
+    echo "Wall times:"
+    cat $wtime_file
+    echo " "
+done
+}
+
+#declare -a pctypes=("ccmlmg" "petsc_lu" "petsc_asm_lu" "petsc_asm_ilu" "none")
+declare -a pctypes=("ccmlmg" "petsc_lu" "petsc_asm_lu" "petsc_asm_ilu")
+num_pc=${#pctypes[@]}
+declare -a jfnktypes=("native_jfnk" "petsc_ksp" "petsc_snes")
+num_jfnk=${#jfnktypes[@]}
+
+inp_file="uniform_plasma_2d.in"
+max_step=5
+
+for jfnk_type in ${jfnktypes[@]}; do
+    for pc_type in ${pctypes[@]}; do
+        if [[ "$pc_type" == *"asm"* ]]; then
+            declare -a asmovlps=("0" "2" "4" "8" "12" "16" "22" "28" "32")
+        else
+            declare -a asmovlps=("0")
+        fi
+        if [[ "$pc_type" == *"ilu"* ]]; then
+            declare -a ilulvls=("0" "2" "4" "8" "16")
+        else
+            declare -a ilulvls=("0")
+        fi
+        if [[ "x$jfnk_type" == "xnative_jfnk" ]]; then
+            if [[ "$pc_type" == *"petsc"* ]]; then
+                continue
+            fi
+        fi
+
+        for ilulvl in ${ilulvls[@]}; do
+            for asmovlp in ${asmovlps[@]}; do
+                echo "Running simulation for $jfnk_type, $pc_type ($asmovlp $ilulvl)..."
+                run_simulation $# $inp_file $max_step $jfnk_type $pc_type $asmovlp $ilulvl
+            done
+        done
+    done
+done
+
