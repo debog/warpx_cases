@@ -316,7 +316,7 @@ num_pc=${#pctypes[@]}
 declare -a jfnktypes=("native_jfnk" "petsc_ksp")
 num_jfnk=${#jfnktypes[@]}
 
-inp_file="uniform_plasma_2d.in"
+inp_file="uniform_plasma_${DIM}.in"
 max_step=5
 
 for jfnk_type in ${jfnktypes[@]}; do
