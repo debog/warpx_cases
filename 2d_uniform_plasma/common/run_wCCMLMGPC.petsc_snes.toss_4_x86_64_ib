@@ -7,11 +7,11 @@ NPROC=64
 NNODE=1
 export OMP_NUM_THREADS=1
 
+DIM=2d
 dir_prefix=".run_wCCMLMGPC.petsc_snes.${SYS_TYPE}."
 rootdir=$PWD
-INP_FILE=$rootdir/common/uniform_plasma_2d.in
+INP_FILE=$rootdir/common/uniform_plasma_${DIM}.in
 outfile=out.${SYS_TYPE}.log
-DIM=2d
 EXEC=$(ls $WARPX_BUILD/build/bin/warpx.${DIM})
 echo "Executable file is ${EXEC}."
 
