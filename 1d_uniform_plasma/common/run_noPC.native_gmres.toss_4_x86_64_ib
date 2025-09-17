@@ -16,7 +16,7 @@ EXEC=$(ls $WARPX_BUILD/build/bin/warpx.${DIM})
 echo "Executable file is ${EXEC}."
 
 nx="512"
-np="32"
+np="100"
 echo "Creating directory for nx=$nx, np=$np"
 dirname=$dir_prefix$(printf "nx%05d" $nx)$(printf "np%03d" $np)
 if [ -d "$dirname" ]; then
@@ -33,8 +33,7 @@ INP=$(ls *.in)
 echo "  running WarpX with input file $INP"
 srun -n $NPROC $EXEC $INP \
                amr.n_cell = $nx \
-               my_constants.Nppc_x = $np \
-               my_constants.Nppc_z = $np \
+               my_constants.Nppc = $np \
                max_step = $max_step \
                implicit_evolve.nonlinear_solver = newton \
                jacobian.pc_type = none \
