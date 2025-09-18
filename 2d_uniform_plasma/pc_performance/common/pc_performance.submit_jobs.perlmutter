@@ -148,12 +148,12 @@ do
         ARGS_PC=$(get_pc_args $# ${precon_type} ${asm_ovlp} ${ilu_level} ${num_vcycl})
         ARGS="$ARGS $ARGS_JFNK $ARGS_PC"
         if [[ "$solver_type" == *"petsc"* ]]; then
-            ARGS="$ARGS -log_view -log_view_gpu_time"
+            ARGS="$ARGS -mat_view ::ascii_info -log_view"
         fi
         echo "  writing jobscript $jobscript_name"
         write_job $# $jobscript_name
         echo "  submitting job"
-        #sbatch $jobscript_name
+        sbatch $jobscript_name
         cd $rootdir
     done
 done
