@@ -2,26 +2,20 @@
 
 clear
 
-DIM=2d
-EXEC=$(ls $WARPX_BUILD/bin/warpx.${DIM})
-echo "Executable file is ${EXEC}."
-
-run_simulation () {
+scrape_wtimes () {
 
 arg=("$@")
-# argument 1: input filename
-# argument 2: number of timesteps
-# argument 3: JFNK solver type
-# argument 4: PC solver type
-# argument 5: ASM overlap
-# argument 6: ILU factor levels
-# argument 7: Number of V-cycles
+# argument 1: JFNK solver type
+# argument 2: PC solver type
+# argument 3: ASM overlap
+# argument 4: ILU factor levels
+# argument 5: Number of V-cycles
 
-solver_type=${arg[3]}
-precon_type=${arg[4]}
-asm_ovlp=${arg[5]}
-ilu_level=${arg[6]}
-num_vcycl=${arg[7]}
+solver_type=${arg[1]}
+precon_type=${arg[2]}
+asm_ovlp=${arg[3]}
+ilu_level=${arg[4]}
+num_vcycl=${arg[5]}
 
 declare -a ngpuvals=("4")
 declare -a nxnpvals=("512" "32")
@@ -58,6 +52,7 @@ do
     echo "nx ngpu n_ts t_ts n_newton t_newton n_gmres t_gmres n_pc t_pc n_rhs t_rhs n_rhsnl t_rhsnl" >> $wtime_file
     for ngpu in ${ngpuvals[@]}; do
         dirname=$dir_prefix$(printf "%05d" $ngpu).$(printf "nx%05d" $nx)$(printf "np%03d" $np)
+        echo "  Run directory is $dirname"
 
         ts="ThetaImplicitEM::OneStep()"
         tstime=$(cat $dirname/$outfile |grep -m2 "$ts" |tail -n1)
@@ -243,9 +238,6 @@ num_pc=${#pctypes[@]}
 declare -a jfnktypes=("native_jfnk" "petsc_ksp")
 num_jfnk=${#jfnktypes[@]}
 
-inp_file="uniform_plasma_${DIM}.in"
-max_step=5
-
 for jfnk_type in ${jfnktypes[@]}; do
     for pc_type in ${pctypes[@]}; do
         if [[ "$pc_type" == *"asm"* ]]; then
@@ -272,8 +264,8 @@ for jfnk_type in ${jfnktypes[@]}; do
         for ilulvl in ${ilulvls[@]}; do
             for asmovlp in ${asmovlps[@]}; do
                 for nvcycl in ${num_vcycles[@]}; do
-                    echo "Running simulation for $jfnk_type, $pc_type (asm overlap=$asmovlp, ILU levels=$ilulvl, num. V-cycles=$nvcycl)..."
-                    run_simulation $# $inp_file $max_step $jfnk_type $pc_type $asmovlp $ilulvl $nvcycl
+                    echo "Scraping wall times for $jfnk_type, $pc_type (asm overlap=$asmovlp, ILU levels=$ilulvl, num. V-cycles=$nvcycl)..."
+                    scrape_wtimes $# $jfnk_type $pc_type $asmovlp $ilulvl $nvcycl
                 done
             done
         done
