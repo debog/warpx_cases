@@ -35,15 +35,15 @@ export MPICH_OFI_NIC_POLICY=GPU
 
 # threads for OpenMP and threaded compressors per MPI rank
 #   note: 16 avoids hyperthreading (32 virtual cores, 16 physical)
-export OMP_NUM_THREADS=1
+export OMP_NUM_THREADS=16
 
 # GPU-aware MPI optimizations
 GPU_AWARE_MPI="amrex.use_gpu_aware_mpi=1"
 
 # CUDA visible devices are ordered inverse to local task IDs
 #   Reference: nvidia-smi topo -m
-srun --cpu-bind=cores -n $ngpu bash -c "
-    export CUDA_VISIBLE_DEVICES=\$((3-SLURM_LOCALID));
+srun --cpu-bind=cores bash -c "
+    export CUDA_VISIBLE_DEVICES=\\\$((3-SLURM_LOCALID));
     $EXEC $INP $ARGS \${GPU_AWARE_MPI}" 2>&1 |tee $outfile
 EOM
 }
