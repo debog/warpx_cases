@@ -55,7 +55,7 @@ set grid mxtics lw 1 dt 4 lc rgbcolor "gray"
 set grid mytics lw 1 dt 4 lc rgbcolor "gray"
 
 set output "pc_performance.Dane.eps"
-set title "2D uniform plasma, 512^2 grid, 32^2 ppc, 100 time steps" font "Times,14"
+set title "2D uniform plasma, 512^2 grid, 32^2 ppc, 100 time steps, 64 MPI ranks" font "Times,14"
 set xlabel "Wall time (s)" font "Times,14"
 set ylabel "Average number of GMRES iterations per Newton iteration" font "Times,14"
 set key outside right
