@@ -44,7 +44,7 @@ GPU_AWARE_MPI="amrex.use_gpu_aware_mpi=1"
 #   Reference: nvidia-smi topo -m
 srun --cpu-bind=cores bash -c "
     export CUDA_VISIBLE_DEVICES=\\\$((3-SLURM_LOCALID));
-    $EXEC $INP $ARGS \${GPU_AWARE_MPI}" 2>&1 |tee $outfile
+    $EXEC $INP \${GPU_AWARE_MPI} $ARGS" 2>&1 |tee $outfile
 EOM
 }
 
@@ -147,8 +147,11 @@ do
         ARGS_JFNK=$(get_jfnk_args $# ${solver_type})
         ARGS_PC=$(get_pc_args $# ${precon_type} ${asm_ovlp} ${ilu_level} ${num_vcycl})
         ARGS="$ARGS $ARGS_JFNK $ARGS_PC"
+        if [[ "$precon_type" == *"petsc"* ]]; then
+            ARGS="$ARGS -mat_view ::ascii_info"
+        fi
         if [[ "$solver_type" == *"petsc"* ]]; then
-            ARGS="$ARGS -mat_view ::ascii_info -log_view"
+            ARGS="$ARGS -log_view"
         fi
         echo "  writing jobscript $jobscript_name"
         write_job $# $jobscript_name
