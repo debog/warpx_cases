@@ -1,0 +1,196 @@
+#!/bin/bash
+
+clear
+
+DIM=2d
+EXEC=$(ls $WARPX_BUILD/build/bin/warpx.${DIM})
+echo "Executable file is ${EXEC}."
+
+write_job () {
+
+# argument 1: filename
+# argument 2: number of nodes
+# argument 3: number of MPI ranks
+
+arg=("$@")
+
+/bin/cat <<EOM >${arg[1]}
+#!/bin/bash
+
+#SBATCH -t 4:00:00
+#SBATCH -J warpx
+#SBATCH -N ${arg[2]}
+#SBATCH -n ${arg[3]}
+#SBATCH -A fipic
+#SBATCH --export=ALL
+
+NPROC=${arg[3]}
+export OMP_NUM_THREADS=1
+
+OUTFILE=out.${SYS_TYPE}.log
+
+rm -rf *.core diags Backtrac* warpx_used_inputs $outfile
+srun -n \$NPROC $EXEC $INP $ARGS 2>&1 > $outfile
+EOM
+
+}
+get_pc_args () {
+arg=("$@")
+# argument 1: PC type
+# argument 2: ASM overlap (if applicable)
+# argument 3: ILU factor levels (if applicable)
+# argument 4: Number of V-cycles (if applicable)
+option=${arg[1]}
+if [[ "x$option" == "xnone" ]]; then
+    echo "jacobian.pc_type = none"
+elif [[ "x$option" == "xccmlmg" ]]; then
+    echo "jacobian.pc_type = pc_curl_curl_mlmg pc_curl_curl_mlmg.verbose = false pc_curl_curl_mlmg.max_iter = ${arg[4]} pc_curl_curl_mlmg.relative_tolerance = 1e-16"
+elif [[ "x$option" == "xpetsc_lu" ]]; then
+    echo "jacobian.pc_type = pc_petsc -pc_type lu"
+elif [[ "x$option" == "xpetsc_ilu" ]]; then
+    echo "jacobian.pc_type = pc_petsc -pc_type ilu -pc_factor_levels ${arg[3]}"
+elif [[ "x$option" == "xpetsc_asm_lu" ]]; then
+    echo "jacobian.pc_type = pc_petsc -pc_type asm -sub_pc_type lu -pc_asm_overlap ${arg[2]}"
+elif [[ "x$option" == "xpetsc_asm_ilu" ]]; then
+    echo "jacobian.pc_type = pc_petsc -pc_type asm -sub_pc_type ilu -pc_asm_overlap ${arg[2]} -sub_pc_factor_levels ${arg[3]}"
+fi
+}
+
+get_jfnk_args () {
+arg=("$@")
+# argument 1: JFNK solver type
+option=${arg[1]}
+if [[ "x$option" == "xnative_jfnk" ]]; then
+    echo "implicit_evolve.nonlinear_solver = newton newton.linear_solver = amrex_gmres"
+elif [[ "x$option" == "xpetsc_ksp" ]]; then
+    echo "implicit_evolve.nonlinear_solver = newton newton.linear_solver = petsc_ksp"
+elif [[ "x$option" == "xpetsc_snes" ]]; then
+    echo "implicit_evolve.nonlinear_solver = petsc_snes"
+fi
+}
+
+run_simulation () {
+
+arg=("$@")
+# argument 1: input filename
+# argument 2: number of timesteps
+# argument 3: JFNK solver type
+# argument 4: PC solver type
+# argument 5: ASM overlap
+# argument 6: ILU factor levels
+# argument 7: Number of V-cycles
+
+solver_type=${arg[3]}
+precon_type=${arg[4]}
+asm_ovlp=${arg[5]}
+ilu_level=${arg[6]}
+num_vcycl=${arg[7]}
+
+declare -a nprocvals=("16" "64" "256" "1024")
+declare -a nxnpvals=("512" "32")
+count=${#nxnpvals[@]}
+
+nproc_node=112
+num_steps=${arg[2]}
+export OMP_NUM_THREADS=1
+
+precon_str=$precon_type
+if [[ "$precon_type" == *"asm"* ]]; then
+    precon_str="${precon_str}_asmovlp$(printf "%03d" $asm_ovlp)"
+fi
+if [[ "$precon_type" == *"ilu"* ]]; then
+    precon_str="${precon_str}_ilu$(printf "%03d" $ilu_level)"
+fi
+if [[ "$precon_type" == *"mg"* ]]; then
+    precon_str="${precon_str}_nvcyc$(printf "%03d" $num_vcycl)"
+fi
+
+dir_prefix=".tmp.${solver_type}.pc_${precon_str}.${SYS_TYPE}."
+rootdir=$PWD
+INP_FILE=$rootdir/common/${arg[1]}
+outfile=out.${SYS_TYPE}.log
+jobscript_name="warpx.job"
+
+for (( i = 0; i < count; i += 2 ))
+do
+    nx=${nxnpvals[i + 0]}
+    np=${nxnpvals[i + 1]}
+    for nproc in ${nprocvals[@]}; do
+        nnode=$(( nproc / nproc_node+1 ))
+        echo "Creating directory for nx=$nx, np=$np, nproc=$nproc"
+        dirname=$dir_prefix$(printf "%05d" $nproc).$(printf "nx%05d" $nx)$(printf "np%03d" $np)
+        if [ -d "$dirname" ]; then
+            echo "  deleting existing directory $dirname"
+            rm -rf $dirname
+        fi
+        echo "  creating directory $dirname"
+        mkdir $dirname
+
+        cd $dirname
+        echo "  creating shortcut for input file"
+        cp $INP_FILE .
+        INP=$(ls *.in)
+        ARGS="amr.n_cell = $nx $nx my_constants.Nppc_x = $np my_constants.Nppc_z =$np max_step = $num_steps"
+        ARGS_JFNK=$(get_jfnk_args $# ${solver_type})
+        ARGS_PC=$(get_pc_args $# ${precon_type} ${asm_ovlp} ${ilu_level} ${num_vcycl})
+        ARGS="$ARGS $ARGS_JFNK $ARGS_PC"
+        if [[ "$precon_type" == *"petsc"* ]]; then
+            ARGS="$ARGS -mat_view ::ascii_info"
+        fi
+        if [[ "$solver_type" == *"petsc"* ]]; then
+            ARGS="$ARGS -log_view"
+        fi
+        echo "  writing jobscript $jobscript_name ($nnode nodes, $nproc MPI ranks)"
+        write_job $# $jobscript_name $nnode $nproc
+        echo "  input file is $INP"
+        echo "  command line args are \"$ARGS\""
+        echo "  submitting job"
+        sbatch $jobscript_name
+        cd $rootdir
+    done
+done
+}
+
+declare -a pctypes=("ccmlmg" "petsc_lu" "petsc_asm_lu" "petsc_asm_ilu" "none")
+num_pc=${#pctypes[@]}
+#declare -a jfnktypes=("native_jfnk" "petsc_ksp" "petsc_snes")
+declare -a jfnktypes=("native_jfnk" "petsc_ksp")
+num_jfnk=${#jfnktypes[@]}
+
+inp_file="uniform_plasma_${DIM}.in"
+max_step=200
+
+for jfnk_type in ${jfnktypes[@]}; do
+    for pc_type in ${pctypes[@]}; do
+        if [[ "$pc_type" == *"asm"* ]]; then
+            declare -a asmovlps=("32" "16" "8" "0")
+        else
+            declare -a asmovlps=("0")
+        fi
+        if [[ "$pc_type" == *"ilu"* ]]; then
+            declare -a ilulvls=("8" "4" "2" "1")
+        else
+            declare -a ilulvls=("0")
+        fi
+        if [[ "$pc_type" == *"mg"* ]]; then
+            declare -a num_vcycles=("1" "2" "4")
+        else
+            declare -a num_vcycles=("0")
+        fi
+        if [[ "x$jfnk_type" == "xnative_jfnk" ]]; then
+            if [[ "$pc_type" == *"petsc"* ]]; then
+                continue
+            fi
+        fi
+
+        for ilulvl in ${ilulvls[@]}; do
+            for asmovlp in ${asmovlps[@]}; do
+                for nvcycl in ${num_vcycles[@]}; do
+                    echo "Running simulation for $jfnk_type, $pc_type (asm overlap=$asmovlp, ILU levels=$ilulvl, num. V-cycles=$nvcycl)..."
+                    run_simulation $# $inp_file $max_step $jfnk_type $pc_type $asmovlp $ilulvl $nvcycl
+                done
+            done
+        done
+    done
+done
+
