@@ -12,7 +12,7 @@ my_constants.dt = 1.0e-4*1.0e-9   # time step [s]
 ####### GENERAL PARAMETERS ######
 #################################
 stop_time = tsim
-amr.n_cell =  512 512
+amr.blocking_factor = 32
 amr.max_level = 0
 geometry.dims = 2
 geometry.prob_lo = 0.0 0.0
@@ -35,6 +35,9 @@ warpx.limit_verbose_step = false
 warpx.const_dt = dt
 warpx.use_filter = 0
 
+algo.load_balance_intervals = 0
+warpx.sort_intervals = -1
+
 algo.maxwell_solver = Yee
 algo.evolve_scheme = "theta_implicit_em"
 
@@ -49,7 +52,7 @@ newton.absolute_tolerance = 0.0
 newton.require_convergence = false
 
 gmres.verbose_int = 2
-gmres.max_iterations = 1
+gmres.max_iterations = 5
 gmres.relative_tolerance = 0.0e-4
 gmres.absolute_tolerance = 0.0
 
