@@ -101,7 +101,7 @@ asm_ovlp=${arg[5]}
 ilu_level=${arg[6]}
 num_vcycl=${arg[7]}
 
-declare -a nnodevals=("1" "2" "4" "8" "16" "32")
+declare -a nnodevals=("1" "2" "4" "8" "16" "32" "48" "64")
 declare -a nxnpvals=("512" "32")
 count=${#nxnpvals[@]}
 
@@ -176,12 +176,12 @@ max_step=200
 for jfnk_type in ${jfnktypes[@]}; do
     for pc_type in ${pctypes[@]}; do
         if [[ "$pc_type" == *"asm"* ]]; then
-            declare -a asmovlps=("32" "16" "8" "0")
+            declare -a asmovlps=("32" "16" "8")
         else
             declare -a asmovlps=("0")
         fi
         if [[ "$pc_type" == *"ilu"* ]]; then
-            declare -a ilulvls=("8" "4" "2" "1")
+            declare -a ilulvls=("8" "4" "2")
         else
             declare -a ilulvls=("0")
         fi
