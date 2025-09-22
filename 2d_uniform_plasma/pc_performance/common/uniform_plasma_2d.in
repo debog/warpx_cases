@@ -37,6 +37,8 @@ algo.evolve_scheme = "theta_implicit_em"
 implicit_evolve.theta = 0.5
 implicit_evolve.max_particle_iterations = 21
 implicit_evolve.particle_tolerance = 1.0e-12
+implicit_evolve.use_mass_matrices_jacobian = true
+implicit_evolve.use_mass_matrices_pc = false
 
 implicit_evolve.nonlinear_solver = "newton"
 newton.verbose = true
