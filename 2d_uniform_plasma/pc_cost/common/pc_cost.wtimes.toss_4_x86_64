@@ -241,17 +241,17 @@ num_jfnk=${#jfnktypes[@]}
 for jfnk_type in ${jfnktypes[@]}; do
     for pc_type in ${pctypes[@]}; do
         if [[ "$pc_type" == *"asm"* ]]; then
-            declare -a asmovlps=("32" "24" "16" "8" "0")
+            declare -a asmovlps=("32" "16" "8" "0")
         else
             declare -a asmovlps=("0")
         fi
         if [[ "$pc_type" == *"ilu"* ]]; then
-            declare -a ilulvls=("16" "8" "4" "2" "1")
+            declare -a ilulvls=("8" "4" "2" "1")
         else
             declare -a ilulvls=("0")
         fi
         if [[ "$pc_type" == *"mg"* ]]; then
-            declare -a num_vcycles=("1" "2" "4" "8")
+            declare -a num_vcycles=("1" "2" "4")
         else
             declare -a num_vcycles=("0")
         fi
