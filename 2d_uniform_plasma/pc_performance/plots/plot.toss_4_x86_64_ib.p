@@ -54,46 +54,46 @@ set grid  ytics lw 1 dt 4 lc rgbcolor "gray"
 set grid mxtics lw 1 dt 4 lc rgbcolor "gray"
 set grid mytics lw 1 dt 4 lc rgbcolor "gray"
 
-set output "pc_performance.Dane.eps"
+set output "pc_performance.nx00512.np032.nproc0064.Dane.eps"
 set title "2D uniform plasma, 512^2 grid, 32^2 ppc, 100 time steps, 64 MPI ranks" font "Times,14"
-set xlabel "Wall time (s)" font "Times,14"
+set xlabel "Wall time (s) per step" font "Times,14"
 set ylabel "Average number of GMRES iterations per Newton iteration" font "Times,14"
 set key outside right
 plot \
-'../wtimes.petsc_ksp.pc_none.toss_4_x86_64_ib.nx00512.np032.dat'                            u 4:($11/($13+1.0e-16)) w p ls 11 t "No PC",\
-'../wtimes.petsc_ksp.pc_petsc_lu.toss_4_x86_64_ib.nx00512.np032.dat'                        u 4:($11/($13+1.0e-16)) w p ls 12 t "PCLU",\
-'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp000.toss_4_x86_64_ib.nx00512.np032.dat'         u 4:($11/($13+1.0e-16)) w p ls 21 t "PCASM ( 0)(LU)",\
-'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp008.toss_4_x86_64_ib.nx00512.np032.dat'         u 4:($11/($13+1.0e-16)) w p ls 22 t "PCASM ( 8)(LU)",\
-'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp016.toss_4_x86_64_ib.nx00512.np032.dat'         u 4:($11/($13+1.0e-16)) w p ls 23 t "PCASM (16)(LU)",\
-'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp024.toss_4_x86_64_ib.nx00512.np032.dat'         u 4:($11/($13+1.0e-16)) w p ls 24 t "PCASM (24)(LU)",\
-'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp032.toss_4_x86_64_ib.nx00512.np032.dat'         u 4:($11/($13+1.0e-16)) w p ls 25 t "PCASM (32)(LU)",\
-'../wtimes.petsc_ksp.pc_ccmlmg_nvcyc001.toss_4_x86_64_ib.nx00512.np032.dat'                 u 4:($11/($13+1.0e-16)) w p ls 31 t "PCCCMLMG (1)",\
-'../wtimes.petsc_ksp.pc_ccmlmg_nvcyc002.toss_4_x86_64_ib.nx00512.np032.dat'                 u 4:($11/($13+1.0e-16)) w p ls 32 t "PCCCMLMG (2)",\
-'../wtimes.petsc_ksp.pc_ccmlmg_nvcyc004.toss_4_x86_64_ib.nx00512.np032.dat'                 u 4:($11/($13+1.0e-16)) w p ls 33 t "PCCCMLMG (4)",\
-'../wtimes.petsc_ksp.pc_ccmlmg_nvcyc008.toss_4_x86_64_ib.nx00512.np032.dat'                 u 4:($11/($13+1.0e-16)) w p ls 34 t "PCCCMLMG (8)",\
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp000_ilu001.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 41 t "PCASM ( 0)(ILU 1)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp000_ilu002.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 42 t "PCASM ( 0)(ILU 2)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp000_ilu004.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 43 t "PCASM ( 0)(ILU 4)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp000_ilu008.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 44 t "PCASM ( 0)(ILU 8)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp000_ilu016.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 45 t "PCASM ( 0)(ILU16)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu001.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 51 t "PCASM ( 8)(ILU 1)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu002.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 52 t "PCASM ( 8)(ILU 2)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu004.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 53 t "PCASM ( 8)(ILU 4)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu008.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 54 t "PCASM ( 8)(ILU 8)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu016.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 55 t "PCASM ( 8)(ILU16)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp016_ilu001.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 61 t "PCASM (16)(ILU 1)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp016_ilu002.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 62 t "PCASM (16)(ILU 2)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp016_ilu004.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 63 t "PCASM (16)(ILU 4)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp016_ilu008.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 64 t "PCASM (16)(ILU 8)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp016_ilu016.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 65 t "PCASM (16)(ILU16)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp024_ilu001.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 71 t "PCASM (24)(ILU 1)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp024_ilu002.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 72 t "PCASM (24)(ILU 2)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp024_ilu004.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 73 t "PCASM (24)(ILU 4)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp024_ilu008.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 74 t "PCASM (24)(ILU 8)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp024_ilu016.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 75 t "PCASM (24)(ILU16)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp032_ilu001.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 81 t "PCASM (32)(ILU 1)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp032_ilu002.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 82 t "PCASM (32)(ILU 2)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp032_ilu004.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 83 t "PCASM (32)(ILU 4)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp032_ilu008.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 84 t "PCASM (32)(ILU 8)", \
-'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp032_ilu016.toss_4_x86_64_ib.nx00512.np032.dat' u 4:($11/($13+1.0e-16)) w p ls 85 t "PCASM (32)(ILU16)", \
+'../wtimes.petsc_ksp.pc_none.toss_4_x86_64_ib.nx00512.np032.dat'                            u ($4/$3):($11/$13) w p ls 11 t "No PC",\
+'../wtimes.petsc_ksp.pc_petsc_lu.toss_4_x86_64_ib.nx00512.np032.dat'                        u ($4/$3):($11/$13) w p ls 12 t "PCLU",\
+'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp000.toss_4_x86_64_ib.nx00512.np032.dat'         u ($4/$3):($11/$13) w p ls 21 t "PCASM ( 0)(LU)",\
+'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp008.toss_4_x86_64_ib.nx00512.np032.dat'         u ($4/$3):($11/$13) w p ls 22 t "PCASM ( 8)(LU)",\
+'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp016.toss_4_x86_64_ib.nx00512.np032.dat'         u ($4/$3):($11/$13) w p ls 23 t "PCASM (16)(LU)",\
+'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp024.toss_4_x86_64_ib.nx00512.np032.dat'         u ($4/$3):($11/$13) w p ls 24 t "PCASM (24)(LU)",\
+'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp032.toss_4_x86_64_ib.nx00512.np032.dat'         u ($4/$3):($11/$13) w p ls 25 t "PCASM (32)(LU)",\
+'../wtimes.petsc_ksp.pc_ccmlmg_nvcyc001.toss_4_x86_64_ib.nx00512.np032.dat'                 u ($4/$3):($11/$13) w p ls 31 t "PCCCMLMG (1)",\
+'../wtimes.petsc_ksp.pc_ccmlmg_nvcyc002.toss_4_x86_64_ib.nx00512.np032.dat'                 u ($4/$3):($11/$13) w p ls 32 t "PCCCMLMG (2)",\
+'../wtimes.petsc_ksp.pc_ccmlmg_nvcyc004.toss_4_x86_64_ib.nx00512.np032.dat'                 u ($4/$3):($11/$13) w p ls 33 t "PCCCMLMG (4)",\
+'../wtimes.petsc_ksp.pc_ccmlmg_nvcyc008.toss_4_x86_64_ib.nx00512.np032.dat'                 u ($4/$3):($11/$13) w p ls 34 t "PCCCMLMG (8)",\
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp000_ilu001.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 41 t "PCASM ( 0)(ILU 1)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp000_ilu002.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 42 t "PCASM ( 0)(ILU 2)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp000_ilu004.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 43 t "PCASM ( 0)(ILU 4)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp000_ilu008.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 44 t "PCASM ( 0)(ILU 8)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp000_ilu016.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 45 t "PCASM ( 0)(ILU16)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu001.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 51 t "PCASM ( 8)(ILU 1)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu002.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 52 t "PCASM ( 8)(ILU 2)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu004.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 53 t "PCASM ( 8)(ILU 4)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu008.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 54 t "PCASM ( 8)(ILU 8)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu016.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 55 t "PCASM ( 8)(ILU16)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp016_ilu001.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 61 t "PCASM (16)(ILU 1)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp016_ilu002.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 62 t "PCASM (16)(ILU 2)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp016_ilu004.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 63 t "PCASM (16)(ILU 4)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp016_ilu008.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 64 t "PCASM (16)(ILU 8)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp016_ilu016.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 65 t "PCASM (16)(ILU16)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp024_ilu001.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 71 t "PCASM (24)(ILU 1)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp024_ilu002.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 72 t "PCASM (24)(ILU 2)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp024_ilu004.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 73 t "PCASM (24)(ILU 4)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp024_ilu008.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 74 t "PCASM (24)(ILU 8)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp024_ilu016.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 75 t "PCASM (24)(ILU16)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp032_ilu001.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 81 t "PCASM (32)(ILU 1)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp032_ilu002.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 82 t "PCASM (32)(ILU 2)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp032_ilu004.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 83 t "PCASM (32)(ILU 4)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp032_ilu008.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 84 t "PCASM (32)(ILU 8)", \
+'../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp032_ilu016.toss_4_x86_64_ib.nx00512.np032.dat' u ($4/$3):($11/$13) w p ls 85 t "PCASM (32)(ILU16)", \
 
