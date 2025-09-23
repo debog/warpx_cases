@@ -111,7 +111,7 @@ do
             ncall_nlrhs=$(echo $nlrhstime | awk '{print $2}')
             wtime_nlrhs=$(echo $nlrhstime | awk '{print $4}')
             if [ -z "$nlrhstime" ]; then
-                echo "  Warning: unable to find $nlrhs for nx=$nx, np=$np, nproc=$nproc."
+                echo "  Warning: unable to find $rhsnl for nx=$nx, np=$np, nproc=$nproc."
                 ncall_nlrhs="0"
                 wtime_nlrhs="0.0"
             fi
@@ -163,7 +163,7 @@ do
             ncall_nlrhs=$(echo $nlrhstime | awk '{print $2}')
             wtime_nlrhs=$(echo $nlrhstime | awk '{print $4}')
             if [ -z "$nlrhstime" ]; then
-                echo "  Warning: unable to find $nlrhs for nx=$nx, np=$np, nproc=$nproc."
+                echo "  Warning: unable to find $rhsnl for nx=$nx, np=$np, nproc=$nproc."
                 ncall_nlrhs="0"
                 wtime_nlrhs="0.0"
             fi
@@ -215,7 +215,7 @@ do
             ncall_nlrhs=$(echo $nlrhstime | awk '{print $2}')
             wtime_nlrhs=$(echo $nlrhstime | awk '{print $4}')
             if [ -z "$nlrhstime" ]; then
-                echo "  Warning: unable to find $nlrhs for nx=$nx, np=$np, nproc=$nproc."
+                echo "  Warning: unable to find $rhsnl for nx=$nx, np=$np, nproc=$nproc."
                 ncall_nlrhs="0"
                 wtime_nlrhs="0.0"
             fi
