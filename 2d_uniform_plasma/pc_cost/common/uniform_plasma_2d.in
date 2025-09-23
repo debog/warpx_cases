@@ -44,15 +44,16 @@ algo.evolve_scheme = "theta_implicit_em"
 implicit_evolve.theta = 0.5
 implicit_evolve.max_particle_iterations = 21
 implicit_evolve.particle_tolerance = 1.0e-10
+implicit_evolve.skip_particle_picard_init = true
 
 newton.verbose = true
-newton.max_iterations = 1
+newton.max_iterations = 3
 newton.relative_tolerance = 0.0e-8
 newton.absolute_tolerance = 0.0
 newton.require_convergence = false
 
 gmres.verbose_int = 2
-gmres.max_iterations = 5
+gmres.max_iterations = 9
 gmres.relative_tolerance = 0.0e-4
 gmres.absolute_tolerance = 0.0
 
