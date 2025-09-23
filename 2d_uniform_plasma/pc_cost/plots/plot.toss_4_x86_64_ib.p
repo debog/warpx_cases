@@ -67,9 +67,9 @@ plot \
 '../wtimes.petsc_ksp.pc_ccmlmg_nvcyc002.toss_4_x86_64_ib.nx00512.np032.dat'                 u 2:($4/$3) w lp ls 32 t "PCCCMLMG (2)",\
 '../wtimes.petsc_ksp.pc_ccmlmg_nvcyc004.toss_4_x86_64_ib.nx00512.np032.dat'                 u 2:($4/$3) w lp ls 33 t "PCCCMLMG (4)",\
 '../wtimes.petsc_ksp.pc_petsc_lu.toss_4_x86_64_ib.nx00512.np032.dat'                        u 2:($4/$3) w lp ls 12 t "PCLU",\
-'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp008.toss_4_x86_64_ib.nx00512.np032.dat'         u 2:($4/$3) w lp ls 22 t "PCASM ( 8)(LU)",\
-'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp016.toss_4_x86_64_ib.nx00512.np032.dat'         u 2:($4/$3) w lp ls 23 t "PCASM (16)(LU)",\
-'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp032.toss_4_x86_64_ib.nx00512.np032.dat'         u 2:($4/$3) w lp ls 25 t "PCASM (32)(LU)",\
+'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp008.toss_4_x86_64_ib.nx00512.np032.dat'         u 2:($4/$3) w lp ls 22 t "PCASM ( 8)( LU  )",\
+'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp016.toss_4_x86_64_ib.nx00512.np032.dat'         u 2:($4/$3) w lp ls 23 t "PCASM (16)( LU  )",\
+'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp032.toss_4_x86_64_ib.nx00512.np032.dat'         u 2:($4/$3) w lp ls 25 t "PCASM (32)( LU  )",\
 '../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu002.toss_4_x86_64_ib.nx00512.np032.dat' u 2:($4/$3) w lp ls 52 t "PCASM ( 8)(ILU 2)", \
 '../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu004.toss_4_x86_64_ib.nx00512.np032.dat' u 2:($4/$3) w lp ls 53 t "PCASM ( 8)(ILU 4)", \
 '../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu008.toss_4_x86_64_ib.nx00512.np032.dat' u 2:($4/$3) w lp ls 54 t "PCASM ( 8)(ILU 8)", \

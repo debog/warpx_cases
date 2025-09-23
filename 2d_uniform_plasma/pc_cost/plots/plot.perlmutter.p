@@ -65,12 +65,11 @@ set yrange [0.1:20]
 set key outside right
 plot \
 '../wtimes.petsc_ksp.pc_none.perlmutter.nx00512.np032.dat'                            u 2:($4/$3) w lp ls 11 t "No PC",\
-'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp008.perlmutter.nx00512.np032.dat'         u 2:($4/$3) w lp ls 22 t "PCASM ( 8)(LU)",\
-'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp016.perlmutter.nx00512.np032.dat'         u 2:($4/$3) w lp ls 23 t "PCASM (16)(LU)",\
-'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp032.perlmutter.nx00512.np032.dat'         u 2:($4/$3) w lp ls 25 t "PCASM (32)(LU)",\
-'../wtimes.petsc_ksp.pc_ccmlmg_nvcyc001.perlmutter.nx00512.np032.dat'                 u 2:($4/$3) w lp ls 31 t "PCCCMLMG (1)",\
 '../wtimes.petsc_ksp.pc_ccmlmg_nvcyc002.perlmutter.nx00512.np032.dat'                 u 2:($4/$3) w lp ls 32 t "PCCCMLMG (2)",\
 '../wtimes.petsc_ksp.pc_ccmlmg_nvcyc004.perlmutter.nx00512.np032.dat'                 u 2:($4/$3) w lp ls 33 t "PCCCMLMG (4)",\
+'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp008.perlmutter.nx00512.np032.dat'         u 2:($4/$3) w lp ls 22 t "PCASM ( 8)( LU  )",\
+'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp016.perlmutter.nx00512.np032.dat'         u 2:($4/$3) w lp ls 23 t "PCASM (16)( LU  )",\
+'../wtimes.petsc_ksp.pc_petsc_asm_lu_asmovlp032.perlmutter.nx00512.np032.dat'         u 2:($4/$3) w lp ls 25 t "PCASM (32)( LU  )",\
 '../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu002.perlmutter.nx00512.np032.dat' u 2:($4/$3) w lp ls 52 t "PCASM ( 8)(ILU 2)", \
 '../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu004.perlmutter.nx00512.np032.dat' u 2:($4/$3) w lp ls 53 t "PCASM ( 8)(ILU 4)", \
 '../wtimes.petsc_ksp.pc_petsc_asm_ilu_asmovlp008_ilu008.perlmutter.nx00512.np032.dat' u 2:($4/$3) w lp ls 54 t "PCASM ( 8)(ILU 8)", \
