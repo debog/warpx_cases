@@ -6,6 +6,7 @@ max_step=10
 NGPU=4
 nx="256"
 np="32"
+mmw="1"
 
 DIM=2d
 dir_prefix=".run_wPETScPC.petsc_ksp.${NERSC_HOST}."
@@ -16,7 +17,7 @@ EXEC=$(ls $WARPX_BUILD/bin/warpx.${DIM})
 echo "Executable file is ${EXEC}."
 
 echo "Creating directory for nx=$nx, np=$np"
-dirname=$dir_prefix$(printf "nx%05d" $nx)$(printf "np%03d" $np)
+dirname=$dir_prefix$(printf "nx%05d" $nx)$(printf "np%03d" $np)$(printf "mmw%02d" $mmw)
 if [ -d "$dirname" ]; then
     echo "  deleteing existing directory $dirname"
     rm -rf $dirname
@@ -35,11 +36,14 @@ srun --cpu-bind=cores -n $NGPU bash -c "
     export CUDA_VISIBLE_DEVICES=\$((3-SLURM_LOCALID));
     ${EXEC} ${INP} \
             amr.n_cell = $nx $nx \
-            my_constants.nppcz = $np \
+            my_constants.Nppc_x = $np \
+            my_constants.Nppc_z = $np \
             amr.max_grid_size = $(( nx/2 )) \
             max_step = $max_step \
+            implicit_evolve.nonlinear_solver = \"newton\" \
             newton.linear_solver = \"petsc_ksp\" \
             jacobian.pc_type = \"pc_petsc\" \
+            pc_petsc.pc_mass_matrix_width = $mmw \
             -pc_type asm \
             -pc_asm_overlap 32 \
             -sub_pc_type lu \

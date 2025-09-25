@@ -6,7 +6,7 @@ my_constants.mD = AD*m_u - m_e   # deuterium mass [kg]
 
 ###   simulation parameters
 my_constants.tsim = 220.e-9  # sim time = 1.35*t0 [s]
-my_constants.dt = 1.0e-4*1.0e-9   # time step [s]
+my_constants.dt = 1.0e-3*1.0e-9   # time step [s]
 
 #################################
 ####### GENERAL PARAMETERS ######

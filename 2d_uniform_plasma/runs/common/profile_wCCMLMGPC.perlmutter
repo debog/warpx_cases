@@ -38,7 +38,8 @@ srun --cpu-bind=cores -n $NGPU \
     export CUDA_VISIBLE_DEVICES=\$((3-SLURM_LOCALID));
     ${EXEC} ${INP} \
             amr.n_cell = $nx $nx \
-            my_constants.nppcz = $np \
+            my_constants.Nppc_x = $np \
+            my_constants.Nppc_z = $np \
             amr.max_grid_size = $(( nx/2 )) \
             max_step = $max_step \
     ${GPU_AWARE_MPI}" \

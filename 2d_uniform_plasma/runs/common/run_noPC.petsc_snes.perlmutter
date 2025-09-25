@@ -35,7 +35,8 @@ srun --cpu-bind=cores -n $NGPU bash -c "
     export CUDA_VISIBLE_DEVICES=\$((3-SLURM_LOCALID));
     ${EXEC} ${INP} \
             amr.n_cell = $nx $nx \
-            my_constants.nppcz = $np \
+            my_constants.Nppc_x = $np \
+            my_constants.Nppc_z = $np \
             amr.max_grid_size = $(( nx/2 )) \
             implicit_evolve.nonlinear_solver = \"petsc_snes\" \
             jacobian.pc_type = \"none\" \

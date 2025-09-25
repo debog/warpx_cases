@@ -35,9 +35,11 @@ srun --cpu-bind=cores -n $NGPU bash -c "
     export CUDA_VISIBLE_DEVICES=\$((3-SLURM_LOCALID));
     ${EXEC} ${INP} \
             amr.n_cell = $nx $nx \
-            my_constants.nppcz = $np \
+            my_constants.Nppc_x = $np \
+            my_constants.Nppc_z = $np \
             amr.max_grid_size = $(( nx/2 )) \
             jacobian.pc_type = \"none\" \
+            implicit_evolve.nonlinear_solver = \"newton\" \
             newton.linear_solver = \"petsc_ksp\" \
             max_step = $max_step \
             -log_view -log_view_gpu_time \

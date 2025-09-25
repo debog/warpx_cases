@@ -17,8 +17,9 @@ echo "Executable file is ${EXEC}."
 
 nx="256"
 np="32"
+mmw="1"
 echo "Creating directory for nx=$nx, np=$np"
-dirname=$dir_prefix$(printf "nx%05d" $nx)$(printf "np%03d" $np)
+dirname=$dir_prefix$(printf "nx%05d" $nx)$(printf "np%03d" $np)$(printf "mmw%02d" $mmw)
 if [ -d "$dirname" ]; then
     echo "  deleteing existing directory $dirname"
     rm -rf $dirname
@@ -33,10 +34,13 @@ INP=$(ls *.in)
 echo "  running WarpX with input file $INP"
 srun -n $NPROC $EXEC $INP \
                amr.n_cell = $nx $nx \
-               my_constants.nppcz = $np \
+               my_constants.Nppc_x = $np \
+               my_constants.Nppc_z = $np \
                max_step = $max_step \
+               implicit_evolve.nonlinear_solver = "newton" \
                newton.linear_solver = "petsc_ksp" \
                jacobian.pc_type = "pc_petsc" \
+               pc_petsc.pc_mass_matrix_width = $mmw \
                -pc_type lu \
                -log_view \
                2>&1 |tee $outfile
