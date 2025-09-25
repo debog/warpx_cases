@@ -17,7 +17,7 @@ asm_ovlp=${arg[3]}
 ilu_level=${arg[4]}
 num_vcycl=${arg[5]}
 
-declare -a nprocvals=("16" "32" "64" "112" "128" "224" "256" "448" "512" "672" "896" "1024" "1792")
+declare -a nprocvals=("32" "64" "112" "128" "224" "256" "448" "512" "672" "896" "1024" "1792")
 declare -a nxnpvals=("512" "32")
 count=${#nxnpvals[@]}
 
