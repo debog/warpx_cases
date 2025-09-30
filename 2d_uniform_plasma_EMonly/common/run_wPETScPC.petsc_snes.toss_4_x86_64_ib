@@ -1,0 +1,43 @@
+#!/bin/bash
+
+clear
+
+max_step=10
+NPROC=64
+NNODE=1
+export OMP_NUM_THREADS=1
+
+DIM=2d
+dir_prefix=".run_wPETScPC.petsc_snes.${SYS_TYPE}."
+rootdir=$PWD
+INP_FILE=$rootdir/common/uniform_plasma_${DIM}.in
+outfile=out.${SYS_TYPE}.log
+EXEC=$(ls $WARPX_BUILD/build/bin/warpx.${DIM})
+echo "Executable file is ${EXEC}."
+
+nx="256"
+np="32"
+echo "Creating directory for nx=$nx, np=$np"
+dirname=$dir_prefix$(printf "nx%05d" $nx)$(printf "np%03d" $np)
+if [ -d "$dirname" ]; then
+    echo "  deleteing existing directory $dirname"
+    rm -rf $dirname
+fi
+echo "  creating directory $dirname"
+mkdir $dirname
+
+cd $dirname
+echo "  creating shortcut for input file"
+cp $INP_FILE .
+INP=$(ls *.in)
+echo "  running WarpX with input file $INP"
+srun -n $NPROC $EXEC $INP \
+               amr.n_cell = $nx $nx \
+               my_constants.nppcz = $np \
+               max_step = $max_step \
+               implicit_evolve.nonlinear_solver = "petsc_snes" \
+               jacobian.pc_type = "pc_petsc" \
+               -pc_type lu \
+               -log_view \
+               2>&1 |tee $outfile
+cd $rootdir
