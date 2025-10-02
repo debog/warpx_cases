@@ -95,64 +95,6 @@ deuterium.ux_th = sqrt(T0*q_e/mD)/clight
 deuterium.uy_th = sqrt(T0*q_e/mD)/clight
 deuterium.uz_th = sqrt(T0*q_e/mD)/clight
 
-###   Diagnostics
-diagnostics.diags_names = diag1_ em_fields species_moms checkpoint
-diag1_.intervals = 2000
-diag1_.diag_type = Full
-diag1_.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho divE
-diag1_.electrons.variables = z w ux uy uz
-diag1_.deuterium.variables = z w ux uy uz
-
-checkpoint.format = checkpoint
-checkpoint.diag_type = Full
-checkpoint.intervals = 20000
-checkpoint.dump_last_timestep = 1
-
-em_fields.write_species = 0
-em_fields.intervals = 2000
-em_fields.diag_type = Full
-em_fields.format = openpmd
-em_fields.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho divE divB
-em_fields.openpmd_backend = h5
-em_fields.file_prefix = mesh_data/field_data
-
-species_moms.fields_to_plot = none
-species_moms.write_species = 0
-species_moms.intervals = 2200
-species_moms.diag_type = Full
-species_moms.format = openpmd
-species_moms.openpmd_backend = h5
-species_moms.file_prefix = mesh_data/species_data
-species_moms.particle_fields_to_plot = num ene ux uy uz
-species_moms.particle_fields.num.do_average = 0
-species_moms.particle_fields.ene.do_average = 0
-species_moms.particle_fields.ux.do_average = 0
-species_moms.particle_fields.uy.do_average = 0
-species_moms.particle_fields.uz.do_average = 0
-species_moms.particle_fields.num(x,y,z,ux,uy,uz) = "1."
-species_moms.particle_fields.ene(x,y,z,ux,uy,uz) = "u2=ux*ux+uy*uy+uz*uz;gamma=sqrt(1.+u2);1./(1.+gamma)*u2*clight*clight"
-species_moms.particle_fields.ux(x,y,z,ux,uy,uz) = "ux"
-species_moms.particle_fields.uy(x,y,z,ux,uy,uz) = "uy"
-species_moms.particle_fields.uz(x,y,z,ux,uy,uz) = "uz"
-
-###   reduced diagnostics
-warpx.reduced_diags_names = particle_energy field_energy poynting_flux
-
-particle_energy.type = ParticleEnergy
-particle_energy.intervals = 100
-particle_energy.precision = 18
-particle_energy.path = diags/reduced_files/
-
-field_energy.type = FieldEnergy
-field_energy.intervals = 100
-field_energy.precision = 18
-field_energy.path = diags/reduced_files/
-
-poynting_flux.type = FieldPoyntingFlux
-poynting_flux.intervals = 100
-poynting_flux.precision = 18
-poynting_flux.path = diags/reduced_files/
-
 #################################
 ############ COLLISION ##########
 #################################

@@ -3,7 +3,7 @@
 clear
 
 max_step=100
-NPROC=16
+NPROC=64
 NNODE=1
 export OMP_NUM_THREADS=1
 
