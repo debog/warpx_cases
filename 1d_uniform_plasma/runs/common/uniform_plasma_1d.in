@@ -58,8 +58,8 @@ gmres.max_iterations = 100
 gmres.relative_tolerance = 1.0e-8
 gmres.absolute_tolerance = 0.0
 
-implicit_evolve.use_mass_matrices_jacobian = false
-implicit_evolve.use_mass_matrices_pc = false
+implicit_evolve.use_mass_matrices_jacobian = true
+implicit_evolve.use_mass_matrices_pc = true
 
 algo.particle_pusher = "higuera"
 particles.max_grid_crossings = 2
