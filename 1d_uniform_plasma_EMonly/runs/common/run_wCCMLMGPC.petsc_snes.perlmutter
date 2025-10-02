@@ -1,0 +1,49 @@
+#!/bin/bash
+
+clear
+
+max_step=100
+NGPU=1
+nx="256"
+np="32"
+
+DIM=1d
+dir_prefix=".run_wCCMLMGPC.petsc_snes.${NERSC_HOST}."
+rootdir=$PWD
+INP_FILE=$rootdir/common/uniform_plasma_${DIM}.in
+outfile=out.${NERSC_HOST}.log
+EXEC=$(ls $WARPX_BUILD/bin/warpx.${DIM})
+echo "Executable file is ${EXEC}."
+
+echo "Creating directory for nx=$nx, np=$np"
+dirname=$dir_prefix$(printf "nx%05d" $nx)$(printf "np%03d" $np)
+if [ -d "$dirname" ]; then
+    echo "  deleteing existing directory $dirname"
+    rm -rf $dirname
+fi
+echo "  creating directory $dirname"
+mkdir $dirname
+
+cd $dirname
+echo "  creating shortcut for input file"
+cp $INP_FILE .
+INP=$(ls *.in)
+echo "  running WarpX with input file $INP"
+# CUDA visible devices are ordered inverse to local task IDs
+#   Reference: nvidia-smi topo -m
+srun --cpu-bind=cores -n $NGPU bash -c "
+    export CUDA_VISIBLE_DEVICES=\$((3-SLURM_LOCALID));
+    ${EXEC} ${INP} \
+            amr.n_cell = $nx \
+            my_constants.nppcz = $np \
+            amr.max_grid_size = $(( nx/2 )) \
+            implicit_evolve.nonlinear_solver = \"petsc_snes\" \
+            max_step = $max_step \
+            jacobian.pc_type = \"pc_curl_curl_mlmg\" \
+            pc_curl_curl_mlmg.verbose = false \
+            pc_curl_curl_mlmg.max_iter = 10 \
+            pc_curl_curl_mlmg.relative_tolerance = 1e-4 \
+            -log_view -log_view_gpu_time \
+    ${GPU_AWARE_MPI}" \
+    2>&1 |tee $outfile
+cd $rootdir
