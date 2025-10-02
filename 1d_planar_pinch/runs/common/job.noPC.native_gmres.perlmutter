@@ -1,0 +1,67 @@
+#!/bin/bash -l
+
+#SBATCH -t 00:10:00
+#SBATCH -N 1
+#SBATCH -J WarpX
+#SBATCH -A m4546_g
+#SBATCH -q regular
+#SBATCH -C gpu
+#SBATCH --exclusive
+#SBATCH --cpus-per-task=32
+#SBATCH --gpu-bind=none
+#SBATCH --ntasks-per-node=4
+#SBATCH --gpus-per-node=4
+#SBATCH -o WarpX.o%j
+#SBATCH -e WarpX.e%j
+
+max_step=100
+NGPU=1
+nx="256"
+np="32"
+
+DIM=1d
+dir_prefix=".job_noPC.native_gmres.${NERSC_HOST}."
+rootdir=$PWD
+INP_FILE=$rootdir/common/planar_pinch_${DIM}.in
+outfile=out.${NERSC_HOST}.log
+EXEC=$(ls $WARPX_BUILD/bin/warpx.${DIM})
+echo "Executable file is ${EXEC}."
+
+# pin to closest NIC to GPU
+export MPICH_OFI_NIC_POLICY=GPU
+
+# threads for OpenMP and threaded compressors per MPI rank
+#   note: 16 avoids hyperthreading (32 virtual cores, 16 physical)
+export OMP_NUM_THREADS=16
+
+# GPU-aware MPI optimizations
+GPU_AWARE_MPI="amrex.use_gpu_aware_mpi=1"
+
+echo "Creating directory for nx=$nx, np=$np"
+dirname=$dir_prefix$(printf "nx%05d" $nx)$(printf "np%03d" $np)
+if [ -d "$dirname" ]; then
+    echo "  deleteing existing directory $dirname"
+    rm -rf $dirname
+fi
+echo "  creating directory $dirname"
+mkdir $dirname
+
+cd $dirname
+echo "  creating shortcut for input file"
+cp $INP_FILE .
+INP=$(ls *.in)
+echo "  running WarpX with input file $INP"
+
+# CUDA visible devices are ordered inverse to local task IDs
+#   Reference: nvidia-smi topo -m
+srun --cpu-bind=cores bash -c "
+    export CUDA_VISIBLE_DEVICES=\$((3-SLURM_LOCALID));
+    ${EXEC} ${INP} \
+            amr.n_cell = $nx \
+            my_constants.Nppc = $np \
+            amr.max_grid_size = $(( nx/2 )) \
+            implicit_evolve.nonlinear_solver = newton \
+            jacobian.pc_type = \"none\" \
+            max_step = $max_step \
+    ${GPU_AWARE_MPI}" \
+    2>&1 |tee $outfile
