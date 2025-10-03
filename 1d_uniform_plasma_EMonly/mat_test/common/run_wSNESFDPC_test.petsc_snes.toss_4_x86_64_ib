@@ -40,7 +40,7 @@ $EXEC $INP \
     -pc_type lu \
     -log_view \
     -snes_fd \
-    -snes_test_err 1e-1 \
+    -snes_test_err 1e6 \
     -mat_view \
     2>&1 |tee $outfile
 cd $rootdir
