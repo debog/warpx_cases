@@ -1,0 +1,46 @@
+#!/bin/bash
+
+clear
+
+max_step=10
+nx="32"
+np="32"
+
+NGPU=4
+
+DIM=3d
+dir_prefix=".run_noPC.petsc_ksp.${NERSC_HOST}."
+rootdir=$PWD
+INP_FILE=$rootdir/common/fields_only_${DIM}.in
+outfile=out.${NERSC_HOST}.log
+EXEC=$(ls $WARPX_BUILD/bin/warpx.${DIM})
+echo "Executable file is ${EXEC}."
+
+echo "Creating directory for nx=$nx, np=$np"
+dirname=$dir_prefix$(printf "nx%05d" $nx)$(printf "np%03d" $np)
+if [ -d "$dirname" ]; then
+    echo "  deleteing existing directory $dirname"
+    rm -rf $dirname
+fi
+echo "  creating directory $dirname"
+mkdir $dirname
+
+cd $dirname
+echo "  creating shortcut for input file"
+cp $INP_FILE .
+INP=$(ls *.in)
+echo "  running WarpX with input file $INP"
+# CUDA visible devices are ordered inverse to local task IDs
+#   Reference: nvidia-smi topo -m
+srun --cpu-bind=cores -n $NGPU bash -c "
+    export CUDA_VISIBLE_DEVICES=\$((3-SLURM_LOCALID));
+    ${EXEC} ${INP} \
+            amr.n_cell = $nx $nx $nx \
+            amr.max_grid_size = $(( nx/2 )) \
+            max_step = $max_step \
+            implicit_evolve.nonlinear_solver = newton \
+            newton.linear_solver = petsc_ksp \
+            jacobian.pc_type = none \
+    ${GPU_AWARE_MPI}" \
+    2>&1 |tee $outfile
+cd $rootdir
