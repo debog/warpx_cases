@@ -1,0 +1,78 @@
+#################################
+########## CONSTANTS ############
+#################################
+
+###   characteristic plasma values
+my_constants.n0 = 1.e30    # plasma density [1/m^3]
+my_constants.T0 = 100.     # plasma temperature [eV]
+my_constants.wpe = q_e*sqrt(n0/(m_e*epsilon0))  # electron plasma frequency, radians/s
+my_constants.de0 = clight/wpe    # skin depth, m
+
+###   simulation parameters
+my_constants.dt = de0/clight   # time step [s]
+
+#################################
+####### GENERAL PARAMETERS ######
+#################################
+stop_time = 1000*dt
+amr.max_level = 0
+geometry.dims = 3
+geometry.prob_lo = 0.0 0.0 0.0
+geometry.prob_hi = 10*de0 10*de0 10*de0
+
+#################################
+####### Boundary condition ######
+#################################
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
+boundary.particle_lo = periodic periodic periodic
+boundary.particle_hi = periodic periodic periodic
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.serialize_initial_conditions = 1
+warpx.verbose = 1
+warpx.limit_verbose_step = false
+warpx.const_dt = dt
+warpx.use_filter = 0
+
+algo.maxwell_solver = Yee
+algo.evolve_scheme = "theta_implicit_em"
+
+implicit_evolve.theta = 0.5
+implicit_evolve.max_particle_iterations = 21
+implicit_evolve.particle_tolerance = 1.0e-10
+
+newton.verbose = true
+newton.max_iterations = 10
+newton.relative_tolerance = 1.0e-6
+newton.absolute_tolerance = 0.0
+newton.require_convergence = false
+newton.diagnostic_file = "diags/reduced_files/newton_solver.txt"
+newton.diagnostic_interval = 10
+
+gmres.verbose_int = 2
+gmres.max_iterations = 1000
+gmres.relative_tolerance = 1.0e-8
+gmres.absolute_tolerance = 0.0
+
+implicit_evolve.use_mass_matrices_jacobian = false
+implicit_evolve.skip_particle_picard_init = true
+implicit_evolve.use_mass_matrices_pc = true
+
+algo.particle_pusher = "higuera"
+algo.particle_shape = 1
+algo.current_deposition = "villasenor"
+
+
+#### Initial fields ####
+warpx.B_ext_grid_init_style = parse_B_ext_grid_function
+warpx.Bx_external_grid_function(x,y,z) = -1.e4*cos(pi*x/2/de0)*sin(pi*y/2/de0)*sin(pi*z/2/de0)
+warpx.By_external_grid_function(x,y,z) = -1.e4*sin(pi*x/2/de0)*cos(pi*y/2/de0)*sin(pi*z/2/de0)
+warpx.Bz_external_grid_function(x,y,z) = +2.e4*sin(pi*x/2/de0)*sin(pi*y/2/de0)*cos(pi*z/2/de0)
+
+warpx.E_ext_grid_init_style = parse_E_ext_grid_function
+warpx.Ex_external_grid_function(x,y,z) = -1.e4*sin(pi*x/2/de0)*cos(pi*y/2/de0)*cos(pi*z/2/de0)*clight
+warpx.Ey_external_grid_function(x,y,z) = -1.e4*cos(pi*x/2/de0)*sin(pi*y/2/de0)*cos(pi*z/2/de0)*clight
+warpx.Ez_external_grid_function(x,y,z) = +2.e4*cos(pi*x/2/de0)*cos(pi*y/2/de0)*sin(pi*z/2/de0)*clight
