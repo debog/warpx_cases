@@ -43,7 +43,8 @@ srun --cpu-bind=cores -n $NGPU bash -c "
             jacobian.pc_type = pc_petsc \
             -pc_type asm \
             -pc_asm_overlap 16 \
-            -sub_pc_type lu \
+            -sub_pc_type ilu \
+            -sub_pc_factor_levels 4 \
             -mat_view ::ascii_info \
             -log_view -log_view_gpu_time \
     ${GPU_AWARE_MPI}" \
