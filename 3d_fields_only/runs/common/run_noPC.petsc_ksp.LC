@@ -32,12 +32,14 @@ cp $INP_FILE .
 INP=$(ls *.in)
 
 runcmd=""
+addflags=""
 if [[ "x$LCHOST" == "xdane" ]]; then
     ntasks=64
     runcmd="srun -n $ntasks -p pdebug"
 elif [[ "x$LCHOST" == "xmatrix" ]]; then
     ntasks=4
     runcmd="srun -n $ntasks -G $ntasks -N $NNODE -p pdebug"
+    addflags="-use_gpu_aware_mpi 0"
 elif [[ "x$LCHOST" == "xtuolumne" ]]; then
     ntasks=4
     runcmd="flux run --exclusive --nodes=$NNODE --ntasks $ntasks --verbose --setopt=mpibind=verbose:1 -q=pdebug"
@@ -49,5 +51,6 @@ $runcmd $EXEC $INP \
                implicit_evolve.nonlinear_solver = newton \
                newton.linear_solver = petsc_ksp \
                jacobian.pc_type = none \
+               ${addflags} \
                2>&1 |tee $outfile
 cd $rootdir
