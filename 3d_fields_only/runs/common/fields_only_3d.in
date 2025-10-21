@@ -4,7 +4,6 @@
 
 ###   characteristic plasma values
 my_constants.n0 = 1.e30    # plasma density [1/m^3]
-my_constants.T0 = 100.     # plasma temperature [eV]
 my_constants.wpe = q_e*sqrt(n0/(m_e*epsilon0))  # electron plasma frequency, radians/s
 my_constants.de0 = clight/wpe    # skin depth, m
 
@@ -58,11 +57,9 @@ gmres.relative_tolerance = 1.0e-8
 gmres.absolute_tolerance = 0.0
 
 implicit_evolve.use_mass_matrices_jacobian = false
-implicit_evolve.skip_particle_picard_init = true
 implicit_evolve.use_mass_matrices_pc = true
 
 algo.particle_pusher = "higuera"
-algo.particle_shape = 1
 algo.current_deposition = "villasenor"
 
 
