@@ -8,7 +8,7 @@ nx="256"
 np="32"
 
 DIM=2d
-dir_prefix="run_wCCMLMGPC.native_gmres.${NERSC_HOST}."
+dir_prefix=".run_wCCMLMGPC.native_jfnk.${NERSC_HOST}."
 rootdir=$PWD
 INP_FILE=$rootdir/common/uniform_plasma_${DIM}.in
 outfile=out.${NERSC_HOST}.log
@@ -16,7 +16,7 @@ EXEC=$(ls $WARPX_BUILD/bin/warpx.${DIM})
 echo "Executable file is ${EXEC}."
 
 echo "Creating directory for nx=$nx, np=$np"
-dirname=$dir_prefix$(printf "nx%05d" $nx)$(printf "np%03d" $np).profile
+dirname=$dir_prefix$(printf "nx%05d" $nx)$(printf "np%03d" $np)
 if [ -d "$dirname" ]; then
     echo "  deleteing existing directory $dirname"
     rm -rf $dirname
@@ -31,16 +31,18 @@ INP=$(ls *.in)
 echo "  running WarpX with input file $INP"
 # CUDA visible devices are ordered inverse to local task IDs
 #   Reference: nvidia-smi topo -m
-# nsys profile --stats=true -t nvtx,cuda -o ${dirname}
-srun --cpu-bind=cores -n $NGPU \
-    nsys profile --stats=true -t nvtx,cuda -o $dirname \
-    bash -c "
+srun --cpu-bind=cores -n $NGPU bash -c "
     export CUDA_VISIBLE_DEVICES=\$((3-SLURM_LOCALID));
     ${EXEC} ${INP} \
             amr.n_cell = $nx $nx \
             my_constants.nppcz = $np \
             amr.max_grid_size = $(( nx/2 )) \
             max_step = $max_step \
+            jacobian.pc_type = \"pc_curl_curl_mlmg\" \
+            pc_curl_curl_mlmg.verbose = false \
+            pc_curl_curl_mlmg.max_iter = 10 \
+            pc_curl_curl_mlmg.relative_tolerance = 1e-4 \
+            -log_view -log_view_gpu_time \
     ${GPU_AWARE_MPI}" \
     2>&1 |tee $outfile
 cd $rootdir
