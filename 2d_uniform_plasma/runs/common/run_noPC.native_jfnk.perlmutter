@@ -8,7 +8,7 @@ nx="256"
 np="32"
 
 DIM=2d
-dir_prefix=".run_noPC.native_gmres.${NERSC_HOST}."
+dir_prefix=".run_noPC.native_jfnk.${NERSC_HOST}."
 rootdir=$PWD
 INP_FILE=$rootdir/common/uniform_plasma_${DIM}.in
 outfile=out.${NERSC_HOST}.log
