@@ -1,0 +1,54 @@
+#!/bin/bash
+
+clear
+
+max_step=100
+nx="512"
+np="100"
+
+NNODE=1
+export OMP_NUM_THREADS=1
+
+DIM=1d
+dir_prefix=".run_noPC.petsc_ksp.${LCHOST}."
+rootdir=$PWD
+INP_FILE=$rootdir/common/uniform_plasma_${DIM}.in
+outfile=out.${LCHOST}.log
+EXEC=$(ls $WARPX_BUILD/build/bin/warpx.${DIM})
+echo "Executable file is ${EXEC}."
+
+echo "Creating directory for nx=$nx, np=$np"
+dirname=$dir_prefix$(printf "nx%05d" $nx)$(printf "np%03d" $np)
+if [ -d "$dirname" ]; then
+    echo "  deleteing existing directory $dirname"
+    rm -rf $dirname
+fi
+echo "  creating directory $dirname"
+mkdir $dirname
+
+cd $dirname
+echo "  creating shortcut for input file"
+cp $INP_FILE .
+INP=$(ls *.in)
+
+runcmd=""
+if [[ "x$LCHOST" == "xdane" ]]; then
+    ntasks=4
+    runcmd="srun -n $ntasks -p pdebug"
+elif [[ "x$LCHOST" == "xmatrix" ]]; then
+    ntasks=1
+    runcmd="srun -n $ntasks -G $ntasks -N $NNODE -p pdebug"
+elif [[ "x$LCHOST" == "xtuolumne" ]]; then
+    ntasks=1
+    runcmd="flux run --exclusive --nodes=$NNODE --ntasks $ntasks --verbose --setopt=mpibind=verbose:1 -q=pdebug"
+fi
+echo "  running WarpX with input file $INP"
+$runcmd $EXEC $INP \
+        amr.n_cell = $nx \
+        my_constants.Nppc = $np \
+        max_step = $max_step \
+        implicit_evolve.nonlinear_solver = newton \
+        newton.linear_solver = petsc_ksp \
+        jacobian.pc_type = "none" \
+        2>&1 |tee $outfile
+cd $rootdir
