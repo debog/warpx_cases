@@ -9,7 +9,7 @@ np="32"
 NGPU=4
 
 DIM=3d
-dir_prefix=".run_noPC.native_gmres.${NERSC_HOST}."
+dir_prefix=".run_noPC.native_jfnk.${NERSC_HOST}."
 rootdir=$PWD
 INP_FILE=$rootdir/common/fields_only_${DIM}.in
 outfile=out.${NERSC_HOST}.log
