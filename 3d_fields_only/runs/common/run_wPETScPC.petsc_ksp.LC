@@ -34,8 +34,8 @@ INP=$(ls *.in)
 runcmd=""
 addflags=""
 if [[ "x$LCHOST" == "xdane" ]]; then
-    ntasks=4
-    NNODE=4
+    ntasks=64
+    NNODE=2
     runcmd="srun -n $ntasks -N $NNODE -p pdebug"
     pctype="lu"
     addflags="--exclusive"
