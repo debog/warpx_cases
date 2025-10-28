@@ -35,17 +35,20 @@ runcmd=""
 addflags=""
 if [[ "x$LCHOST" == "xdane" ]]; then
     ntasks=64
-    runcmd="srun -n $ntasks -p pdebug"
+    NNODE=2
+    runcmd="srun -n $ntasks -N $NNODE -p pdebug"
     pctype="lu"
+    addflags="--exclusive"
 elif [[ "x$LCHOST" == "xmatrix" ]]; then
     ntasks=4
     runcmd="srun -n $ntasks -G $ntasks -N $NNODE -p pdebug"
-    pctype="asm -pc_asm_overlap 32 -sub_pc_type ilu -sub_pc_factor_levels 4 -log_view_gpu_time"
-    addflags="-use_gpu_aware_mpi 0"
+    pctype="asm -pc_asm_overlap 16 -sub_pc_type ilu -sub_pc_factor_levels 4 -log_view_gpu_time"
+    addflags="-use_gpu_aware_mpi 0 -mat_view ::ascii_info"
 elif [[ "x$LCHOST" == "xtuolumne" ]]; then
     ntasks=4
     runcmd="flux run --exclusive --nodes=$NNODE --ntasks $ntasks --verbose --setopt=mpibind=verbose:1 -q=pdebug"
     pctype="asm -pc_asm_overlap 32 -sub_pc_type ilu -sub_pc_factor_levels 4 -log_view_gpu_time"
+    addflags="-mat_view ::ascii_info"
 fi
 echo "  running WarpX with input file $INP"
 $runcmd $EXEC $INP \
@@ -54,7 +57,6 @@ $runcmd $EXEC $INP \
                implicit_evolve.nonlinear_solver = petsc_snes \
                jacobian.pc_type = pc_petsc \
                -pc_type $pctype \
-               -mat_view ::ascii_info \
                -log_view \
                ${addflags} \
                2>&1 |tee $outfile
