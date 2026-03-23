@@ -15,7 +15,8 @@ declare -A PC_OPTIONS
 PC_OPTIONS["noPC"]="none"
 PC_OPTIONS["JacobiPC"]="pc_jacobi"
 PC_OPTIONS["CurlCurlMLMGPC"]="pc_curl_curl_mlmg"
-PC_OPTIONS["PETScPC"]="pc_petsc"
+PC_OPTIONS["PETScPCASMwLU"]="pc_petsc"
+PC_OPTIONS["PETScPCLU"]="pc_petsc"
 
 # Define solver options
 declare -A SOLVER_OPTIONS
@@ -41,10 +42,11 @@ Case Format: <pc_option>.<solver_option>
   or: <pc_option>_mmw<N>.<solver_option> (for PCs with mass matrix width)
 
 PC Options:
-  noPC              - No preconditioner
-  JacobiPC_mmw<N>   - Jacobi preconditioner (mmw: 0, 1, 2)
-  CurlCurlMLMGPC_mmw<N> - CurlCurl MLMG preconditioner (mmw: 0, 1, 2)
-  PETScPC_mmw<N>    - PETSc preconditioner (mmw: 0, 1, 2)
+  noPC                 - No preconditioner (all solvers)
+  JacobiPC_mmw<N>      - Jacobi preconditioner (mmw: 0, 1, 2; all solvers)
+  CurlCurlMLMGPC       - CurlCurl MLMG preconditioner (mmw fixed at 0; all solvers)
+  PETScPCASMwLU_mmw<N> - PETSc ASM+LU preconditioner (mmw: 0, 1, 2; petsc_ksp/petsc_snes only)
+  PETScPCLU_mmw<N>     - PETSc LU preconditioner (mmw: 0, 1, 2; petsc_ksp/petsc_snes only)
 
 Solver Options:
   native_jfnk  - Native JFNK (Newton with GMRES)
@@ -54,14 +56,17 @@ Solver Options:
 Platform Detection: Automatically detects Dane, Matrix, or Tuolumne
 
 Examples:
-  ./run.sh -l                                    # List all cases
-  ./run.sh -c noPC.native_jfnk                   # Run single case
+  ./run.sh -l                                         # List all cases
+  ./run.sh -c noPC.native_jfnk                        # Run single case
   ./run.sh -c noPC.petsc_ksp JacobiPC_mmw1.petsc_ksp  # Run multiple cases
-  ./run.sh -c '*.petsc_ksp'                      # Run all petsc_ksp cases
-  ./run.sh -c 'JacobiPC*'                        # Run all JacobiPC cases
-  ./run.sh -c '*.petsc_ksp' '*.petsc_snes'       # Run multiple patterns
-  ./run.sh -c 'JacobiPC_mmw?.native_jfnk'        # Use ? for single char
-  ./run.sh -a                                    # Run all cases
+  ./run.sh -c '*.petsc_ksp'                           # Run all petsc_ksp cases
+  ./run.sh -c 'JacobiPC*'                             # Run all JacobiPC cases
+  ./run.sh -c 'CurlCurlMLMGPC.*'                      # Run all CurlCurlMLMGPC cases
+  ./run.sh -c 'PETScPCASMwLU*'                        # Run all PETScPCASMwLU cases
+  ./run.sh -c 'PETScPCLU*'                            # Run all PETScPCLU cases
+  ./run.sh -c '*.petsc_ksp' '*.petsc_snes'            # Run multiple patterns
+  ./run.sh -c 'JacobiPC_mmw?.native_jfnk'             # Use ? for single char
+  ./run.sh -a                                         # Run all cases
 
 Note: When using wildcards, quote the pattern to prevent shell expansion
 
@@ -77,12 +82,29 @@ generate_all_cases() {
         cases+=("noPC.${solver}")
     done
 
-    # Other PC cases (with mmw options)
-    for pc in "JacobiPC" "CurlCurlMLMGPC" "PETScPC"; do
-        for mmw in "${MMW_OPTIONS[@]}"; do
-            for solver in "${!SOLVER_OPTIONS[@]}"; do
-                cases+=("${pc}_mmw${mmw}.${solver}")
-            done
+    # CurlCurlMLMGPC cases (mmw fixed at 0, no suffix)
+    for solver in "${!SOLVER_OPTIONS[@]}"; do
+        cases+=("CurlCurlMLMGPC.${solver}")
+    done
+
+    # JacobiPC cases (with mmw options, all solvers)
+    for mmw in "${MMW_OPTIONS[@]}"; do
+        for solver in "${!SOLVER_OPTIONS[@]}"; do
+            cases+=("JacobiPC_mmw${mmw}.${solver}")
+        done
+    done
+
+    # PETScPCASMwLU cases (with mmw options, only petsc_ksp and petsc_snes)
+    for mmw in "${MMW_OPTIONS[@]}"; do
+        for solver in "petsc_ksp" "petsc_snes"; do
+            cases+=("PETScPCASMwLU_mmw${mmw}.${solver}")
+        done
+    done
+
+    # PETScPCLU cases (with mmw options, only petsc_ksp and petsc_snes)
+    for mmw in "${MMW_OPTIONS[@]}"; do
+        for solver in "petsc_ksp" "petsc_snes"; do
+            cases+=("PETScPCLU_mmw${mmw}.${solver}")
         done
     done
 
@@ -147,12 +169,22 @@ parse_case() {
     if [[ $pc_part == "noPC" ]]; then
         PC_TYPE="noPC"
         MMW="1"
-    elif [[ $pc_part =~ ^(JacobiPC|CurlCurlMLMGPC|PETScPC)_mmw([0-2])$ ]]; then
+    elif [[ $pc_part == "CurlCurlMLMGPC" ]]; then
+        PC_TYPE="CurlCurlMLMGPC"
+        MMW="0"  # CurlCurlMLMGPC only supports mmw=0
+    elif [[ $pc_part =~ ^(JacobiPC|PETScPCASMwLU|PETScPCLU)_mmw([0-2])$ ]]; then
         PC_TYPE="${BASH_REMATCH[1]}"
         MMW="${BASH_REMATCH[2]}"
     else
         echo "Error: Invalid PC option '$pc_part'"
-        echo "Expected format: noPC or <PC>_mmw<0|1|2>"
+        echo "Expected format: noPC, CurlCurlMLMGPC, or JacobiPC_mmw<0|1|2>/PETScPCASMwLU_mmw<0|1|2>/PETScPCLU_mmw<0|1|2>"
+        return 1
+    fi
+
+    # Validate PC and solver combinations
+    if [[ ("$PC_TYPE" == "PETScPCASMwLU" || "$PC_TYPE" == "PETScPCLU") && "$solver_part" == "native_jfnk" ]]; then
+        echo "Error: $PC_TYPE is not compatible with native_jfnk solver"
+        echo "Valid solvers for $PC_TYPE: petsc_ksp, petsc_snes"
         return 1
     fi
 
@@ -164,6 +196,7 @@ parse_case() {
 create_run_case_script() {
     local dirname=$1
     local case_name=$2
+    local warpx_params="$3"
 
     cat > "${dirname}/run_case.sh" << 'EOFSCRIPT'
 #!/bin/bash
@@ -171,11 +204,11 @@ create_run_case_script() {
 # This script runs the case from within the run directory
 # Generated automatically by run.sh
 
-# Get configuration from directory name
-if [[ $(basename $PWD) =~ \.([^.]+)\. ]]; then
-    platform="${BASH_REMATCH[1]}"
-else
-    platform="unknown"
+# Get platform from environment variable
+platform="$LCHOST"
+if [ -z "$platform" ]; then
+    echo "Error: LCHOST environment variable not set"
+    exit 1
 fi
 
 # Read parameters from the current directory name and input file
@@ -198,13 +231,15 @@ NNODE=1
 runcmd=""
 if [[ "x$platform" == "xdane" ]]; then
     ntasks=64
-    runcmd="srun -n $ntasks -p pdebug"
+    runcmd="srun -n $ntasks -p pdebug --export=ALL"
 elif [[ "x$platform" == "xmatrix" ]]; then
     ntasks=4
-    runcmd="srun -n $ntasks -G $ntasks -N $NNODE -p pdebug"
+    export OMP_NUM_THREADS=1
+    runcmd="srun -n $ntasks -G $ntasks -N $NNODE -p pdebug --export=ALL"
 elif [[ "x$platform" == "xtuolumne" ]]; then
     ntasks=4
-    runcmd="flux run --exclusive --nodes=$NNODE --ntasks $ntasks --verbose --setopt=mpibind=verbose:1 -q=pdebug"
+    export OMP_NUM_THREADS=1
+    runcmd="flux run --exclusive --nodes=$NNODE --ntasks $ntasks --verbose --setopt=mpibind=verbose:1 -q=pdebug --env OMP_NUM_THREADS=1"
 else
     echo "Error: Unknown platform '$platform'"
     exit 1
@@ -214,11 +249,29 @@ echo "Running WarpX from directory: $PWD"
 echo "Platform: $platform"
 echo "Input file: $INP"
 echo "Output file: $outfile"
+EOFSCRIPT
 
-# Extract WarpX parameters from the input file or use defaults
-# This is a simplified version - actual parameters should match the case configuration
-$runcmd $EXEC $INP 2>&1 | tee $outfile
+    # Append case-specific information and command
+    cat >> "${dirname}/run_case.sh" << EOFSCRIPT
+echo "Case: $case_name"
 
+# Run WarpX with case-specific parameters
+echo "Output writing to \$outfile (and displaying on screen)"
+\$runcmd \$EXEC \$INP \\
+$warpx_params \\
+    2>&1 | tee \$outfile
+exit_code=\${PIPESTATUS[0]}
+
+if [ \$exit_code -eq 0 ]; then
+    echo "Run completed successfully"
+else
+    echo "ERROR: Run failed with exit code \$exit_code"
+    backtrace_files=\$(ls Backtrace.* 2>/dev/null | wc -l)
+    if [ \$backtrace_files -gt 0 ]; then
+        echo "Found \$backtrace_files backtrace file(s)"
+    fi
+    exit \$exit_code
+fi
 EOFSCRIPT
 
     chmod +x "${dirname}/run_case.sh"
@@ -241,6 +294,8 @@ run_case() {
     # Build directory name
     if [ "$PC_TYPE" == "noPC" ]; then
         dir_prefix=".run_noPC.${SOLVER_TYPE}.${LCHOST}."
+    elif [ "$PC_TYPE" == "CurlCurlMLMGPC" ]; then
+        dir_prefix=".run_CurlCurlMLMGPC.${SOLVER_TYPE}.${LCHOST}."
     else
         dir_prefix=".run_${PC_TYPE}_mmw${MMW}.${SOLVER_TYPE}.${LCHOST}."
     fi
@@ -296,26 +351,25 @@ run_case() {
         return 1
     fi
 
-    # Build WarpX command based on PC and solver types
-    warpx_cmd="$runcmd $EXEC $INP \
-        amr.n_cell = $nx $nz \
-        my_constants.Nppc_x = $npx \
-        my_constants.Nppc_z = $npz \
+    # Build WarpX parameters (without run command and redirection)
+    warpx_params="amr.n_cell = $nx $nz \\
+        my_constants.Nppc_x = $npx \\
+        my_constants.Nppc_z = $npz \\
         max_step = $max_step"
 
     # Add solver-specific options
     case $SOLVER_TYPE in
         native_jfnk)
-            warpx_cmd="$warpx_cmd \
+            warpx_params="$warpx_params \\
         implicit_evolve.nonlinear_solver = newton"
             ;;
         petsc_ksp)
-            warpx_cmd="$warpx_cmd \
-        implicit_evolve.nonlinear_solver = newton \
+            warpx_params="$warpx_params \\
+        implicit_evolve.nonlinear_solver = newton \\
         newton.linear_solver = petsc_ksp"
             ;;
         petsc_snes)
-            warpx_cmd="$warpx_cmd \
+            warpx_params="$warpx_params \\
         implicit_evolve.nonlinear_solver = petsc_snes"
             ;;
     esac
@@ -323,57 +377,94 @@ run_case() {
     # Add PC-specific options
     case $PC_TYPE in
         noPC)
-            warpx_cmd="$warpx_cmd \
-        jacobian.pc_type = none \
+            warpx_params="$warpx_params \\
+        jacobian.pc_type = none \\
         implicit_evolve.mass_matrices_pc_width = $MMW"
             ;;
         JacobiPC)
-            warpx_cmd="$warpx_cmd \
-        jacobian.pc_type = pc_jacobi \
+            warpx_params="$warpx_params \\
+        jacobian.pc_type = pc_jacobi \\
         implicit_evolve.mass_matrices_pc_width = $MMW"
             ;;
         CurlCurlMLMGPC)
-            warpx_cmd="$warpx_cmd \
-        jacobian.pc_type = pc_curl_curl_mlmg \
-        pc_curl_curl_mlmg.verbose = false \
-        pc_curl_curl_mlmg.max_iter = 10 \
-        pc_curl_curl_mlmg.relative_tolerance = 1e-4 \
+            warpx_params="$warpx_params \\
+        jacobian.pc_type = pc_curl_curl_mlmg \\
+        pc_curl_curl_mlmg.verbose = false \\
+        pc_curl_curl_mlmg.max_iter = 10 \\
+        pc_curl_curl_mlmg.relative_tolerance = 1e-4 \\
         implicit_evolve.mass_matrices_pc_width = $MMW"
             ;;
-        PETScPC)
-            # PETSc PC requires platform-specific options
+        PETScPCASMwLU)
+            # PETSc ASM+LU PC requires platform-specific options
+            pctype="asm -pc_asm_overlap 32 -sub_pc_type lu"
             if [[ "x$LCHOST" == "xdane" ]]; then
-                pctype="lu"
+                addflags="-mat_view ::ascii_info"
             elif [[ "x$LCHOST" == "xmatrix" ]]; then
-                pctype="asm -pc_asm_overlap 32 -sub_pc_type lu -log_view_gpu_time"
+                pctype="$pctype -log_view_gpu_time"
                 addflags="-use_gpu_aware_mpi 0 -mat_view ::ascii_info"
             elif [[ "x$LCHOST" == "xtuolumne" ]]; then
-                pctype="asm -pc_asm_overlap 32 -sub_pc_type lu -log_view_gpu_time"
+                pctype="$pctype -log_view_gpu_time"
                 addflags="-mat_view ::ascii_info"
             fi
-            warpx_cmd="$warpx_cmd \
-        jacobian.pc_type = pc_petsc \
-        implicit_evolve.mass_matrices_pc_width = $MMW \
-        -pc_type $pctype \
-        -log_view \
+            warpx_params="$warpx_params \\
+        jacobian.pc_type = pc_petsc \\
+        implicit_evolve.mass_matrices_pc_width = $MMW \\
+        -pc_type $pctype \\
+        -log_view \\
+        ${addflags}"
+            ;;
+        PETScPCLU)
+            # PETSc LU PC requires platform-specific options
+            pctype="lu"
+            if [[ "x$LCHOST" == "xdane" ]]; then
+                addflags="-mat_view ::ascii_info"
+            elif [[ "x$LCHOST" == "xmatrix" ]]; then
+                addflags="-use_gpu_aware_mpi 0 -mat_view ::ascii_info -log_view_gpu_time"
+            elif [[ "x$LCHOST" == "xtuolumne" ]]; then
+                addflags="-mat_view ::ascii_info -log_view_gpu_time"
+            fi
+            warpx_params="$warpx_params \\
+        jacobian.pc_type = pc_petsc \\
+        implicit_evolve.mass_matrices_pc_width = $MMW \\
+        -pc_type $pctype \\
+        -log_view \\
         ${addflags}"
             ;;
     esac
 
-    # Add output redirection
-    warpx_cmd="$warpx_cmd \
-        2>&1 | tee $outfile"
+    # Create the run_case.sh script with parameters
+    create_run_case_script "$PWD" "$case_name" "$warpx_params"
 
-    # Create the run_case.sh script
-    create_run_case_script "$PWD" "$case_name"
+    # Build full command with run command and output redirection
+    warpx_cmd="$runcmd $EXEC $INP \\
+        $warpx_params \\
+        > $outfile 2>&1"
 
     echo "  Running WarpX with input file $INP"
+    echo "  Output writing to $outfile"
     eval $warpx_cmd
+    exit_code=$?
 
-    cd $rootdir
-    echo ""
-    echo "Case $case_name completed. Results in $dirname"
-    echo "============================================"
+    if [ $exit_code -eq 0 ]; then
+        echo "  Run completed successfully"
+        cd $rootdir
+        echo ""
+        echo "Case $case_name completed. Results in $dirname"
+        echo "============================================"
+        return 0
+    else
+        echo "  ERROR: Run failed with exit code $exit_code"
+        # Check for backtrace files
+        backtrace_files=$(ls Backtrace.* 2>/dev/null | wc -l)
+        if [ $backtrace_files -gt 0 ]; then
+            echo "  Found $backtrace_files backtrace file(s)"
+        fi
+        cd $rootdir
+        echo ""
+        echo "Case $case_name FAILED. Check logs in $dirname"
+        echo "============================================"
+        return 1
+    fi
 }
 
 # Function to run all cases
@@ -395,17 +486,49 @@ run_all_cases() {
         fi
     done
 
-    # Run other PC cases with mmw options
-    for pc in "JacobiPC" "CurlCurlMLMGPC" "PETScPC"; do
-        for mmw in "${MMW_OPTIONS[@]}"; do
-            for solver in "${!SOLVER_OPTIONS[@]}"; do
-                total=$((total + 1))
-                if run_case "${pc}_mmw${mmw}.${solver}"; then
-                    succeeded=$((succeeded + 1))
-                else
-                    failed_cases+=("${pc}_mmw${mmw}.${solver}")
-                fi
-            done
+    # Run CurlCurlMLMGPC cases (no mmw suffix)
+    for solver in "${!SOLVER_OPTIONS[@]}"; do
+        total=$((total + 1))
+        if run_case "CurlCurlMLMGPC.${solver}"; then
+            succeeded=$((succeeded + 1))
+        else
+            failed_cases+=("CurlCurlMLMGPC.${solver}")
+        fi
+    done
+
+    # Run JacobiPC cases with mmw options (all solvers)
+    for mmw in "${MMW_OPTIONS[@]}"; do
+        for solver in "${!SOLVER_OPTIONS[@]}"; do
+            total=$((total + 1))
+            if run_case "JacobiPC_mmw${mmw}.${solver}"; then
+                succeeded=$((succeeded + 1))
+            else
+                failed_cases+=("JacobiPC_mmw${mmw}.${solver}")
+            fi
+        done
+    done
+
+    # Run PETScPCASMwLU cases with mmw options (only petsc_ksp and petsc_snes)
+    for mmw in "${MMW_OPTIONS[@]}"; do
+        for solver in "petsc_ksp" "petsc_snes"; do
+            total=$((total + 1))
+            if run_case "PETScPCASMwLU_mmw${mmw}.${solver}"; then
+                succeeded=$((succeeded + 1))
+            else
+                failed_cases+=("PETScPCASMwLU_mmw${mmw}.${solver}")
+            fi
+        done
+    done
+
+    # Run PETScPCLU cases with mmw options (only petsc_ksp and petsc_snes)
+    for mmw in "${MMW_OPTIONS[@]}"; do
+        for solver in "petsc_ksp" "petsc_snes"; do
+            total=$((total + 1))
+            if run_case "PETScPCLU_mmw${mmw}.${solver}"; then
+                succeeded=$((succeeded + 1))
+            else
+                failed_cases+=("PETScPCLU_mmw${mmw}.${solver}")
+            fi
         done
     done
 
