@@ -204,6 +204,9 @@ create_run_case_script() {
 # This script runs the case from within the run directory
 # Generated automatically by run.sh
 
+# Set OpenMP threads
+export OMP_NUM_THREADS=1
+
 # Get platform from environment variable
 platform="$LCHOST"
 if [ -z "$platform" ]; then
@@ -234,12 +237,10 @@ if [[ "x$platform" == "xdane" ]]; then
     runcmd="srun -n $ntasks -p pdebug --export=ALL"
 elif [[ "x$platform" == "xmatrix" ]]; then
     ntasks=4
-    export OMP_NUM_THREADS=1
     runcmd="srun -n $ntasks -G $ntasks -N $NNODE -p pdebug --export=ALL"
 elif [[ "x$platform" == "xtuolumne" ]]; then
     ntasks=4
-    export OMP_NUM_THREADS=1
-    runcmd="flux run --exclusive --nodes=$NNODE --ntasks $ntasks --verbose --setopt=mpibind=verbose:1 -q=pdebug --env OMP_NUM_THREADS=1"
+    runcmd="flux run --exclusive --nodes=$NNODE --ntasks $ntasks --verbose --setopt=mpibind=verbose:1 -q=pdebug"
 else
     echo "Error: Unknown platform '$platform'"
     exit 1
@@ -254,6 +255,11 @@ EOFSCRIPT
     # Append case-specific information and command
     cat >> "${dirname}/run_case.sh" << EOFSCRIPT
 echo "Case: $case_name"
+
+# Clean up previous run outputs
+echo "Cleaning up previous run outputs..."
+rm -f out.*.log warpx_used_inputs Backtrace.*
+rm -rf diags
 
 # Run WarpX with case-specific parameters
 echo "Output writing to \$outfile (and displaying on screen)"
@@ -435,14 +441,9 @@ run_case() {
     # Create the run_case.sh script with parameters
     create_run_case_script "$PWD" "$case_name" "$warpx_params"
 
-    # Build full command with run command and output redirection
-    warpx_cmd="$runcmd $EXEC $INP \\
-        $warpx_params \\
-        > $outfile 2>&1"
-
-    echo "  Running WarpX with input file $INP"
-    echo "  Output writing to $outfile"
-    eval $warpx_cmd
+    echo "  Executing run_case.sh"
+    # Execute the generated run_case.sh script (output goes to file only, not tee)
+    ./run_case.sh > /dev/null 2>&1
     exit_code=$?
 
     if [ $exit_code -eq 0 ]; then
