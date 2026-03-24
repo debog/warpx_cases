@@ -17,6 +17,7 @@ PC_OPTIONS["JacobiPC"]="pc_jacobi"
 PC_OPTIONS["CurlCurlMLMGPC"]="pc_curl_curl_mlmg"
 PC_OPTIONS["PETScPCASMwLU"]="pc_petsc"
 PC_OPTIONS["PETScPCLU"]="pc_petsc"
+PC_OPTIONS["PETScPCJacobi"]="pc_petsc"
 
 # Define solver options
 declare -A SOLVER_OPTIONS
@@ -42,11 +43,12 @@ Case Format: <pc_option>.<solver_option>
   or: <pc_option>_mmw<N>.<solver_option> (for PCs with mass matrix width)
 
 PC Options:
-  noPC                 - No preconditioner (all solvers)
-  JacobiPC_mmw<N>      - Jacobi preconditioner (mmw: 0, 1, 2; all solvers)
-  CurlCurlMLMGPC       - CurlCurl MLMG preconditioner (mmw fixed at 0; all solvers)
-  PETScPCASMwLU_mmw<N> - PETSc ASM+LU preconditioner (mmw: 0, 1, 2; petsc_ksp/petsc_snes only)
-  PETScPCLU_mmw<N>     - PETSc LU preconditioner (mmw: 0, 1, 2; petsc_ksp/petsc_snes only)
+  noPC                   - No preconditioner (all solvers)
+  JacobiPC_mmw<N>        - Jacobi preconditioner (mmw: 0, 1, 2; all solvers)
+  CurlCurlMLMGPC         - CurlCurl MLMG preconditioner (mmw fixed at 0; all solvers)
+  PETScPCASMwLU_mmw<N>   - PETSc ASM+LU preconditioner (mmw: 0, 1, 2; petsc_ksp/petsc_snes only)
+  PETScPCLU_mmw<N>       - PETSc LU preconditioner (mmw: 0, 1, 2; petsc_ksp/petsc_snes only)
+  PETScPCJacobi_mmw<N>   - PETSc Jacobi preconditioner (mmw: 0, 1, 2; petsc_ksp/petsc_snes only)
 
 Solver Options:
   native_jfnk  - Native JFNK (Newton with GMRES)
@@ -64,6 +66,7 @@ Examples:
   ./run.sh -c 'CurlCurlMLMGPC.*'                      # Run all CurlCurlMLMGPC cases
   ./run.sh -c 'PETScPCASMwLU*'                        # Run all PETScPCASMwLU cases
   ./run.sh -c 'PETScPCLU*'                            # Run all PETScPCLU cases
+  ./run.sh -c 'PETScPCJacobi*'                        # Run all PETScPCJacobi cases
   ./run.sh -c '*.petsc_ksp' '*.petsc_snes'            # Run multiple patterns
   ./run.sh -c 'JacobiPC_mmw?.native_jfnk'             # Use ? for single char
   ./run.sh -a                                         # Run all cases
@@ -105,6 +108,13 @@ generate_all_cases() {
     for mmw in "${MMW_OPTIONS[@]}"; do
         for solver in "petsc_ksp" "petsc_snes"; do
             cases+=("PETScPCLU_mmw${mmw}.${solver}")
+        done
+    done
+
+    # PETScPCJacobi cases (with mmw options, only petsc_ksp and petsc_snes)
+    for mmw in "${MMW_OPTIONS[@]}"; do
+        for solver in "petsc_ksp" "petsc_snes"; do
+            cases+=("PETScPCJacobi_mmw${mmw}.${solver}")
         done
     done
 
@@ -172,17 +182,17 @@ parse_case() {
     elif [[ $pc_part == "CurlCurlMLMGPC" ]]; then
         PC_TYPE="CurlCurlMLMGPC"
         MMW="0"  # CurlCurlMLMGPC only supports mmw=0
-    elif [[ $pc_part =~ ^(JacobiPC|PETScPCASMwLU|PETScPCLU)_mmw([0-2])$ ]]; then
+    elif [[ $pc_part =~ ^(JacobiPC|PETScPCASMwLU|PETScPCLU|PETScPCJacobi)_mmw([0-2])$ ]]; then
         PC_TYPE="${BASH_REMATCH[1]}"
         MMW="${BASH_REMATCH[2]}"
     else
         echo "Error: Invalid PC option '$pc_part'"
-        echo "Expected format: noPC, CurlCurlMLMGPC, or JacobiPC_mmw<0|1|2>/PETScPCASMwLU_mmw<0|1|2>/PETScPCLU_mmw<0|1|2>"
+        echo "Expected format: noPC, CurlCurlMLMGPC, or JacobiPC_mmw<0|1|2>/PETScPCASMwLU_mmw<0|1|2>/PETScPCLU_mmw<0|1|2>/PETScPCJacobi_mmw<0|1|2>"
         return 1
     fi
 
     # Validate PC and solver combinations
-    if [[ ("$PC_TYPE" == "PETScPCASMwLU" || "$PC_TYPE" == "PETScPCLU") && "$solver_part" == "native_jfnk" ]]; then
+    if [[ ("$PC_TYPE" == "PETScPCASMwLU" || "$PC_TYPE" == "PETScPCLU" || "$PC_TYPE" == "PETScPCJacobi") && "$solver_part" == "native_jfnk" ]]; then
         echo "Error: $PC_TYPE is not compatible with native_jfnk solver"
         echo "Valid solvers for $PC_TYPE: petsc_ksp, petsc_snes"
         return 1
@@ -436,6 +446,23 @@ run_case() {
         -log_view \\
         ${addflags}"
             ;;
+        PETScPCJacobi)
+            # PETSc Jacobi PC requires platform-specific options
+            pctype="jacobi"
+            if [[ "x$LCHOST" == "xdane" ]]; then
+                addflags="-mat_view ::ascii_info"
+            elif [[ "x$LCHOST" == "xmatrix" ]]; then
+                addflags="-use_gpu_aware_mpi 0 -mat_view ::ascii_info -log_view_gpu_time"
+            elif [[ "x$LCHOST" == "xtuolumne" ]]; then
+                addflags="-mat_view ::ascii_info -log_view_gpu_time"
+            fi
+            warpx_params="$warpx_params \\
+        jacobian.pc_type = pc_petsc \\
+        implicit_evolve.mass_matrices_pc_width = $MMW \\
+        -pc_type $pctype \\
+        -log_view \\
+        ${addflags}"
+            ;;
     esac
 
     # Create the run_case.sh script with parameters
@@ -529,6 +556,18 @@ run_all_cases() {
                 succeeded=$((succeeded + 1))
             else
                 failed_cases+=("PETScPCLU_mmw${mmw}.${solver}")
+            fi
+        done
+    done
+
+    # Run PETScPCJacobi cases with mmw options (only petsc_ksp and petsc_snes)
+    for mmw in "${MMW_OPTIONS[@]}"; do
+        for solver in "petsc_ksp" "petsc_snes"; do
+            total=$((total + 1))
+            if run_case "PETScPCJacobi_mmw${mmw}.${solver}"; then
+                succeeded=$((succeeded + 1))
+            else
+                failed_cases+=("PETScPCJacobi_mmw${mmw}.${solver}")
             fi
         done
     done
