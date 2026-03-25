@@ -98,8 +98,8 @@ Analysis generated on: $(date)
 ## Semi-Implicit
 ---------------
 
-| Preconditioner | Solver      | MMW | Total GMRES | Total Newton | Avg GMRES/Step | Avg Newton/Step | Avg GMRES/Newton |
-|----------------|-------------|-----|-------------|--------------|----------------|-----------------|------------------|
+| PC     | Solver      | MMW | Total<br>GMRES | Total<br>Newton | Avg<br>GMRES/Step | Avg<br>Newton/Step | Avg<br>GMRES/Newton |
+|--------|-------------|-----|----------------|-----------------|-------------------|--------------------|---------------------|
 EOF
 
 # Process SemiImpl cases
@@ -110,7 +110,7 @@ for solver in native_jfnk petsc_ksp petsc_snes; do
     if [[ -n "$case_dir" ]]; then
         echo "Processing: SemiImpl noPC $solver"
         stats=($(parse_case_stats "$case_dir"))
-        printf "| %-14s | %-11s | %-3s | %-11s | %-12s | %-14s | %-15s | %-16s |\n" \
+        printf "| %-6s | %-11s | %-3s | %-14s | %-15s | %-17s | %-18s | %-19s |\n" \
             "None" "$solver" "--" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
     fi
 done
@@ -121,7 +121,7 @@ for mmw in 0 1 2; do
         if [[ -n "$case_dir" ]]; then
             echo "Processing: SemiImpl JacobiPC mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-14s | %-11s | %-3s | %-11s | %-12s | %-14s | %-15s | %-16s |\n" \
+            printf "| %-6s | %-11s | %-3s | %-14s | %-15s | %-17s | %-18s | %-19s |\n" \
                 "Jacobi" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
         fi
     done
@@ -133,7 +133,7 @@ for mmw in 0 1 2; do
         if [[ -n "$case_dir" ]]; then
             echo "Processing: SemiImpl PETScPCASMwLU mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-14s | %-11s | %-3s | %-11s | %-12s | %-14s | %-15s | %-16s |\n" \
+            printf "| %-6s | %-11s | %-3s | %-14s | %-15s | %-17s | %-18s | %-19s |\n" \
                 "ASM-LU" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
         fi
     done
@@ -145,7 +145,7 @@ for mmw in 0 1 2; do
         if [[ -n "$case_dir" ]]; then
             echo "Processing: SemiImpl PETScPCLU mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-14s | %-11s | %-3s | %-11s | %-12s | %-14s | %-15s | %-16s |\n" \
+            printf "| %-6s | %-11s | %-3s | %-14s | %-15s | %-17s | %-18s | %-19s |\n" \
                 "LU" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
         fi
     done
@@ -157,7 +157,7 @@ for mmw in 0 1 2; do
         if [[ -n "$case_dir" ]]; then
             echo "Processing: SemiImpl PETScPCSOR mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-14s | %-11s | %-3s | %-11s | %-12s | %-14s | %-15s | %-16s |\n" \
+            printf "| %-6s | %-11s | %-3s | %-14s | %-15s | %-17s | %-18s | %-19s |\n" \
                 "SOR" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
         fi
     done
@@ -169,8 +169,8 @@ cat >> "$report_file" <<EOF
 ## Theta-Implicit
 ----------------
 
-| Preconditioner | Solver      | MMW | Total GMRES | Total Newton | Avg GMRES/Step | Avg Newton/Step | Avg GMRES/Newton |
-|----------------|-------------|-----|-------------|--------------|----------------|-----------------|------------------|
+| PC     | Solver      | MMW | Total<br>GMRES | Total<br>Newton | Avg<br>GMRES/Step | Avg<br>Newton/Step | Avg<br>GMRES/Newton |
+|--------|-------------|-----|----------------|-----------------|-------------------|--------------------|---------------------|
 EOF
 
 # Process ThetaImpl cases
@@ -181,7 +181,7 @@ for solver in native_jfnk petsc_ksp petsc_snes; do
     if [[ -n "$case_dir" ]]; then
         echo "Processing: ThetaImpl noPC $solver"
         stats=($(parse_case_stats "$case_dir"))
-        printf "| %-14s | %-11s | %-3s | %-11s | %-12s | %-14s | %-15s | %-16s |\n" \
+        printf "| %-6s | %-11s | %-3s | %-14s | %-15s | %-17s | %-18s | %-19s |\n" \
             "None" "$solver" "--" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
     fi
 done
@@ -192,7 +192,7 @@ for mmw in 0 1 2; do
         if [[ -n "$case_dir" ]]; then
             echo "Processing: ThetaImpl JacobiPC mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-14s | %-11s | %-3s | %-11s | %-12s | %-14s | %-15s | %-16s |\n" \
+            printf "| %-6s | %-11s | %-3s | %-14s | %-15s | %-17s | %-18s | %-19s |\n" \
                 "Jacobi" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
         fi
     done
@@ -204,7 +204,7 @@ for mmw in 0 1 2; do
         if [[ -n "$case_dir" ]]; then
             echo "Processing: ThetaImpl PETScPCASMwLU mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-14s | %-11s | %-3s | %-11s | %-12s | %-14s | %-15s | %-16s |\n" \
+            printf "| %-6s | %-11s | %-3s | %-14s | %-15s | %-17s | %-18s | %-19s |\n" \
                 "ASM-LU" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
         fi
     done
@@ -216,7 +216,7 @@ for mmw in 0 1 2; do
         if [[ -n "$case_dir" ]]; then
             echo "Processing: ThetaImpl PETScPCLU mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-14s | %-11s | %-3s | %-11s | %-12s | %-14s | %-15s | %-16s |\n" \
+            printf "| %-6s | %-11s | %-3s | %-14s | %-15s | %-17s | %-18s | %-19s |\n" \
                 "LU" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
         fi
     done
@@ -227,9 +227,9 @@ cat >> "$report_file" <<EOF
 
 ## Notes
 
-- **Preconditioner**: Preconditioning method (None, Jacobi, ASM-LU, LU, SOR)
+- **PC**: Preconditioner (None, Jacobi, ASM-LU, LU, SOR)
 - **Solver**: Nonlinear/linear solver (native_jfnk, petsc_ksp, petsc_snes)
-- **MMW**: Mass matrix width for preconditioner (-- = not applicable)
+- **MMW**: Mass matrix width (-- = not applicable)
 - **Total GMRES**: Total GMRES iterations across all timesteps
 - **Total Newton**: Total Newton iterations across all timesteps (excluding iteration 0)
 - **Avg GMRES/Step**: Average GMRES iterations per timestep
