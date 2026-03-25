@@ -39,37 +39,41 @@ Options:
   -a              Run all cases
   -h              Print this help message
 
-Case Format: <pc_option>.<solver_option>
-  or: <pc_option>_mmw<N>.<solver_option> (for PCs with mass matrix width)
+Case Format: <SemiImpl|ThetaImpl>_<pc_option>.<solver_option>
+  or: <SemiImpl|ThetaImpl>_<pc_option>_mmw<N>.<solver_option> (for PCs with mass matrix width)
+
+Time Integrators:
+  SemiImpl  - Semi-implicit time integrator (warpx_evolve.scheme = semi_implicit_em)
+  ThetaImpl - Theta-implicit time integrator (warpx_evolve.scheme = theta_implicit_em)
 
 PC Options:
-  noPC                   - No preconditioner (all solvers)
-  JacobiPC_mmw<N>        - Jacobi preconditioner (mmw: 0, 1, 2; all solvers)
-  CurlCurlMLMGPC         - CurlCurl MLMG preconditioner (mmw fixed at 0; all solvers)
-  PETScPCASMwLU_mmw<N>   - PETSc ASM+LU preconditioner (mmw: 0, 1, 2; petsc_ksp/petsc_snes only)
-  PETScPCLU_mmw<N>       - PETSc LU preconditioner (mmw: 0, 1, 2; petsc_ksp/petsc_snes only)
-  PETScPCSOR_mmw<N>   - PETSc SOR preconditioner (mmw: 0, 1, 2; petsc_ksp/petsc_snes only)
+  noPC                   - No preconditioner (all solvers, both integrators)
+  JacobiPC_mmw<N>        - Jacobi preconditioner (mmw: 0, 1, 2; all solvers, both integrators)
+  CurlCurlMLMGPC         - CurlCurl MLMG preconditioner (ThetaImpl only, mmw fixed at 0)
+  PETScPCASMwLU_mmw<N>   - PETSc ASM+LU preconditioner (mmw: 0, 1, 2; petsc_ksp/petsc_snes, both integrators)
+  PETScPCLU_mmw<N>       - PETSc LU preconditioner (mmw: 0, 1, 2; petsc_ksp/petsc_snes, both integrators)
+  PETScPCSOR_mmw<N>      - PETSc SOR preconditioner (SemiImpl only, mmw: 0, 1, 2; petsc_ksp/petsc_snes)
 
 Solver Options:
   native_jfnk  - Native JFNK (Newton with GMRES)
   petsc_ksp    - PETSc KSP linear solver
   petsc_snes   - PETSc SNES nonlinear solver
 
-Platform Detection: Automatically detects Dane, Matrix, or Tuolumne
+Platform Detection: Automatically detects Dane (4 MPI ranks), Matrix, or Tuolumne
+
+Directory Structure: .run_<IntegratorType>/<case_name>.<platform>.nx...
 
 Examples:
-  ./run.sh -l                                         # List all cases
-  ./run.sh -c noPC.native_jfnk                        # Run single case
-  ./run.sh -c noPC.petsc_ksp JacobiPC_mmw1.petsc_ksp  # Run multiple cases
-  ./run.sh -c '*.petsc_ksp'                           # Run all petsc_ksp cases
-  ./run.sh -c 'JacobiPC*'                             # Run all JacobiPC cases
-  ./run.sh -c 'CurlCurlMLMGPC.*'                      # Run all CurlCurlMLMGPC cases
-  ./run.sh -c 'PETScPCASMwLU*'                        # Run all PETScPCASMwLU cases
-  ./run.sh -c 'PETScPCLU*'                            # Run all PETScPCLU cases
-  ./run.sh -c 'PETScPCSOR*'                        # Run all PETScPCSOR cases
-  ./run.sh -c '*.petsc_ksp' '*.petsc_snes'            # Run multiple patterns
-  ./run.sh -c 'JacobiPC_mmw?.native_jfnk'             # Use ? for single char
-  ./run.sh -a                                         # Run all cases
+  ./run.sh -l                                              # List all cases
+  ./run.sh -c SemiImpl_noPC.native_jfnk                    # Run single case
+  ./run.sh -c ThetaImpl_noPC.petsc_snes                    # Run ThetaImpl case
+  ./run.sh -c 'SemiImpl_*.petsc_ksp'                       # Run all SemiImpl petsc_ksp cases
+  ./run.sh -c 'ThetaImpl_JacobiPC*'                        # Run all ThetaImpl JacobiPC cases
+  ./run.sh -c 'ThetaImpl_CurlCurlMLMGPC.*'                 # Run all ThetaImpl CurlCurlMLMGPC cases
+  ./run.sh -c '*_PETScPCASMwLU*'                           # Run all PETScPCASMwLU cases (both integrators)
+  ./run.sh -c 'SemiImpl_PETScPCSOR*'                       # Run all SemiImpl PETScPCSOR cases
+  ./run.sh -c 'SemiImpl_*.petsc_ksp' 'ThetaImpl_*.petsc_ksp'  # Run multiple patterns
+  ./run.sh -a                                              # Run all cases
 
 Note: When using wildcards, quote the pattern to prevent shell expansion
 
@@ -80,41 +84,73 @@ EOF
 generate_all_cases() {
     local cases=()
 
-    # noPC cases (no mmw)
+    # SemiImpl cases (semi-implicit time integrator)
+    # Note: CurlCurlMLMGPC excluded from SemiImpl
+
+    # SemiImpl_noPC cases (no mmw)
     for solver in "${!SOLVER_OPTIONS[@]}"; do
-        cases+=("noPC.${solver}")
+        cases+=("SemiImpl_noPC.${solver}")
     done
 
-    # CurlCurlMLMGPC cases (mmw fixed at 0, no suffix)
-    for solver in "${!SOLVER_OPTIONS[@]}"; do
-        cases+=("CurlCurlMLMGPC.${solver}")
-    done
-
-    # JacobiPC cases (with mmw options, all solvers)
+    # SemiImpl_JacobiPC cases (with mmw options, all solvers)
     for mmw in "${MMW_OPTIONS[@]}"; do
         for solver in "${!SOLVER_OPTIONS[@]}"; do
-            cases+=("JacobiPC_mmw${mmw}.${solver}")
+            cases+=("SemiImpl_JacobiPC_mmw${mmw}.${solver}")
         done
     done
 
-    # PETScPCASMwLU cases (with mmw options, only petsc_ksp and petsc_snes)
+    # SemiImpl_PETScPCASMwLU cases (with mmw options, only petsc_ksp and petsc_snes)
     for mmw in "${MMW_OPTIONS[@]}"; do
         for solver in "petsc_ksp" "petsc_snes"; do
-            cases+=("PETScPCASMwLU_mmw${mmw}.${solver}")
+            cases+=("SemiImpl_PETScPCASMwLU_mmw${mmw}.${solver}")
         done
     done
 
-    # PETScPCLU cases (with mmw options, only petsc_ksp and petsc_snes)
+    # SemiImpl_PETScPCLU cases (with mmw options, only petsc_ksp and petsc_snes)
     for mmw in "${MMW_OPTIONS[@]}"; do
         for solver in "petsc_ksp" "petsc_snes"; do
-            cases+=("PETScPCLU_mmw${mmw}.${solver}")
+            cases+=("SemiImpl_PETScPCLU_mmw${mmw}.${solver}")
         done
     done
 
-    # PETScPCSOR cases (with mmw options, only petsc_ksp and petsc_snes)
+    # SemiImpl_PETScPCSOR cases (with mmw options, only petsc_ksp and petsc_snes)
     for mmw in "${MMW_OPTIONS[@]}"; do
         for solver in "petsc_ksp" "petsc_snes"; do
-            cases+=("PETScPCSOR_mmw${mmw}.${solver}")
+            cases+=("SemiImpl_PETScPCSOR_mmw${mmw}.${solver}")
+        done
+    done
+
+    # ThetaImpl cases (theta-implicit time integrator)
+    # Note: PETScPCSOR excluded from ThetaImpl
+
+    # ThetaImpl_noPC cases (no mmw)
+    for solver in "${!SOLVER_OPTIONS[@]}"; do
+        cases+=("ThetaImpl_noPC.${solver}")
+    done
+
+    # ThetaImpl_CurlCurlMLMGPC cases (mmw fixed at 0, no suffix)
+    for solver in "${!SOLVER_OPTIONS[@]}"; do
+        cases+=("ThetaImpl_CurlCurlMLMGPC.${solver}")
+    done
+
+    # ThetaImpl_JacobiPC cases (with mmw options, all solvers)
+    for mmw in "${MMW_OPTIONS[@]}"; do
+        for solver in "${!SOLVER_OPTIONS[@]}"; do
+            cases+=("ThetaImpl_JacobiPC_mmw${mmw}.${solver}")
+        done
+    done
+
+    # ThetaImpl_PETScPCASMwLU cases (with mmw options, only petsc_ksp and petsc_snes)
+    for mmw in "${MMW_OPTIONS[@]}"; do
+        for solver in "petsc_ksp" "petsc_snes"; do
+            cases+=("ThetaImpl_PETScPCASMwLU_mmw${mmw}.${solver}")
+        done
+    done
+
+    # ThetaImpl_PETScPCLU cases (with mmw options, only petsc_ksp and petsc_snes)
+    for mmw in "${MMW_OPTIONS[@]}"; do
+        for solver in "petsc_ksp" "petsc_snes"; do
+            cases+=("ThetaImpl_PETScPCLU_mmw${mmw}.${solver}")
         done
     done
 
@@ -152,19 +188,21 @@ match_cases() {
     echo "${matched_cases[@]}"
 }
 
-# Function to parse case name and get PC, MMW, and solver
+# Function to parse case name and get integrator, PC, MMW, and solver
 parse_case() {
     local case_name=$1
+    local integrator_part=""
     local pc_part=""
     local solver_part=""
     local mmw_val="1"
 
-    # Split by last dot to separate PC and solver
-    if [[ $case_name =~ ^(.+)\.([^.]+)$ ]]; then
-        pc_part="${BASH_REMATCH[1]}"
-        solver_part="${BASH_REMATCH[2]}"
+    # Extract integrator type (SemiImpl or ThetaImpl)
+    if [[ $case_name =~ ^(SemiImpl|ThetaImpl)_(.+)\.([^.]+)$ ]]; then
+        integrator_part="${BASH_REMATCH[1]}"
+        pc_part="${BASH_REMATCH[2]}"
+        solver_part="${BASH_REMATCH[3]}"
     else
-        echo "Error: Invalid case format. Expected <pc_option>.<solver_option>"
+        echo "Error: Invalid case format. Expected <SemiImpl|ThetaImpl>_<pc_option>.<solver_option>"
         return 1
     fi
 
@@ -182,9 +220,19 @@ parse_case() {
     elif [[ $pc_part == "CurlCurlMLMGPC" ]]; then
         PC_TYPE="CurlCurlMLMGPC"
         MMW="0"  # CurlCurlMLMGPC only supports mmw=0
+        # CurlCurlMLMGPC only allowed for ThetaImpl
+        if [[ "$integrator_part" != "ThetaImpl" ]]; then
+            echo "Error: CurlCurlMLMGPC is only available for ThetaImpl cases"
+            return 1
+        fi
     elif [[ $pc_part =~ ^(JacobiPC|PETScPCASMwLU|PETScPCLU|PETScPCSOR)_mmw([0-2])$ ]]; then
         PC_TYPE="${BASH_REMATCH[1]}"
         MMW="${BASH_REMATCH[2]}"
+        # PETScPCSOR only allowed for SemiImpl
+        if [[ "$PC_TYPE" == "PETScPCSOR" && "$integrator_part" == "ThetaImpl" ]]; then
+            echo "Error: PETScPCSOR is only available for SemiImpl cases"
+            return 1
+        fi
     else
         echo "Error: Invalid PC option '$pc_part'"
         echo "Expected format: noPC, CurlCurlMLMGPC, or JacobiPC_mmw<0|1|2>/PETScPCASMwLU_mmw<0|1|2>/PETScPCLU_mmw<0|1|2>/PETScPCSOR_mmw<0|1|2>"
@@ -198,6 +246,7 @@ parse_case() {
         return 1
     fi
 
+    INTEGRATOR_TYPE="$integrator_part"
     SOLVER_TYPE="$solver_part"
     return 0
 }
@@ -243,7 +292,7 @@ NNODE=1
 # Determine run command based on platform
 runcmd=""
 if [[ "x$platform" == "xdane" ]]; then
-    ntasks=64
+    ntasks=4
     runcmd="srun -n $ntasks -p pdebug --export=ALL"
 elif [[ "x$platform" == "xmatrix" ]]; then
     ntasks=4
@@ -304,19 +353,22 @@ run_case() {
 
     echo "============================================"
     echo "Running case: $case_name"
-    echo "PC Type: $PC_TYPE, MMW: $MMW, Solver: $SOLVER_TYPE"
+    echo "Integrator: $INTEGRATOR_TYPE, PC Type: $PC_TYPE, MMW: $MMW, Solver: $SOLVER_TYPE"
     echo "============================================"
 
-    # Build directory name
+    # Build directory structure: .run_<IntegratorType>/<case_name>.<platform>.nx...
+    rootdir=$PWD
+    parent_dir=".run_${INTEGRATOR_TYPE}"
+
+    # Build case-specific directory name
     if [ "$PC_TYPE" == "noPC" ]; then
-        dir_prefix=".run_noPC.${SOLVER_TYPE}.${LCHOST}."
+        case_dir="noPC.${SOLVER_TYPE}.${LCHOST}."
     elif [ "$PC_TYPE" == "CurlCurlMLMGPC" ]; then
-        dir_prefix=".run_CurlCurlMLMGPC.${SOLVER_TYPE}.${LCHOST}."
+        case_dir="CurlCurlMLMGPC.${SOLVER_TYPE}.${LCHOST}."
     else
-        dir_prefix=".run_${PC_TYPE}_mmw${MMW}.${SOLVER_TYPE}.${LCHOST}."
+        case_dir="${PC_TYPE}_mmw${MMW}.${SOLVER_TYPE}.${LCHOST}."
     fi
 
-    rootdir=$PWD
     INP_FILE=$(ls $rootdir/common/*.in 2>/dev/null | head -1)
     if [ -z "$INP_FILE" ]; then
         echo "Error: No input file found in $rootdir/common/"
@@ -331,18 +383,25 @@ run_case() {
     fi
     echo "Executable file is ${EXEC}."
 
-    # Create directory
+    # Create parent directory if it doesn't exist
+    if [ ! -d "$parent_dir" ]; then
+        echo "Creating parent directory $parent_dir"
+        mkdir -p "$parent_dir"
+    fi
+
+    # Create case directory
     echo "Creating directory for nx=$nx, nz=$nz, npx=$npx, npz=$npz"
-    dirname=$dir_prefix$(printf "nx%05dnz%05d" $nx $nz)$(printf "npx%03dnpz%03d" $npx $npz)
+    case_dirname=$case_dir$(printf "nx%05dnz%05d" $nx $nz)$(printf "npx%03dnpz%03d" $npx $npz)
+    dirname="$parent_dir/$case_dirname"
 
     if [ -d "$dirname" ]; then
         echo "  Deleting existing directory $dirname"
-        rm -rf $dirname
+        rm -rf "$dirname"
     fi
     echo "  Creating directory $dirname"
-    mkdir $dirname
+    mkdir -p "$dirname"
 
-    cd $dirname
+    cd "$dirname"
     echo "  Copying input file"
     cp $INP_FILE .
     INP=$(ls *.in)
@@ -351,7 +410,7 @@ run_case() {
     runcmd=""
     addflags=""
     if [[ "x$LCHOST" == "xdane" ]]; then
-        ntasks=64
+        ntasks=4
         runcmd="srun -n $ntasks -p pdebug --export=ALL"
     elif [[ "x$LCHOST" == "xmatrix" ]]; then
         ntasks=4
@@ -372,6 +431,15 @@ run_case() {
         my_constants.Nppc_x = $npx \\
         my_constants.Nppc_z = $npz \\
         max_step = $max_step"
+
+    # Add integrator-specific options
+    if [ "$INTEGRATOR_TYPE" == "SemiImpl" ]; then
+        warpx_params="$warpx_params \\
+        warpx_evolve.scheme = semi_implicit_em"
+    elif [ "$INTEGRATOR_TYPE" == "ThetaImpl" ]; then
+        warpx_params="$warpx_params \\
+        warpx_evolve.scheme = theta_implicit_em"
+    fi
 
     # Add solver-specific options
     case $SOLVER_TYPE in
@@ -504,70 +572,122 @@ run_all_cases() {
     local total=0
     local succeeded=0
 
-    # Run noPC cases
+    # ========== SemiImpl Cases ==========
+    # Note: CurlCurlMLMGPC excluded from SemiImpl
+
+    # SemiImpl_noPC cases
     for solver in "${!SOLVER_OPTIONS[@]}"; do
         total=$((total + 1))
-        if run_case "noPC.${solver}"; then
+        if run_case "SemiImpl_noPC.${solver}"; then
             succeeded=$((succeeded + 1))
         else
-            failed_cases+=("noPC.${solver}")
+            failed_cases+=("SemiImpl_noPC.${solver}")
         fi
     done
 
-    # Run CurlCurlMLMGPC cases (no mmw suffix)
-    for solver in "${!SOLVER_OPTIONS[@]}"; do
-        total=$((total + 1))
-        if run_case "CurlCurlMLMGPC.${solver}"; then
-            succeeded=$((succeeded + 1))
-        else
-            failed_cases+=("CurlCurlMLMGPC.${solver}")
-        fi
-    done
-
-    # Run JacobiPC cases with mmw options (all solvers)
+    # SemiImpl_JacobiPC cases with mmw options (all solvers)
     for mmw in "${MMW_OPTIONS[@]}"; do
         for solver in "${!SOLVER_OPTIONS[@]}"; do
             total=$((total + 1))
-            if run_case "JacobiPC_mmw${mmw}.${solver}"; then
+            if run_case "SemiImpl_JacobiPC_mmw${mmw}.${solver}"; then
                 succeeded=$((succeeded + 1))
             else
-                failed_cases+=("JacobiPC_mmw${mmw}.${solver}")
+                failed_cases+=("SemiImpl_JacobiPC_mmw${mmw}.${solver}")
             fi
         done
     done
 
-    # Run PETScPCASMwLU cases with mmw options (only petsc_ksp and petsc_snes)
+    # SemiImpl_PETScPCASMwLU cases with mmw options (only petsc_ksp and petsc_snes)
     for mmw in "${MMW_OPTIONS[@]}"; do
         for solver in "petsc_ksp" "petsc_snes"; do
             total=$((total + 1))
-            if run_case "PETScPCASMwLU_mmw${mmw}.${solver}"; then
+            if run_case "SemiImpl_PETScPCASMwLU_mmw${mmw}.${solver}"; then
                 succeeded=$((succeeded + 1))
             else
-                failed_cases+=("PETScPCASMwLU_mmw${mmw}.${solver}")
+                failed_cases+=("SemiImpl_PETScPCASMwLU_mmw${mmw}.${solver}")
             fi
         done
     done
 
-    # Run PETScPCLU cases with mmw options (only petsc_ksp and petsc_snes)
+    # SemiImpl_PETScPCLU cases with mmw options (only petsc_ksp and petsc_snes)
     for mmw in "${MMW_OPTIONS[@]}"; do
         for solver in "petsc_ksp" "petsc_snes"; do
             total=$((total + 1))
-            if run_case "PETScPCLU_mmw${mmw}.${solver}"; then
+            if run_case "SemiImpl_PETScPCLU_mmw${mmw}.${solver}"; then
                 succeeded=$((succeeded + 1))
             else
-                failed_cases+=("PETScPCLU_mmw${mmw}.${solver}")
+                failed_cases+=("SemiImpl_PETScPCLU_mmw${mmw}.${solver}")
             fi
         done
     done
 
-    # Run PETScPCSOR cases with mmw options (only petsc_ksp and petsc_snes)
+    # SemiImpl_PETScPCSOR cases with mmw options (only petsc_ksp and petsc_snes)
     for mmw in "${MMW_OPTIONS[@]}"; do
         for solver in "petsc_ksp" "petsc_snes"; do
             total=$((total + 1))
-            if run_case "PETScPCSOR_mmw${mmw}.${solver}"; then
+            if run_case "SemiImpl_PETScPCSOR_mmw${mmw}.${solver}"; then
                 succeeded=$((succeeded + 1))
             else
-                failed_cases+=("PETScPCSOR_mmw${mmw}.${solver}")
+                failed_cases+=("SemiImpl_PETScPCSOR_mmw${mmw}.${solver}")
+            fi
+        done
+    done
+
+    # ========== ThetaImpl Cases ==========
+    # Note: PETScPCSOR excluded from ThetaImpl
+
+    # ThetaImpl_noPC cases
+    for solver in "${!SOLVER_OPTIONS[@]}"; do
+        total=$((total + 1))
+        if run_case "ThetaImpl_noPC.${solver}"; then
+            succeeded=$((succeeded + 1))
+        else
+            failed_cases+=("ThetaImpl_noPC.${solver}")
+        fi
+    done
+
+    # ThetaImpl_CurlCurlMLMGPC cases (no mmw suffix)
+    for solver in "${!SOLVER_OPTIONS[@]}"; do
+        total=$((total + 1))
+        if run_case "ThetaImpl_CurlCurlMLMGPC.${solver}"; then
+            succeeded=$((succeeded + 1))
+        else
+            failed_cases+=("ThetaImpl_CurlCurlMLMGPC.${solver}")
+        fi
+    done
+
+    # ThetaImpl_JacobiPC cases with mmw options (all solvers)
+    for mmw in "${MMW_OPTIONS[@]}"; do
+        for solver in "${!SOLVER_OPTIONS[@]}"; do
+            total=$((total + 1))
+            if run_case "ThetaImpl_JacobiPC_mmw${mmw}.${solver}"; then
+                succeeded=$((succeeded + 1))
+            else
+                failed_cases+=("ThetaImpl_JacobiPC_mmw${mmw}.${solver}")
+            fi
+        done
+    done
+
+    # ThetaImpl_PETScPCASMwLU cases with mmw options (only petsc_ksp and petsc_snes)
+    for mmw in "${MMW_OPTIONS[@]}"; do
+        for solver in "petsc_ksp" "petsc_snes"; do
+            total=$((total + 1))
+            if run_case "ThetaImpl_PETScPCASMwLU_mmw${mmw}.${solver}"; then
+                succeeded=$((succeeded + 1))
+            else
+                failed_cases+=("ThetaImpl_PETScPCASMwLU_mmw${mmw}.${solver}")
+            fi
+        done
+    done
+
+    # ThetaImpl_PETScPCLU cases with mmw options (only petsc_ksp and petsc_snes)
+    for mmw in "${MMW_OPTIONS[@]}"; do
+        for solver in "petsc_ksp" "petsc_snes"; do
+            total=$((total + 1))
+            if run_case "ThetaImpl_PETScPCLU_mmw${mmw}.${solver}"; then
+                succeeded=$((succeeded + 1))
+            else
+                failed_cases+=("ThetaImpl_PETScPCLU_mmw${mmw}.${solver}")
             fi
         done
     done
