@@ -24,10 +24,8 @@ PC_OPTIONS["PETScPCSOR"]="pc_petsc"
 declare -A SOLVER_OPTIONS
 SOLVER_OPTIONS["native_jfnk"]="newton"
 SOLVER_OPTIONS["petsc_ksp"]="newton|petsc_ksp"
-SOLVER_OPTIONS["amrex_gmres"]="newton|amrex_gmres"
 SOLVER_OPTIONS["weighted_jacobi"]="newton|weighted_jacobi"
 SOLVER_OPTIONS["chebyshev"]="newton|chebyshev"
-SOLVER_OPTIONS["petsc_snes"]="petsc_snes"
 
 # Mass matrix width options (for PCs other than noPC)
 MMW_OPTIONS=(0 1 2)
@@ -52,23 +50,21 @@ Time Integrators:
 
 PC Options:
   noPC                   - No preconditioner (all solvers, both integrators)
-  JacobiPC_mmw<N>        - Jacobi preconditioner (mmw: 0, 1, 2; native_jfnk/petsc_ksp/amrex_gmres/petsc_snes, both integrators)
-  ChebyshevPC_mmw<N>     - Chebyshev preconditioner (mmw: 0, 1, 2; native_jfnk/petsc_ksp/amrex_gmres/petsc_snes, both integrators)
-  PETScPCASMwLU_mmw<N>   - PETSc ASM+LU preconditioner (mmw: 0, 1, 2; petsc_ksp/petsc_snes, both integrators)
-  PETScPCLU_mmw<N>       - PETSc LU preconditioner (mmw: 0, 1, 2; petsc_ksp/petsc_snes, both integrators; Dane only)
-  PETScPCSOR_mmw<N>      - PETSc SOR preconditioner (SemiImpl only, mmw: 0, 1, 2; petsc_ksp/petsc_snes)
+  JacobiPC_mmw<N>        - Jacobi preconditioner (mmw: 0, 1, 2; native_jfnk/petsc_ksp, both integrators)
+  ChebyshevPC_mmw<N>     - Chebyshev preconditioner (mmw: 0, 1, 2; native_jfnk/petsc_ksp, both integrators)
+  PETScPCASMwLU_mmw<N>   - PETSc ASM+LU preconditioner (mmw: 0, 1, 2; petsc_ksp only, both integrators)
+  PETScPCLU_mmw<N>       - PETSc LU preconditioner (mmw: 0, 1, 2; petsc_ksp only, both integrators; Dane only)
+  PETScPCSOR_mmw<N>      - PETSc SOR preconditioner (SemiImpl only, mmw: 0, 1, 2; petsc_ksp only)
 
 Note: CurlCurlMLMGPC has been excluded from both integrators
 Note: PETScPCLU is only available on Dane (excluded from Matrix and Tuolumne)
 Note: weighted_jacobi and chebyshev linear solvers only work with noPC (no preconditioner)
 
 Solver Options:
-  native_jfnk      - Native JFNK (Newton with native GMRES)
+  native_jfnk      - Native JFNK (Newton with AMReX GMRES linear solver)
   petsc_ksp        - Newton with PETSc KSP linear solver
-  amrex_gmres      - Newton with AMReX GMRES linear solver
   weighted_jacobi  - Newton with weighted Jacobi linear solver (no PC support)
   chebyshev        - Newton with Chebyshev linear solver (no PC support)
-  petsc_snes       - PETSc SNES nonlinear solver
 
 Platform Detection: Automatically detects Dane (4 MPI ranks), Matrix, or Tuolumne
 
@@ -104,40 +100,34 @@ generate_all_cases() {
 
     # SemiImpl_JacobiPC cases (with mmw options, compatible solvers only)
     for mmw in "${MMW_OPTIONS[@]}"; do
-        for solver in "native_jfnk" "petsc_ksp" "amrex_gmres" "petsc_snes"; do
+        for solver in "native_jfnk" "petsc_ksp"; do
             cases+=("SemiImpl_JacobiPC_mmw${mmw}.${solver}")
         done
     done
 
     # SemiImpl_ChebyshevPC cases (with mmw options, compatible solvers only)
     for mmw in "${MMW_OPTIONS[@]}"; do
-        for solver in "native_jfnk" "petsc_ksp" "amrex_gmres" "petsc_snes"; do
+        for solver in "native_jfnk" "petsc_ksp"; do
             cases+=("SemiImpl_ChebyshevPC_mmw${mmw}.${solver}")
         done
     done
 
-    # SemiImpl_PETScPCASMwLU cases (with mmw options, only petsc_ksp and petsc_snes)
+    # SemiImpl_PETScPCASMwLU cases (with mmw options, petsc_ksp only)
     for mmw in "${MMW_OPTIONS[@]}"; do
-        for solver in "petsc_ksp" "petsc_snes"; do
-            cases+=("SemiImpl_PETScPCASMwLU_mmw${mmw}.${solver}")
-        done
+        cases+=("SemiImpl_PETScPCASMwLU_mmw${mmw}.petsc_ksp")
     done
 
-    # SemiImpl_PETScPCLU cases (with mmw options, only petsc_ksp and petsc_snes)
+    # SemiImpl_PETScPCLU cases (with mmw options, petsc_ksp only)
     # Note: PETScPCLU only available on Dane (excluded from Matrix and Tuolumne)
     if [[ "x$LCHOST" != "xmatrix" && "x$LCHOST" != "xtuolumne" ]]; then
         for mmw in "${MMW_OPTIONS[@]}"; do
-            for solver in "petsc_ksp" "petsc_snes"; do
-                cases+=("SemiImpl_PETScPCLU_mmw${mmw}.${solver}")
-            done
+            cases+=("SemiImpl_PETScPCLU_mmw${mmw}.petsc_ksp")
         done
     fi
 
-    # SemiImpl_PETScPCSOR cases (with mmw options, only petsc_ksp and petsc_snes)
+    # SemiImpl_PETScPCSOR cases (with mmw options, petsc_ksp only)
     for mmw in "${MMW_OPTIONS[@]}"; do
-        for solver in "petsc_ksp" "petsc_snes"; do
-            cases+=("SemiImpl_PETScPCSOR_mmw${mmw}.${solver}")
-        done
+        cases+=("SemiImpl_PETScPCSOR_mmw${mmw}.petsc_ksp")
     done
 
     # ThetaImpl cases (theta-implicit time integrator)
@@ -150,32 +140,28 @@ generate_all_cases() {
 
     # ThetaImpl_JacobiPC cases (with mmw options, compatible solvers only)
     for mmw in "${MMW_OPTIONS[@]}"; do
-        for solver in "native_jfnk" "petsc_ksp" "amrex_gmres" "petsc_snes"; do
+        for solver in "native_jfnk" "petsc_ksp"; do
             cases+=("ThetaImpl_JacobiPC_mmw${mmw}.${solver}")
         done
     done
 
     # ThetaImpl_ChebyshevPC cases (with mmw options, compatible solvers only)
     for mmw in "${MMW_OPTIONS[@]}"; do
-        for solver in "native_jfnk" "petsc_ksp" "amrex_gmres" "petsc_snes"; do
+        for solver in "native_jfnk" "petsc_ksp"; do
             cases+=("ThetaImpl_ChebyshevPC_mmw${mmw}.${solver}")
         done
     done
 
-    # ThetaImpl_PETScPCASMwLU cases (with mmw options, only petsc_ksp and petsc_snes)
+    # ThetaImpl_PETScPCASMwLU cases (with mmw options, petsc_ksp only)
     for mmw in "${MMW_OPTIONS[@]}"; do
-        for solver in "petsc_ksp" "petsc_snes"; do
-            cases+=("ThetaImpl_PETScPCASMwLU_mmw${mmw}.${solver}")
-        done
+        cases+=("ThetaImpl_PETScPCASMwLU_mmw${mmw}.petsc_ksp")
     done
 
-    # ThetaImpl_PETScPCLU cases (with mmw options, only petsc_ksp and petsc_snes)
+    # ThetaImpl_PETScPCLU cases (with mmw options, petsc_ksp only)
     # Note: PETScPCLU only available on Dane (excluded from Matrix and Tuolumne)
     if [[ "x$LCHOST" != "xmatrix" && "x$LCHOST" != "xtuolumne" ]]; then
         for mmw in "${MMW_OPTIONS[@]}"; do
-            for solver in "petsc_ksp" "petsc_snes"; do
-                cases+=("ThetaImpl_PETScPCLU_mmw${mmw}.${solver}")
-            done
+            cases+=("ThetaImpl_PETScPCLU_mmw${mmw}.petsc_ksp")
         done
     fi
 
@@ -480,11 +466,6 @@ run_case() {
         implicit_evolve.nonlinear_solver = newton \\
         newton.linear_solver = petsc_ksp"
             ;;
-        amrex_gmres)
-            warpx_params="$warpx_params \\
-        implicit_evolve.nonlinear_solver = newton \\
-        newton.linear_solver = amrex_gmres"
-            ;;
         weighted_jacobi)
             warpx_params="$warpx_params \\
         implicit_evolve.nonlinear_solver = newton \\
@@ -494,10 +475,6 @@ run_case() {
             warpx_params="$warpx_params \\
         implicit_evolve.nonlinear_solver = newton \\
         newton.linear_solver = chebyshev"
-            ;;
-        petsc_snes)
-            warpx_params="$warpx_params \\
-        implicit_evolve.nonlinear_solver = petsc_snes"
             ;;
     esac
 
@@ -627,7 +604,7 @@ run_all_cases() {
 
     # SemiImpl_JacobiPC cases with mmw options (compatible solvers only)
     for mmw in "${MMW_OPTIONS[@]}"; do
-        for solver in "native_jfnk" "petsc_ksp" "amrex_gmres" "petsc_snes"; do
+        for solver in "native_jfnk" "petsc_ksp"; do
             total=$((total + 1))
             if run_case "SemiImpl_JacobiPC_mmw${mmw}.${solver}"; then
                 succeeded=$((succeeded + 1))
@@ -639,7 +616,7 @@ run_all_cases() {
 
     # SemiImpl_ChebyshevPC cases with mmw options (compatible solvers only)
     for mmw in "${MMW_OPTIONS[@]}"; do
-        for solver in "native_jfnk" "petsc_ksp" "amrex_gmres" "petsc_snes"; do
+        for solver in "native_jfnk" "petsc_ksp"; do
             total=$((total + 1))
             if run_case "SemiImpl_ChebyshevPC_mmw${mmw}.${solver}"; then
                 succeeded=$((succeeded + 1))
@@ -649,43 +626,37 @@ run_all_cases() {
         done
     done
 
-    # SemiImpl_PETScPCASMwLU cases with mmw options (only petsc_ksp and petsc_snes)
+    # SemiImpl_PETScPCASMwLU cases with mmw options (petsc_ksp only)
     for mmw in "${MMW_OPTIONS[@]}"; do
-        for solver in "petsc_ksp" "petsc_snes"; do
-            total=$((total + 1))
-            if run_case "SemiImpl_PETScPCASMwLU_mmw${mmw}.${solver}"; then
-                succeeded=$((succeeded + 1))
-            else
-                failed_cases+=("SemiImpl_PETScPCASMwLU_mmw${mmw}.${solver}")
-            fi
-        done
+        total=$((total + 1))
+        if run_case "SemiImpl_PETScPCASMwLU_mmw${mmw}.petsc_ksp"; then
+            succeeded=$((succeeded + 1))
+        else
+            failed_cases+=("SemiImpl_PETScPCASMwLU_mmw${mmw}.petsc_ksp")
+        fi
     done
 
-    # SemiImpl_PETScPCLU cases with mmw options (only petsc_ksp and petsc_snes)
+    # SemiImpl_PETScPCLU cases with mmw options (petsc_ksp only)
     # Note: PETScPCLU only available on Dane (excluded from Matrix and Tuolumne)
     if [[ "x$LCHOST" != "xmatrix" && "x$LCHOST" != "xtuolumne" ]]; then
         for mmw in "${MMW_OPTIONS[@]}"; do
-            for solver in "petsc_ksp" "petsc_snes"; do
-                total=$((total + 1))
-                if run_case "SemiImpl_PETScPCLU_mmw${mmw}.${solver}"; then
-                    succeeded=$((succeeded + 1))
-                else
-                    failed_cases+=("SemiImpl_PETScPCLU_mmw${mmw}.${solver}")
-                fi
-            done
+            total=$((total + 1))
+            if run_case "SemiImpl_PETScPCLU_mmw${mmw}.petsc_ksp"; then
+                succeeded=$((succeeded + 1))
+            else
+                failed_cases+=("SemiImpl_PETScPCLU_mmw${mmw}.petsc_ksp")
+            fi
         done
     fi
 
-    # SemiImpl_PETScPCSOR cases with mmw options (only petsc_ksp and petsc_snes)
+    # SemiImpl_PETScPCSOR cases with mmw options (petsc_ksp only)
     for mmw in "${MMW_OPTIONS[@]}"; do
-        for solver in "petsc_ksp" "petsc_snes"; do
-            total=$((total + 1))
-            if run_case "SemiImpl_PETScPCSOR_mmw${mmw}.${solver}"; then
-                succeeded=$((succeeded + 1))
-            else
-                failed_cases+=("SemiImpl_PETScPCSOR_mmw${mmw}.${solver}")
-            fi
-        done
+        total=$((total + 1))
+        if run_case "SemiImpl_PETScPCSOR_mmw${mmw}.petsc_ksp"; then
+            succeeded=$((succeeded + 1))
+        else
+            failed_cases+=("SemiImpl_PETScPCSOR_mmw${mmw}.petsc_ksp")
+        fi
     done
 
     # ========== ThetaImpl Cases ==========
@@ -703,7 +674,7 @@ run_all_cases() {
 
     # ThetaImpl_JacobiPC cases with mmw options (compatible solvers only)
     for mmw in "${MMW_OPTIONS[@]}"; do
-        for solver in "native_jfnk" "petsc_ksp" "amrex_gmres" "petsc_snes"; do
+        for solver in "native_jfnk" "petsc_ksp"; do
             total=$((total + 1))
             if run_case "ThetaImpl_JacobiPC_mmw${mmw}.${solver}"; then
                 succeeded=$((succeeded + 1))
@@ -715,7 +686,7 @@ run_all_cases() {
 
     # ThetaImpl_ChebyshevPC cases with mmw options (compatible solvers only)
     for mmw in "${MMW_OPTIONS[@]}"; do
-        for solver in "native_jfnk" "petsc_ksp" "amrex_gmres" "petsc_snes"; do
+        for solver in "native_jfnk" "petsc_ksp"; do
             total=$((total + 1))
             if run_case "ThetaImpl_ChebyshevPC_mmw${mmw}.${solver}"; then
                 succeeded=$((succeeded + 1))
@@ -725,30 +696,26 @@ run_all_cases() {
         done
     done
 
-    # ThetaImpl_PETScPCASMwLU cases with mmw options (only petsc_ksp and petsc_snes)
+    # ThetaImpl_PETScPCASMwLU cases with mmw options (petsc_ksp only)
     for mmw in "${MMW_OPTIONS[@]}"; do
-        for solver in "petsc_ksp" "petsc_snes"; do
-            total=$((total + 1))
-            if run_case "ThetaImpl_PETScPCASMwLU_mmw${mmw}.${solver}"; then
-                succeeded=$((succeeded + 1))
-            else
-                failed_cases+=("ThetaImpl_PETScPCASMwLU_mmw${mmw}.${solver}")
-            fi
-        done
+        total=$((total + 1))
+        if run_case "ThetaImpl_PETScPCASMwLU_mmw${mmw}.petsc_ksp"; then
+            succeeded=$((succeeded + 1))
+        else
+            failed_cases+=("ThetaImpl_PETScPCASMwLU_mmw${mmw}.petsc_ksp")
+        fi
     done
 
-    # ThetaImpl_PETScPCLU cases with mmw options (only petsc_ksp and petsc_snes)
+    # ThetaImpl_PETScPCLU cases with mmw options (petsc_ksp only)
     # Note: PETScPCLU only available on Dane (excluded from Matrix and Tuolumne)
     if [[ "x$LCHOST" != "xmatrix" && "x$LCHOST" != "xtuolumne" ]]; then
         for mmw in "${MMW_OPTIONS[@]}"; do
-            for solver in "petsc_ksp" "petsc_snes"; do
-                total=$((total + 1))
-                if run_case "ThetaImpl_PETScPCLU_mmw${mmw}.${solver}"; then
-                    succeeded=$((succeeded + 1))
-                else
-                    failed_cases+=("ThetaImpl_PETScPCLU_mmw${mmw}.${solver}")
-                fi
-            done
+            total=$((total + 1))
+            if run_case "ThetaImpl_PETScPCLU_mmw${mmw}.petsc_ksp"; then
+                succeeded=$((succeeded + 1))
+            else
+                failed_cases+=("ThetaImpl_PETScPCLU_mmw${mmw}.petsc_ksp")
+            fi
         done
     fi
 
