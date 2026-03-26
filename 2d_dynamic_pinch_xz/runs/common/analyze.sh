@@ -39,8 +39,13 @@ parse_case_stats() {
         return
     fi
 
-    # Count GMRES iterations
+    # Count linear iterations (GMRES, weighted_jacobi, chebyshev, etc.)
+    # Look for GMRES patterns
     local gmres_count=$(grep -E "(GMRES: iter =|GMRES \(PETSc KSP\): iter =)" "$log_file" | wc -l)
+    # Look for generic linear solver iterations (for weighted_jacobi, chebyshev, etc.)
+    local linear_count=$(grep -E "Linear solver: iter =" "$log_file" | wc -l)
+    # Total linear iterations
+    local total_linear=$((gmres_count + linear_count))
 
     # Count Newton iterations (excluding iteration=0)
     local newton_native=$(grep "Newton: iteration =" "$log_file" | grep -v "iteration =   0" | wc -l)
@@ -51,22 +56,22 @@ parse_case_stats() {
     local timestep_count=$(grep -c "STEP .* ends\." "$log_file")
 
     # Calculate averages (rounded to nearest integer)
-    local avg_gmres_per_step avg_newton_per_step avg_gmres_per_newton
+    local avg_linear_per_step avg_newton_per_step avg_linear_per_newton
     if [[ $timestep_count -gt 0 ]]; then
-        avg_gmres_per_step=$(printf %.0f $(echo "scale=4; $gmres_count / $timestep_count" | bc))
+        avg_linear_per_step=$(printf %.0f $(echo "scale=4; $total_linear / $timestep_count" | bc))
         avg_newton_per_step=$(printf %.0f $(echo "scale=4; $newton_count / $timestep_count" | bc))
     else
-        avg_gmres_per_step="N/A"
+        avg_linear_per_step="N/A"
         avg_newton_per_step="N/A"
     fi
 
     if [[ $newton_count -gt 0 ]]; then
-        avg_gmres_per_newton=$(printf %.0f $(echo "scale=4; $gmres_count / $newton_count" | bc))
+        avg_linear_per_newton=$(printf %.0f $(echo "scale=4; $total_linear / $newton_count" | bc))
     else
-        avg_gmres_per_newton="N/A"
+        avg_linear_per_newton="N/A"
     fi
 
-    echo "$gmres_count $newton_count $avg_gmres_per_step $avg_newton_per_step $avg_gmres_per_newton"
+    echo "$total_linear $newton_count $avg_linear_per_step $avg_newton_per_step $avg_linear_per_newton"
 }
 
 # Function to find case directory
@@ -98,31 +103,43 @@ Analysis generated on: $(date)
 ## Semi-Implicit
 ---------------
 
-| PC     | Solver      | MMW | GMRES | Newton | GMRES/Step | Newton/Step | GMRES/Newton |
-|--------|-------------|-----|-------|--------|------------|-------------|--------------|
+| PC     | Solver          | MMW | Linear | Newton | Linear/Step | Newton/Step | Linear/Newton |
+|--------|-----------------|-----|--------|--------|-------------|-------------|---------------|
 EOF
 
 # Process SemiImpl cases
-# Order: noPC, JacobiPC (mmw 0,1,2), PETScPCASMwLU (mmw 0,1,2), PETScPCLU (mmw 0,1,2), PETScPCSOR (mmw 0,1,2)
+# Order: noPC, JacobiPC (mmw 0,1,2), ChebyshevPC (mmw 0,1,2), PETScPCASMwLU (mmw 0,1,2), PETScPCLU (mmw 0,1,2), PETScPCSOR (mmw 0,1,2)
 
-for solver in native_jfnk petsc_ksp petsc_snes; do
+for solver in native_jfnk petsc_ksp amrex_gmres weighted_jacobi chebyshev petsc_snes; do
     case_dir=$(find_case_dir "SemiImpl" "noPC" "none" "$solver")
     if [[ -n "$case_dir" ]]; then
         echo "Processing: SemiImpl noPC $solver"
         stats=($(parse_case_stats "$case_dir"))
-        printf "| %-6s | %-11s | %-3s | %-5s | %-6s | %-10s | %-11s | %-12s |\n" \
+        printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s |\n" \
             "None" "$solver" "--" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
     fi
 done
 
 for mmw in 0 1 2; do
-    for solver in native_jfnk petsc_ksp petsc_snes; do
+    for solver in native_jfnk petsc_ksp amrex_gmres petsc_snes; do
         case_dir=$(find_case_dir "SemiImpl" "JacobiPC" "$mmw" "$solver")
         if [[ -n "$case_dir" ]]; then
             echo "Processing: SemiImpl JacobiPC mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-6s | %-11s | %-3s | %-5s | %-6s | %-10s | %-11s | %-12s |\n" \
+            printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s |\n" \
                 "Jacobi" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
+        fi
+    done
+done
+
+for mmw in 0 1 2; do
+    for solver in native_jfnk petsc_ksp amrex_gmres petsc_snes; do
+        case_dir=$(find_case_dir "SemiImpl" "ChebyshevPC" "$mmw" "$solver")
+        if [[ -n "$case_dir" ]]; then
+            echo "Processing: SemiImpl ChebyshevPC mmw$mmw $solver"
+            stats=($(parse_case_stats "$case_dir"))
+            printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s |\n" \
+                "Cheby" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
         fi
     done
 done
@@ -133,23 +150,26 @@ for mmw in 0 1 2; do
         if [[ -n "$case_dir" ]]; then
             echo "Processing: SemiImpl PETScPCASMwLU mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-6s | %-11s | %-3s | %-5s | %-6s | %-10s | %-11s | %-12s |\n" \
+            printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s |\n" \
                 "ASM-LU" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
         fi
     done
 done
 
-for mmw in 0 1 2; do
-    for solver in petsc_ksp petsc_snes; do
-        case_dir=$(find_case_dir "SemiImpl" "PETScPCLU" "$mmw" "$solver")
-        if [[ -n "$case_dir" ]]; then
-            echo "Processing: SemiImpl PETScPCLU mmw$mmw $solver"
-            stats=($(parse_case_stats "$case_dir"))
-            printf "| %-6s | %-11s | %-3s | %-5s | %-6s | %-10s | %-11s | %-12s |\n" \
-                "LU" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
-        fi
+# PETScPCLU only available on Dane (excluded from Matrix and Tuolumne)
+if [[ "x$platform" != "xmatrix" && "x$platform" != "xtuolumne" ]]; then
+    for mmw in 0 1 2; do
+        for solver in petsc_ksp petsc_snes; do
+            case_dir=$(find_case_dir "SemiImpl" "PETScPCLU" "$mmw" "$solver")
+            if [[ -n "$case_dir" ]]; then
+                echo "Processing: SemiImpl PETScPCLU mmw$mmw $solver"
+                stats=($(parse_case_stats "$case_dir"))
+                printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s |\n" \
+                    "LU" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
+            fi
+        done
     done
-done
+fi
 
 for mmw in 0 1 2; do
     for solver in petsc_ksp petsc_snes; do
@@ -157,7 +177,7 @@ for mmw in 0 1 2; do
         if [[ -n "$case_dir" ]]; then
             echo "Processing: SemiImpl PETScPCSOR mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-6s | %-11s | %-3s | %-5s | %-6s | %-10s | %-11s | %-12s |\n" \
+            printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s |\n" \
                 "SOR" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
         fi
     done
@@ -169,31 +189,43 @@ cat >> "$report_file" <<EOF
 ## Theta-Implicit
 ----------------
 
-| PC     | Solver      | MMW | GMRES | Newton | GMRES/Step | Newton/Step | GMRES/Newton |
-|--------|-------------|-----|-------|--------|------------|-------------|--------------|
+| PC     | Solver          | MMW | Linear | Newton | Linear/Step | Newton/Step | Linear/Newton |
+|--------|-----------------|-----|--------|--------|-------------|-------------|---------------|
 EOF
 
 # Process ThetaImpl cases
-# Order: noPC, JacobiPC (mmw 0,1,2), PETScPCASMwLU (mmw 0,1,2), PETScPCLU (mmw 0,1,2)
+# Order: noPC, JacobiPC (mmw 0,1,2), ChebyshevPC (mmw 0,1,2), PETScPCASMwLU (mmw 0,1,2), PETScPCLU (mmw 0,1,2)
 
-for solver in native_jfnk petsc_ksp petsc_snes; do
+for solver in native_jfnk petsc_ksp amrex_gmres weighted_jacobi chebyshev petsc_snes; do
     case_dir=$(find_case_dir "ThetaImpl" "noPC" "none" "$solver")
     if [[ -n "$case_dir" ]]; then
         echo "Processing: ThetaImpl noPC $solver"
         stats=($(parse_case_stats "$case_dir"))
-        printf "| %-6s | %-11s | %-3s | %-5s | %-6s | %-10s | %-11s | %-12s |\n" \
+        printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s |\n" \
             "None" "$solver" "--" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
     fi
 done
 
 for mmw in 0 1 2; do
-    for solver in native_jfnk petsc_ksp petsc_snes; do
+    for solver in native_jfnk petsc_ksp amrex_gmres petsc_snes; do
         case_dir=$(find_case_dir "ThetaImpl" "JacobiPC" "$mmw" "$solver")
         if [[ -n "$case_dir" ]]; then
             echo "Processing: ThetaImpl JacobiPC mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-6s | %-11s | %-3s | %-5s | %-6s | %-10s | %-11s | %-12s |\n" \
+            printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s |\n" \
                 "Jacobi" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
+        fi
+    done
+done
+
+for mmw in 0 1 2; do
+    for solver in native_jfnk petsc_ksp amrex_gmres petsc_snes; do
+        case_dir=$(find_case_dir "ThetaImpl" "ChebyshevPC" "$mmw" "$solver")
+        if [[ -n "$case_dir" ]]; then
+            echo "Processing: ThetaImpl ChebyshevPC mmw$mmw $solver"
+            stats=($(parse_case_stats "$case_dir"))
+            printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s |\n" \
+                "Cheby" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
         fi
     done
 done
@@ -204,37 +236,40 @@ for mmw in 0 1 2; do
         if [[ -n "$case_dir" ]]; then
             echo "Processing: ThetaImpl PETScPCASMwLU mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-6s | %-11s | %-3s | %-5s | %-6s | %-10s | %-11s | %-12s |\n" \
+            printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s |\n" \
                 "ASM-LU" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
         fi
     done
 done
 
-for mmw in 0 1 2; do
-    for solver in petsc_ksp petsc_snes; do
-        case_dir=$(find_case_dir "ThetaImpl" "PETScPCLU" "$mmw" "$solver")
-        if [[ -n "$case_dir" ]]; then
-            echo "Processing: ThetaImpl PETScPCLU mmw$mmw $solver"
-            stats=($(parse_case_stats "$case_dir"))
-            printf "| %-6s | %-11s | %-3s | %-5s | %-6s | %-10s | %-11s | %-12s |\n" \
-                "LU" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
-        fi
+# PETScPCLU only available on Dane (excluded from Matrix and Tuolumne)
+if [[ "x$platform" != "xmatrix" && "x$platform" != "xtuolumne" ]]; then
+    for mmw in 0 1 2; do
+        for solver in petsc_ksp petsc_snes; do
+            case_dir=$(find_case_dir "ThetaImpl" "PETScPCLU" "$mmw" "$solver")
+            if [[ -n "$case_dir" ]]; then
+                echo "Processing: ThetaImpl PETScPCLU mmw$mmw $solver"
+                stats=($(parse_case_stats "$case_dir"))
+                printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s |\n" \
+                    "LU" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" >> "$report_file"
+            fi
+        done
     done
-done
+fi
 
 # Add footer
 cat >> "$report_file" <<EOF
 
 ## Notes
 
-- **PC**: Preconditioner (None, Jacobi, ASM-LU, LU, SOR)
-- **Solver**: Nonlinear/linear solver (native_jfnk, petsc_ksp, petsc_snes)
+- **PC**: Preconditioner (None, Jacobi, Cheby=Chebyshev, ASM-LU, LU, SOR)
+- **Solver**: Nonlinear/linear solver (native_jfnk, petsc_ksp, amrex_gmres, weighted_jacobi, chebyshev, petsc_snes)
 - **MMW**: Mass matrix width (-- = not applicable)
-- **Total GMRES**: Total GMRES iterations across all timesteps
-- **Total Newton**: Total Newton iterations across all timesteps (excluding iteration 0)
-- **Avg GMRES/Step**: Average GMRES iterations per timestep
-- **Avg Newton/Step**: Average Newton iterations per timestep
-- **Avg GMRES/Newton**: Average GMRES iterations per Newton iteration
+- **Linear**: Total linear solver iterations across all timesteps (GMRES, weighted Jacobi, Chebyshev, etc.)
+- **Newton**: Total Newton iterations across all timesteps (excluding iteration 0)
+- **Linear/Step**: Average linear iterations per timestep
+- **Newton/Step**: Average Newton iterations per timestep
+- **Linear/Newton**: Average linear iterations per Newton iteration
 
 EOF
 
