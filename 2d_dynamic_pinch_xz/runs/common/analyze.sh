@@ -59,6 +59,9 @@ parse_case_stats() {
     local walltime=$(grep -E "TotalTime|Total Time" "$log_file" | tail -1 | awk '{print $NF}')
     if [[ -z "$walltime" ]]; then
         walltime="N/A"
+    else
+        # Format to 1 decimal place
+        walltime=$(printf "%.1f" "$walltime" 2>/dev/null || echo "N/A")
     fi
 
     # Calculate averages (rounded to nearest integer)
