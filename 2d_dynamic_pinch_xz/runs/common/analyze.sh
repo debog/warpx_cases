@@ -42,10 +42,14 @@ parse_case_stats() {
     # Count linear iterations (GMRES, weighted_jacobi, chebyshev, etc.)
     # Look for GMRES patterns
     local gmres_count=$(grep -E "(GMRES: iter =|GMRES \(PETSc KSP\): iter =)" "$log_file" | wc -l)
-    # Look for generic linear solver iterations (for weighted_jacobi, chebyshev, etc.)
+    # Look for weighted_jacobi iterations
+    local wjac_count=$(grep -E "weighted_jacobi: iter =" "$log_file" | wc -l)
+    # Look for chebyshev iterations
+    local cheb_count=$(grep -E "chebyshev: iter =" "$log_file" | wc -l)
+    # Look for generic linear solver iterations (fallback)
     local linear_count=$(grep -E "Linear solver: iter =" "$log_file" | wc -l)
     # Total linear iterations
-    local total_linear=$((gmres_count + linear_count))
+    local total_linear=$((gmres_count + wjac_count + cheb_count + linear_count))
 
     # Count Newton iterations (excluding iteration=0)
     local newton_native=$(grep "Newton: iteration =" "$log_file" | grep -v "iteration =   0" | wc -l)
