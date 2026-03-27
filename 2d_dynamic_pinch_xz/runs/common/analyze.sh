@@ -116,8 +116,8 @@ Analysis generated on: $(date)
 ## Semi-Implicit (4 MPI ranks on Dane)
 ---------------
 
-| PC     | Solver          | MMW | Linear | Newton | Linear/Step | Newton/Step | Linear/Newton | Walltime (s) |
-|--------|-----------------|-----|--------|--------|-------------|-------------|---------------|--------------|
+| PC     | Solver          | MMW | Linear/Step | Newton/Step | Linear/Newton | Walltime (s) |
+|--------|-----------------|-----|-------------|-------------|---------------|--------------|
 EOF
 
 # Process SemiImpl cases
@@ -128,8 +128,8 @@ for solver in native_jfnk petsc_ksp weighted_jacobi chebyshev; do
     if [[ -n "$case_dir" ]]; then
         echo "Processing: SemiImpl noPC $solver"
         stats=($(parse_case_stats "$case_dir"))
-        printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s | %-12s |\n" \
-            "None" "$solver" "--" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
+        printf "| %-6s | %-15s | %-3s | %-11s | %-11s | %-13s | %-12s |\n" \
+            "None" "$solver" "--" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
     fi
 done
 
@@ -139,8 +139,8 @@ for mmw in 0 1 2; do
         if [[ -n "$case_dir" ]]; then
             echo "Processing: SemiImpl JacobiPC mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s | %-12s |\n" \
-                "Jacobi" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
+            printf "| %-6s | %-15s | %-3s | %-11s | %-11s | %-13s | %-12s |\n" \
+                "Jacobi" "$solver" "$mmw" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
         fi
     done
 done
@@ -151,8 +151,8 @@ for mmw in 0 1 2; do
         if [[ -n "$case_dir" ]]; then
             echo "Processing: SemiImpl ChebyshevPC mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s | %-12s |\n" \
-                "Cheby" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
+            printf "| %-6s | %-15s | %-3s | %-11s | %-11s | %-13s | %-12s |\n" \
+                "Cheby" "$solver" "$mmw" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
         fi
     done
 done
@@ -162,8 +162,8 @@ for mmw in 0 1 2; do
     if [[ -n "$case_dir" ]]; then
         echo "Processing: SemiImpl PETScPCASMwLU mmw$mmw petsc_ksp"
         stats=($(parse_case_stats "$case_dir"))
-        printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s | %-12s |\n" \
-            "ASM-LU" "petsc_ksp" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
+        printf "| %-6s | %-15s | %-3s | %-11s | %-11s | %-13s | %-12s |\n" \
+            "ASM-LU" "petsc_ksp" "$mmw" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
     fi
 done
 
@@ -174,8 +174,8 @@ if [[ "x$platform" != "xmatrix" && "x$platform" != "xtuolumne" ]]; then
         if [[ -n "$case_dir" ]]; then
             echo "Processing: SemiImpl PETScPCLU mmw$mmw petsc_ksp"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s | %-12s |\n" \
-                "LU" "petsc_ksp" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
+            printf "| %-6s | %-15s | %-3s | %-11s | %-11s | %-13s | %-12s |\n" \
+                "LU" "petsc_ksp" "$mmw" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
         fi
     done
 fi
@@ -185,8 +185,8 @@ for mmw in 0 1 2; do
     if [[ -n "$case_dir" ]]; then
         echo "Processing: SemiImpl PETScPCSOR mmw$mmw petsc_ksp"
         stats=($(parse_case_stats "$case_dir"))
-        printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s | %-12s |\n" \
-            "SOR" "petsc_ksp" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
+        printf "| %-6s | %-15s | %-3s | %-11s | %-11s | %-13s | %-12s |\n" \
+            "SOR" "petsc_ksp" "$mmw" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
     fi
 done
 
@@ -196,8 +196,8 @@ cat >> "$report_file" <<EOF
 ## Theta-Implicit (4 MPI ranks on Dane)
 ----------------
 
-| PC     | Solver          | MMW | Linear | Newton | Linear/Step | Newton/Step | Linear/Newton | Walltime (s) |
-|--------|-----------------|-----|--------|--------|-------------|-------------|---------------|--------------|
+| PC     | Solver          | MMW | Linear/Step | Newton/Step | Linear/Newton | Walltime (s) |
+|--------|-----------------|-----|-------------|-------------|---------------|--------------|
 EOF
 
 # Process ThetaImpl cases
@@ -208,8 +208,8 @@ for solver in native_jfnk petsc_ksp weighted_jacobi chebyshev; do
     if [[ -n "$case_dir" ]]; then
         echo "Processing: ThetaImpl noPC $solver"
         stats=($(parse_case_stats "$case_dir"))
-        printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s | %-12s |\n" \
-            "None" "$solver" "--" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
+        printf "| %-6s | %-15s | %-3s | %-11s | %-11s | %-13s | %-12s |\n" \
+            "None" "$solver" "--" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
     fi
 done
 
@@ -219,8 +219,8 @@ for mmw in 0 1 2; do
         if [[ -n "$case_dir" ]]; then
             echo "Processing: ThetaImpl JacobiPC mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s | %-12s |\n" \
-                "Jacobi" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
+            printf "| %-6s | %-15s | %-3s | %-11s | %-11s | %-13s | %-12s |\n" \
+                "Jacobi" "$solver" "$mmw" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
         fi
     done
 done
@@ -231,8 +231,8 @@ for mmw in 0 1 2; do
         if [[ -n "$case_dir" ]]; then
             echo "Processing: ThetaImpl ChebyshevPC mmw$mmw $solver"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s | %-12s |\n" \
-                "Cheby" "$solver" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
+            printf "| %-6s | %-15s | %-3s | %-11s | %-11s | %-13s | %-12s |\n" \
+                "Cheby" "$solver" "$mmw" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
         fi
     done
 done
@@ -242,8 +242,8 @@ for mmw in 0 1 2; do
     if [[ -n "$case_dir" ]]; then
         echo "Processing: ThetaImpl PETScPCASMwLU mmw$mmw petsc_ksp"
         stats=($(parse_case_stats "$case_dir"))
-        printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s | %-12s |\n" \
-            "ASM-LU" "petsc_ksp" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
+        printf "| %-6s | %-15s | %-3s | %-11s | %-11s | %-13s | %-12s |\n" \
+            "ASM-LU" "petsc_ksp" "$mmw" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
     fi
 done
 
@@ -254,8 +254,8 @@ if [[ "x$platform" != "xmatrix" && "x$platform" != "xtuolumne" ]]; then
         if [[ -n "$case_dir" ]]; then
             echo "Processing: ThetaImpl PETScPCLU mmw$mmw petsc_ksp"
             stats=($(parse_case_stats "$case_dir"))
-            printf "| %-6s | %-15s | %-3s | %-6s | %-6s | %-11s | %-11s | %-13s | %-12s |\n" \
-                "LU" "petsc_ksp" "$mmw" "${stats[0]}" "${stats[1]}" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
+            printf "| %-6s | %-15s | %-3s | %-11s | %-11s | %-13s | %-12s |\n" \
+                "LU" "petsc_ksp" "$mmw" "${stats[2]}" "${stats[3]}" "${stats[4]}" "${stats[5]}" >> "$report_file"
         fi
     done
 fi
@@ -268,11 +268,10 @@ cat >> "$report_file" <<EOF
 - **PC**: Preconditioner (None, Jacobi, Cheby=Chebyshev, ASM-LU, LU, SOR)
 - **Solver**: Nonlinear/linear solver (native_jfnk, petsc_ksp, weighted_jacobi, chebyshev)
 - **MMW**: Mass matrix width (-- = not applicable)
-- **Linear**: Total linear solver iterations across all timesteps (GMRES, weighted Jacobi, Chebyshev, etc.)
-- **Newton**: Total Newton iterations across all timesteps (excluding iteration 0)
 - **Linear/Step**: Average linear iterations per timestep
 - **Newton/Step**: Average Newton iterations per timestep
 - **Linear/Newton**: Average linear iterations per Newton iteration
+- **Walltime (s)**: Total execution time in seconds
 
 EOF
 
