@@ -43,7 +43,6 @@ boundary.field_lo = none periodic
 boundary.field_hi = pec_insulator periodic
 boundary.particle_lo = none periodic
 boundary.particle_hi = absorbing periodic
-boundary.verboncoeur_axis_correction = false
 
 insulator.area_x_hi(y,z) = (-1.0 <= z and z <= 1.0)
 insulator.Bz_x_hi(y,z,t) = min(t/rise_time,1)*0.0
@@ -89,7 +88,6 @@ implicit_evolve.use_mass_matrices_pc = true
 
 algo.particle_pusher = "higuera"
 particles.crop_on_PEC_boundary = false
-particles.max_grid_crossings = 1
 algo.particle_shape = 2
 algo.current_deposition = "villasenor"
 
