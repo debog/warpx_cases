@@ -1,0 +1,1858 @@
+Initializing AMReX (25.10-19-g546a888ef041)...
+MPI initialized with 4 MPI processes
+MPI initialized with thread support level 3
+OMP initialized with 1 OMP threads
+AMReX (25.10-19-g546a888ef041) initialized
+Initialized PETSc.
+WarpX (25.10-95-g70625705c66d)
+
+                                   ___
+    __        __             ___  /  /
+    \ \      / /_ _ _ __ _ __\  \/  /
+     \ \ /\ / / _` | '__| '_ \\    /
+      \ V  V / (_| | |  | |_) /    \
+       \_/\_/ \__,_|_|  | .__/__/\  \
+                        |_|       \__\
+
+Level 0: dt = 1.772590712e-18 ; dz = 2.075817682e-10
+Defined DOF object for linear solves (total DOFs = 776).
+KSP_impl: Initialized PETSc's KSP solver.
+
+Grids Summary:
+  Level 0   4 grids  256 cells  100 % of domain
+            smallest grid: 64  biggest grid: 64
+
+-------------------------------------------------------------------------------
+--------------------------- MAIN EM PIC PARAMETERS ----------------------------
+-------------------------------------------------------------------------------
+Precision:            | DOUBLE
+Particle precision:   | DOUBLE
+Geometry:             | 1D (Z)
+Operation mode:       | Electromagnetic
+                      | - vacuum
+-------------------------------------------------------------------------------
+Current Deposition:   | Villasenor 
+Guard cells           | - ng_alloc_J  = (2)
+ (allocated for J)    | 
+Particle Pusher:      | Boris 
+Charge Deposition:    | standard 
+Field Gathering:      | energy-conserving 
+Particle Shape Factor:| 2
+-------------------------------------------------------------------------------
+Maxwell Solver:       | Yee 
+-------------------------------------------------------------------------------
+
+-----------------------------------------------------------
+----------- THETA IMPLICIT EM SOLVER PARAMETERS -----------
+-----------------------------------------------------------
+Time-bias parameter theta:           0.5
+max particle iterations:             21
+particle relative tolerance:         1e-12
+use particle suborbits:              false
+print unconverged particle details:  false
+Nonlinear solver type:               newton
+use mass matrices:                   false
+Newton verbose:             true
+Newton max iterations:      100
+Newton relative tolerance:  0.0001
+Newton absolute tolerance:  0
+Newton require convergence: false
+Newton linear solver:       petsc_ksp
+Linear solver (petsc_ksp) verbose:            2
+Linear solver (petsc_ksp) restart length:     30
+Linear solver (petsc_ksp) max iterations:     100
+Linear solver (petsc_ksp) relative tolerance: 1e-06
+Linear solver (petsc_ksp) absolute tolerance: 0
+Preconditioner type:      pc_petsc
+pc_petsc verbose:                   true
+pc_petsc pc_diagonal_only:          false
+pc_petsc pc_mass_matrix_width:      -1
+pc_petsc pc_mass_matrix_include_ij: false
+-----------------------------------------------------------
+
+For full input parameters, see the file: warpx_used_inputs
+
+STEP 1 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.47099e+11 (abs.), 1.00000e+00 (rel.)
+KSP_impl: Using PETSc preconditioner - lu.
+GMRES (PETSc KSP): iter = 0, residual = 2.47318287e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 6053462233, 0.02447640369 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2313082.65, 9.352655149e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 528.1257768, 2.135409327e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=528.1257768).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.19368e+04 (abs.), 2.91125e-07 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+
+
+**** WARNINGS ******************************************************************
+* GLOBAL warning list  after  [ FIRST STEP ]
+*
+* --> [!! ] [MatrixPC] [raised 4 times]
+*     pc_mass_matrix_width is nonnegative but unable to get mass matrices from
+*     operator.
+*     setting m_pc_mass_matrix_width = -1 (no mass matrix in PC).
+*     @ Raised by: ALL
+*
+********************************************************************************
+
+STEP 1 ends. TIME = 1.772590712e-18 DT = 1.772590712e-18
+Evolve time = 0.011734278 s; This step = 0.011734278 s; Avg. per step = 0.011734278 s
+
+STEP 2 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 3.34339e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 3.355808975e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.768085181e+10, 0.05268730115 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1387208.373, 4.133752497e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 739.1133243, 2.202489265e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=739.1133243).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 5.18692e+04 (abs.), 1.55140e-07 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 2 ends. TIME = 3.545181425e-18 DT = 1.772590712e-18
+Evolve time = 0.019001536 s; This step = 0.007267258 s; Avg. per step = 0.009500768 s
+
+STEP 3 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.76457e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.768395277e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 7903162485, 0.0285478109 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2288886.531, 8.26791806e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 874.1224566, 3.157505953e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=874.1224566).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 2.70408e+04 (abs.), 9.78121e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 3 ends. TIME = 5.317772137e-18 DT = 1.772590712e-18
+Evolve time = 0.025947217 s; This step = 0.006945681 s; Avg. per step = 0.008649072333 s
+
+STEP 4 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.52380e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.529490587e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 6839808129, 0.02704025927 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1570754.178, 6.209764868e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 472.6283436, 1.868472435e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=472.6283436).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 1.80533e+04 (abs.), 7.15323e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 4 ends. TIME = 7.09036285e-18 DT = 1.772590712e-18
+Evolve time = 0.032634487 s; This step = 0.00668727 s; Avg. per step = 0.00815862175 s
+
+STEP 5 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.67066e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.675222205e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 4411276636, 0.01648938406 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3345053.341, 1.250383365e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 179.820341, 6.721697385e-10 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=179.820341).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 1.49612e+04 (abs.), 5.60207e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 5 ends. TIME = 8.862953562e-18 DT = 1.772590712e-18
+Evolve time = 0.039325377 s; This step = 0.00669089 s; Avg. per step = 0.0078650754 s
+
+STEP 6 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.89423e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.900101736e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 9205599899, 0.03174233436 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3240526.5, 1.117383731e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 1271.413211, 4.38402969e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=1271.413211).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 1.23272e+04 (abs.), 4.25923e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 6 ends. TIME = 1.063554427e-17 DT = 1.772590712e-18
+Evolve time = 0.046074893 s; This step = 0.006749516 s; Avg. per step = 0.007679148833 s
+
+STEP 7 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.84446e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.84512958e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 7898451314, 0.02776130609 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2927693.338, 1.029019331e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 967.4241415, 3.400281478e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=967.4241415).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 9.92225e+03 (abs.), 3.48827e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 7 ends. TIME = 1.240813499e-17 DT = 1.772590712e-18
+Evolve time = 0.052877444 s; This step = 0.006802551 s; Avg. per step = 0.007553920571 s
+
+STEP 8 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.37908e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.388481497e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.41164304e+10, 0.1009697183 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1129388.409, 4.728478787e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 877.9219019, 3.675648745e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=877.9219019).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.69217e+03 (abs.), 3.65359e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 8 ends. TIME = 1.41807257e-17 DT = 1.772590712e-18
+Evolve time = 0.059653299 s; This step = 0.006775855 s; Avg. per step = 0.007456662375 s
+
+STEP 9 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.47011e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.474874511e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.76406626e+10, 0.07127901847 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3597049.025, 1.453426834e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 369.0028312, 1.490996128e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=369.0028312).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.98667e+03 (abs.), 2.82849e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 9 ends. TIME = 1.595331641e-17 DT = 1.772590712e-18
+Evolve time = 0.066353015 s; This step = 0.006699716 s; Avg. per step = 0.007372557222 s
+
+STEP 10 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.80282e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.803790098e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.18283342e+10, 0.04218694619 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1278007.741, 4.55814343e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 2116.140063, 7.547426836e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=2116.140063).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.15535e+03 (abs.), 2.55291e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 10 ends. TIME = 1.772590712e-17 DT = 1.772590712e-18
+Evolve time = 0.073227892 s; This step = 0.006874877 s; Avg. per step = 0.0073227892 s
+
+STEP 11 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.53990e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.550826989e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.940387017e+10, 0.115271911 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 11882998.7, 4.658488699e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 408.9150035, 1.603068359e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=408.9150035).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 5.94780e+03 (abs.), 2.34175e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 11 ends. TIME = 1.949849784e-17 DT = 1.772590712e-18
+Evolve time = 0.079867345 s; This step = 0.006639453 s; Avg. per step = 0.007260667727 s
+
+STEP 12 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.41080e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.41864299e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.306275902e+10, 0.09535412674 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 7980984.013, 3.299777621e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 422.6194981, 1.74734138e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=422.6194981).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 5.34813e+03 (abs.), 2.21840e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 12 ends. TIME = 2.127108855e-17 DT = 1.772590712e-18
+Evolve time = 0.086564457 s; This step = 0.006697112 s; Avg. per step = 0.00721370475 s
+
+STEP 13 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.36233e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.365468037e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.171548439e+10, 0.0495271304 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3472148.668, 1.467848482e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 428.958382, 1.813418635e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=428.958382).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 4.59055e+03 (abs.), 1.94323e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 13 ends. TIME = 2.304367926e-17 DT = 1.772590712e-18
+Evolve time = 0.093165611 s; This step = 0.006601154 s; Avg. per step = 0.007166585462 s
+
+STEP 14 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.55415e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.557356714e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.003354951e+10, 0.07833693832 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 5827820.745, 2.278845463e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 308.5185251, 1.206396134e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=308.5185251).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 4.87080e+03 (abs.), 1.90702e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 14 ends. TIME = 2.481626997e-17 DT = 1.772590712e-18
+Evolve time = 0.099801712 s; This step = 0.006636101 s; Avg. per step = 0.007128693714 s
+
+STEP 15 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.61344e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.630784494e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 3.278185031e+10, 0.1246086496 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 8373917.048, 3.183049417e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 570.2553302, 2.167624644e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=570.2553302).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 4.42779e+03 (abs.), 1.69424e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 15 ends. TIME = 2.658886069e-17 DT = 1.772590712e-18
+Evolve time = 0.106401838 s; This step = 0.006600126 s; Avg. per step = 0.007093455867 s
+
+STEP 16 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.34186e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.346469681e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.813041885e+10, 0.0772667936 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1225767.107, 5.223877885e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 706.1499621, 3.009414389e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=706.1499621).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 4.84954e+03 (abs.), 2.07081e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 16 ends. TIME = 2.83614514e-17 DT = 1.772590712e-18
+Evolve time = 0.112754599 s; This step = 0.006352761 s; Avg. per step = 0.007047162438 s
+
+STEP 17 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.45082e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.466352767e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.232290896e+10, 0.09050979751 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 326428.0158, 1.323525248e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 307.6571333, 1.24741739e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=307.6571333).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 5.00223e+03 (abs.), 2.04104e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 17 ends. TIME = 3.013404211e-17 DT = 1.772590712e-18
+Evolve time = 0.119359906 s; This step = 0.006605307 s; Avg. per step = 0.007021170941 s
+
+STEP 18 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.56100e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.573336674e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.675249528e+10, 0.1039603389 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2469982.389, 9.598364699e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 448.6275434, 1.743369019e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=448.6275434).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 5.29849e+03 (abs.), 2.06891e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 18 ends. TIME = 3.190663282e-17 DT = 1.772590712e-18
+Evolve time = 0.126016098 s; This step = 0.006656192 s; Avg. per step = 0.007000894333 s
+
+STEP 19 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.65697e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.660924397e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.319628097e+10, 0.08717376939 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 7036977.446, 2.644561211e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 440.1369585, 1.6540754e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=440.1369585).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 5.04840e+03 (abs.), 1.90006e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 19 ends. TIME = 3.367922354e-17 DT = 1.772590712e-18
+Evolve time = 0.132415785 s; This step = 0.006399687 s; Avg. per step = 0.006969251842 s
+
+STEP 20 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.59093e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.593808434e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.552458579e+10, 0.05985247631 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2761967.896, 1.064831103e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 1174.323346, 4.5274097e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=1174.323346).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.13026e+03 (abs.), 2.36605e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 20 ends. TIME = 3.545181425e-17 DT = 1.772590712e-18
+Evolve time = 0.138912612 s; This step = 0.006496827 s; Avg. per step = 0.0069456306 s
+
+STEP 21 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.53236e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.541420823e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.569649239e+10, 0.06176266537 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 6942631.068, 2.731791211e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 610.3310457, 2.401534764e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=610.3310457).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 5.63668e+03 (abs.), 2.22586e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 21 ends. TIME = 3.722440496e-17 DT = 1.772590712e-18
+Evolve time = 0.14554173 s; This step = 0.006629118 s; Avg. per step = 0.006930558571 s
+
+STEP 22 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.68588e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.687092783e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.469784801e+10, 0.05469795497 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3663747.124, 1.363461339e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 827.4103916, 3.079202909e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=827.4103916).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.51116e+03 (abs.), 2.42422e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 22 ends. TIME = 3.899699567e-17 DT = 1.772590712e-18
+Evolve time = 0.152203017 s; This step = 0.006661287 s; Avg. per step = 0.006918318955 s
+
+STEP 23 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.80669e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.810400195e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 6435719186, 0.02289965392 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2124135.46, 7.55812451e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 899.7809197, 3.201611362e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=899.7809197).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.30905e+03 (abs.), 2.60415e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 23 ends. TIME = 4.076958639e-17 DT = 1.772590712e-18
+Evolve time = 0.158630406 s; This step = 0.006427389 s; Avg. per step = 0.006896974174 s
+
+STEP 24 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.69260e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.699814078e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.150872823e+10, 0.04262785471 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 12300370.54, 4.556006519e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 794.9987441, 2.944642561e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=794.9987441).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.45755e+03 (abs.), 2.76965e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 24 ends. TIME = 4.25421771e-17 DT = 1.772590712e-18
+Evolve time = 0.16502048 s; This step = 0.006390074 s; Avg. per step = 0.006875853333 s
+
+STEP 25 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.70053e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.703112406e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.309638866e+10, 0.04844929359 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 4743642.202, 1.754881592e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 534.1336425, 1.975994936e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=534.1336425).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.04785e+03 (abs.), 2.98010e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 25 ends. TIME = 4.431476781e-17 DT = 1.772590712e-18
+Evolve time = 0.171495767 s; This step = 0.006475287 s; Avg. per step = 0.00685983068 s
+
+STEP 26 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.73114e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.739248361e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.556205744e+10, 0.05681141461 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 375025.6937, 1.369082479e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 2120.75544, 7.742107178e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=2120.75544).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.63533e+03 (abs.), 2.79566e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 26 ends. TIME = 4.608735852e-17 DT = 1.772590712e-18
+Evolve time = 0.177792322 s; This step = 0.006296555 s; Avg. per step = 0.006838166231 s
+
+STEP 27 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.87581e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.877594656e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.159564649e+10, 0.04029631646 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 4931653.183, 1.713810933e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 1191.006565, 4.138896221e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=1191.006565).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 9.28269e+03 (abs.), 3.22785e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 27 ends. TIME = 4.785994923e-17 DT = 1.772590712e-18
+Evolve time = 0.184174256 s; This step = 0.006381934 s; Avg. per step = 0.006821268741 s
+
+STEP 28 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.83552e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.849806009e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.894209397e+10, 0.1015581197 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3868436.379, 1.357438495e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 414.6669951, 1.455070955e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=414.6669951).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 9.08419e+03 (abs.), 3.20371e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 28 ends. TIME = 4.963253995e-17 DT = 1.772590712e-18
+Evolve time = 0.190588431 s; This step = 0.006414175 s; Avg. per step = 0.006806729679 s
+
+STEP 29 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.74340e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.746987601e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.113342767e+10, 0.07693310177 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1340017, 4.878132684e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 1247.686651, 4.542017775e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=1247.686651).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.97657e+03 (abs.), 2.90755e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 29 ends. TIME = 5.140513066e-17 DT = 1.772590712e-18
+Evolve time = 0.197006908 s; This step = 0.006418477 s; Avg. per step = 0.006793341655 s
+
+STEP 30 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.79826e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.799226866e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 7879959131, 0.02815048408 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1068179.334, 3.81597986e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 1785.862531, 6.379842066e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=1785.862531).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.84962e+03 (abs.), 3.16255e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 30 ends. TIME = 5.317772137e-17 DT = 1.772590712e-18
+Evolve time = 0.203487265 s; This step = 0.006480357 s; Avg. per step = 0.006782908833 s
+
+STEP 31 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.83203e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.846326975e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.736091104e+10, 0.09612708336 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3724486.636, 1.308523816e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 198.3005522, 6.96689291e-10 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=198.3005522).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.85402e+03 (abs.), 3.12639e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 31 ends. TIME = 5.495031208e-17 DT = 1.772590712e-18
+Evolve time = 0.209802788 s; This step = 0.006315523 s; Avg. per step = 0.006767831871 s
+
+STEP 32 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.86955e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.87539609e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.945991153e+10, 0.06767732487 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 6597965.363, 2.294628342e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 513.1277178, 1.784546204e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=513.1277178).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.06717e+03 (abs.), 2.81130e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 32 ends. TIME = 5.67229028e-17 DT = 1.772590712e-18
+Evolve time = 0.21619122 s; This step = 0.006388432 s; Avg. per step = 0.006755975625 s
+
+STEP 33 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.68835e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.69012551e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 9122090760, 0.03390953591 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 6249817.379, 2.323243787e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 989.2951767, 3.677505651e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=989.2951767).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.04342e+03 (abs.), 2.99195e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 33 ends. TIME = 5.849549351e-17 DT = 1.772590712e-18
+Evolve time = 0.222592427 s; This step = 0.006401207 s; Avg. per step = 0.006745225061 s
+
+STEP 34 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.77998e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.785278068e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.518627297e+10, 0.05452336392 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3691332.71, 1.325301324e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 347.8119278, 1.248751181e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=347.8119278).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.78804e+03 (abs.), 2.80147e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 34 ends. TIME = 6.026808422e-17 DT = 1.772590712e-18
+Evolve time = 0.229000094 s; This step = 0.006407667 s; Avg. per step = 0.006735296882 s
+
+STEP 35 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.77875e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.781823211e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.299452166e+10, 0.04671224833 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3675460.002, 1.321241403e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 930.1365276, 3.343621996e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=930.1365276).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.36751e+03 (abs.), 2.65138e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 35 ends. TIME = 6.204067493e-17 DT = 1.772590712e-18
+Evolve time = 0.235645707 s; This step = 0.006645613 s; Avg. per step = 0.006732734486 s
+
+STEP 36 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.77683e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.779115742e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.3269056e+10, 0.04774560412 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 7723593.205, 2.779154926e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 878.7144467, 3.161849049e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=878.7144467).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.88766e+03 (abs.), 2.84052e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 36 ends. TIME = 6.381326565e-17 DT = 1.772590712e-18
+Evolve time = 0.242173578 s; This step = 0.006527871 s; Avg. per step = 0.006727043833 s
+
+STEP 37 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.71630e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.717388037e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 3181646473, 0.0117084731 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 4943007.008, 1.819028766e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 479.2420067, 1.763612705e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=479.2420067).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.13797e+03 (abs.), 2.62783e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 37 ends. TIME = 6.558585636e-17 DT = 1.772590712e-18
+Evolve time = 0.248541369 s; This step = 0.006367791 s; Avg. per step = 0.006717334297 s
+
+STEP 38 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.70641e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.70898437e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 7027413458, 0.02594113696 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1144700.997, 4.225572541e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 1045.381411, 3.858942203e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=1045.381411).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.54493e+03 (abs.), 2.41831e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 38 ends. TIME = 6.735844707e-17 DT = 1.772590712e-18
+Evolve time = 0.254969068 s; This step = 0.006427699 s; Avg. per step = 0.006709712316 s
+
+STEP 39 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.62134e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.623963479e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 3865316030, 0.01473083014 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 4586093.337, 1.747773311e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 644.4645821, 2.456072988e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=644.4645821).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.72391e+03 (abs.), 2.56507e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 39 ends. TIME = 6.913103778e-17 DT = 1.772590712e-18
+Evolve time = 0.261345599 s; This step = 0.006376531 s; Avg. per step = 0.006701169205 s
+
+STEP 40 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.78556e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.788062556e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.184947784e+10, 0.04250076029 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3850630.089, 1.381113233e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 624.8176377, 2.241045978e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=624.8176377).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.55521e+03 (abs.), 2.35329e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 40 ends. TIME = 7.09036285e-17 DT = 1.772590712e-18
+Evolve time = 0.267938405 s; This step = 0.006592806 s; Avg. per step = 0.006698460125 s
+
+STEP 41 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.64852e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.653107543e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.458349929e+10, 0.05496761461 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 5311118.217, 2.001848071e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 504.1278481, 1.900141023e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=504.1278481).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 5.75042e+03 (abs.), 2.17118e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 41 ends. TIME = 7.267621921e-17 DT = 1.772590712e-18
+Evolve time = 0.274589471 s; This step = 0.006651066 s; Avg. per step = 0.006697304171 s
+
+STEP 42 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.56877e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.573507311e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.112624741e+10, 0.0432337898 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2051615.097, 7.972058555e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 723.0505995, 2.809592172e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=723.0505995).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.33212e+03 (abs.), 2.46504e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 42 ends. TIME = 7.444880992e-17 DT = 1.772590712e-18
+Evolve time = 0.280972975 s; This step = 0.006383504 s; Avg. per step = 0.006689832738 s
+
+STEP 43 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.67643e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.677138195e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 7284358038, 0.02720949577 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 4640817.644, 1.733499471e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 580.3899645, 2.167949214e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=580.3899645).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.35551e+03 (abs.), 2.37462e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 43 ends. TIME = 7.622140063e-17 DT = 1.772590712e-18
+Evolve time = 0.287476872 s; This step = 0.006503897 s; Avg. per step = 0.006685508651 s
+
+STEP 44 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.60888e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.614451505e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.176766422e+10, 0.08325900931 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2298490.998, 8.791484535e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 648.343439, 2.47984496e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=648.343439).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 5.47950e+03 (abs.), 2.10032e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 44 ends. TIME = 7.799399135e-17 DT = 1.772590712e-18
+Evolve time = 0.294019546 s; This step = 0.006542674 s; Avg. per step = 0.006682262409 s
+
+STEP 45 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.68144e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.688409379e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.264405747e+10, 0.08422845732 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2254184.96, 8.384827761e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 240.0650877, 8.929632874e-10 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=240.0650877).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.06397e+03 (abs.), 2.26146e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 45 ends. TIME = 7.976658206e-17 DT = 1.772590712e-18
+Evolve time = 0.300500694 s; This step = 0.006481148 s; Avg. per step = 0.0066777932 s
+
+STEP 46 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.58564e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.589157275e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 9233488826, 0.03566213963 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 373335.2507, 1.441918011e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 219.0509815, 8.460319643e-10 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=219.0509815).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 5.53974e+03 (abs.), 2.14250e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 46 ends. TIME = 8.153917277e-17 DT = 1.772590712e-18
+Evolve time = 0.30689894 s; This step = 0.006398246 s; Avg. per step = 0.006671716087 s
+
+STEP 47 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.50636e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.514903424e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.636814935e+10, 0.065084604 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3170472.986, 1.260673852e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 368.0169569, 1.463344291e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=368.0169569).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 5.09301e+03 (abs.), 2.03204e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 47 ends. TIME = 8.331176348e-17 DT = 1.772590712e-18
+Evolve time = 0.313319526 s; This step = 0.006420586 s; Avg. per step = 0.006666372894 s
+
+STEP 48 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.75146e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.769348747e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.489023613e+10, 0.08987757916 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 378352.0952, 1.36621325e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 1726.261099, 6.23345507e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=1726.261099).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.32538e+03 (abs.), 2.29892e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 48 ends. TIME = 8.50843542e-17 DT = 1.772590712e-18
+Evolve time = 0.319961489 s; This step = 0.006641963 s; Avg. per step = 0.006665864354 s
+
+STEP 49 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.59750e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.602043782e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 8951148575, 0.03440045335 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 4531154.76, 1.741382982e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 325.2692779, 1.250053055e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=325.2692779).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 5.74583e+03 (abs.), 2.21206e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 49 ends. TIME = 8.685694491e-17 DT = 1.772590712e-18
+Evolve time = 0.326546346 s; This step = 0.006584857 s; Avg. per step = 0.006664211143 s
+
+STEP 50 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.58352e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.595543622e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.572868985e+10, 0.06059882684 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 7556681.658, 2.911406147e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 544.4035745, 2.097454922e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=544.4035745).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 5.44927e+03 (abs.), 2.10924e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 50 ends. TIME = 8.862953562e-17 DT = 1.772590712e-18
+Evolve time = 0.332914087 s; This step = 0.006367741 s; Avg. per step = 0.00665828174 s
+
+STEP 51 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.73584e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.752805575e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.405869486e+10, 0.05107042427 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 5549108.484, 2.015801092e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 653.9077254, 2.375422847e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=653.9077254).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.79343e+03 (abs.), 2.48312e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 51 ends. TIME = 9.040212633e-17 DT = 1.772590712e-18
+Evolve time = 0.33936235 s; This step = 0.006448263 s; Avg. per step = 0.006654163725 s
+
+STEP 52 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.60479e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.60746694e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.054965528e+10, 0.04045940188 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 10604169.33, 4.066847088e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 682.5405686, 2.617638437e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=682.5405686).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.10651e+03 (abs.), 2.34434e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 52 ends. TIME = 9.217471705e-17 DT = 1.772590712e-18
+Evolve time = 0.346008725 s; This step = 0.006646375 s; Avg. per step = 0.006654013942 s
+
+STEP 53 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.75493e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.764472209e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.858519274e+10, 0.1034019899 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3647307.878, 1.319350531e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 792.4428415, 2.866524897e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=792.4428415).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.23893e+03 (abs.), 2.62763e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 53 ends. TIME = 9.394730776e-17 DT = 1.772590712e-18
+Evolve time = 0.352444114 s; This step = 0.006435389 s; Avg. per step = 0.006649888943 s
+
+STEP 54 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.73432e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.743292212e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.853251729e+10, 0.06755575364 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 4162430.712, 1.517312189e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 476.0525244, 1.735332905e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=476.0525244).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.34087e+03 (abs.), 2.68471e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 54 ends. TIME = 9.571989847e-17 DT = 1.772590712e-18
+Evolve time = 0.358859152 s; This step = 0.006415038 s; Avg. per step = 0.006645539852 s
+
+STEP 55 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.66950e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.679441094e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.654120577e+10, 0.06173379145 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1744866.229, 6.512052953e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 958.0368231, 3.575509928e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=958.0368231).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.79147e+03 (abs.), 2.91870e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 55 ends. TIME = 9.749248918e-17 DT = 1.772590712e-18
+Evolve time = 0.365359241 s; This step = 0.006500089 s; Avg. per step = 0.006642895291 s
+
+STEP 56 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.75369e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.761482511e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 3.034767569e+10, 0.1098963168 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3732728.807, 1.351711913e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 443.7661307, 1.606985121e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=443.7661307).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.63938e+03 (abs.), 3.13738e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 56 ends. TIME = 9.926507989e-17 DT = 1.772590712e-18
+Evolve time = 0.371880566 s; This step = 0.006521325 s; Avg. per step = 0.006640724393 s
+
+STEP 57 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.88392e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.890317416e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.63121126e+10, 0.05643709755 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1647270.129, 5.699270674e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 606.2526472, 2.097529648e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=606.2526472).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 9.81198e+03 (abs.), 3.40230e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 57 ends. TIME = 1.010376706e-16 DT = 1.772590712e-18
+Evolve time = 0.37828645 s; This step = 0.006405884 s; Avg. per step = 0.006636604386 s
+
+STEP 58 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.83474e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.840858004e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 8658050635, 0.03047688629 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 4237127.878, 1.491495834e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 654.509891, 2.303916247e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=654.509891).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 9.27722e+03 (abs.), 3.27269e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 58 ends. TIME = 1.028102613e-16 DT = 1.772590712e-18
+Evolve time = 0.384691933 s; This step = 0.006405483 s; Avg. per step = 0.006632619534 s
+
+STEP 59 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.74656e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.755809893e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.378170435e+10, 0.08629660709 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 478349.5915, 1.735785885e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 1462.239487, 5.306024523e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=1462.239487).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 9.63906e+03 (abs.), 3.50950e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 59 ends. TIME = 1.04582852e-16 DT = 1.772590712e-18
+Evolve time = 0.391278363 s; This step = 0.00658643 s; Avg. per step = 0.006631836661 s
+
+STEP 60 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.70351e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.706509299e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.259635892e+10, 0.04654097781 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1382436.785, 5.107822041e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 735.6016691, 2.717898178e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=735.6016691).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.71958e+03 (abs.), 3.22528e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 60 ends. TIME = 1.063554427e-16 DT = 1.772590712e-18
+Evolve time = 0.397882181 s; This step = 0.006603818 s; Avg. per step = 0.006631369683 s
+
+STEP 61 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.93250e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.941838139e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.294411707e+10, 0.04400009945 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 684226.215, 2.325845892e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 909.6204661, 3.092013983e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=909.6204661).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 9.10174e+03 (abs.), 3.10374e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 61 ends. TIME = 1.081280335e-16 DT = 1.772590712e-18
+Evolve time = 0.404475684 s; This step = 0.006593503 s; Avg. per step = 0.006630748918 s
+
+STEP 62 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.85460e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.863865611e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.400973467e+10, 0.04891896676 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3769991.964, 1.316399746e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 1063.11931, 3.712182951e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=1063.11931).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 9.65288e+03 (abs.), 3.38152e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 62 ends. TIME = 1.099006242e-16 DT = 1.772590712e-18
+Evolve time = 0.410860052 s; This step = 0.006384368 s; Avg. per step = 0.006626775032 s
+
+STEP 63 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.68467e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.689549189e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 9100624558, 0.03383698872 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2135677.781, 7.940653363e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 734.4292807, 2.730678002e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=734.4292807).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.52448e+03 (abs.), 3.17525e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 63 ends. TIME = 1.116732149e-16 DT = 1.772590712e-18
+Evolve time = 0.417192079 s; This step = 0.006332027 s; Avg. per step = 0.006622096492 s
+
+STEP 64 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.77354e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.777067545e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.780186996e+10, 0.06410312198 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 558414.3566, 2.010805814e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 852.572406, 3.070045622e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=852.572406).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.66197e+03 (abs.), 3.12307e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 64 ends. TIME = 1.134458056e-16 DT = 1.772590712e-18
+Evolve time = 0.423489753 s; This step = 0.006297674 s; Avg. per step = 0.006617027391 s
+
+STEP 65 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.84228e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.850903975e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 5723168643, 0.02007492603 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 6318282.342, 2.216238217e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 921.5970231, 3.232648421e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=921.5970231).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 9.18180e+03 (abs.), 3.23044e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 65 ends. TIME = 1.152183963e-16 DT = 1.772590712e-18
+Evolve time = 0.429902243 s; This step = 0.00641249 s; Avg. per step = 0.006613880662 s
+
+STEP 66 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.80735e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.820551757e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.334011236e+10, 0.08275016514 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2543184.437, 9.016620353e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 543.4926265, 1.926901803e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=543.4926265).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.15435e+03 (abs.), 2.90464e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 66 ends. TIME = 1.16990987e-16 DT = 1.772590712e-18
+Evolve time = 0.436282511 s; This step = 0.006380268 s; Avg. per step = 0.006610341076 s
+
+STEP 67 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.57722e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.592153804e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.614005577e+10, 0.1008429968 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 604343.6897, 2.331434535e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 620.1895518, 2.392564635e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=620.1895518).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.36679e+03 (abs.), 2.85842e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 67 ends. TIME = 1.187635777e-16 DT = 1.772590712e-18
+Evolve time = 0.442593131 s; This step = 0.00631062 s; Avg. per step = 0.006605867627 s
+
+STEP 68 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.79154e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.795056611e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 9081336714, 0.03249070762 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 527564.7862, 1.887492311e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 2839.478943, 1.015893178e-08 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=2839.478943).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.43930e+03 (abs.), 2.66494e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 68 ends. TIME = 1.205361684e-16 DT = 1.772590712e-18
+Evolve time = 0.449046825 s; This step = 0.006453694 s; Avg. per step = 0.006603629779 s
+
+STEP 69 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.69729e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.714452015e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.519302074e+10, 0.09281070578 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2087894.57, 7.691771888e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 959.53305, 3.534905184e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=959.53305).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.30810e+03 (abs.), 2.70943e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 69 ends. TIME = 1.223087592e-16 DT = 1.772590712e-18
+Evolve time = 0.455599707 s; This step = 0.006552882 s; Avg. per step = 0.006602894304 s
+
+STEP 70 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.61337e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.631610317e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 3.207381182e+10, 0.1218790321 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1071102.85, 4.070142312e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 383.0350311, 1.455515768e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=383.0350311).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.28597e+03 (abs.), 2.40531e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 70 ends. TIME = 1.240813499e-16 DT = 1.772590712e-18
+Evolve time = 0.46192603 s; This step = 0.006326323 s; Avg. per step = 0.006598943286 s
+
+STEP 71 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.72126e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.728114385e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.530134974e+10, 0.05608763998 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 717481.7255, 2.629954702e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 2724.032551, 9.985037893e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=2724.032551).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.97918e+03 (abs.), 2.56469e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 71 ends. TIME = 1.258539406e-16 DT = 1.772590712e-18
+Evolve time = 0.468449011 s; This step = 0.006522981 s; Avg. per step = 0.006597873394 s
+
+STEP 72 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.58682e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.592965526e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.923811473e+10, 0.07419348439 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3827095.725, 1.475953184e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 652.6656437, 2.517062557e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=652.6656437).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.02958e+03 (abs.), 2.33088e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 72 ends. TIME = 1.276265313e-16 DT = 1.772590712e-18
+Evolve time = 0.474837046 s; This step = 0.006388035 s; Avg. per step = 0.006594958972 s
+
+STEP 73 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.58724e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.596753278e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 3.083698648e+10, 0.1187520846 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 677794.662, 2.610161958e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 766.1805793, 2.950532828e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=766.1805793).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.10724e+03 (abs.), 2.36052e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 73 ends. TIME = 1.29399122e-16 DT = 1.772590712e-18
+Evolve time = 0.481187866 s; This step = 0.00635082 s; Avg. per step = 0.006591614603 s
+
+STEP 74 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.75654e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.762839858e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.357834698e+10, 0.08534098316 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 5544570.011, 2.006837274e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 706.8960575, 2.558584984e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=706.8960575).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.28785e+03 (abs.), 2.28107e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 74 ends. TIME = 1.311717127e-16 DT = 1.772590712e-18
+Evolve time = 0.487497659 s; This step = 0.006309793 s; Avg. per step = 0.006587806203 s
+
+STEP 75 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.57174e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.573298845e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 5704367282, 0.02216752746 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2661202.257, 1.034159815e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 673.5038929, 2.617278184e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=673.5038929).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 5.57225e+03 (abs.), 2.16673e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 75 ends. TIME = 1.329443034e-16 DT = 1.772590712e-18
+Evolve time = 0.49407394 s; This step = 0.006576281 s; Avg. per step = 0.006587652533 s
+
+STEP 76 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.67596e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.688544514e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.788000031e+10, 0.1036992327 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1900184.586, 7.067707366e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 382.6899573, 1.423409415e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=382.6899573).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.12473e+03 (abs.), 2.28879e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 76 ends. TIME = 1.347168941e-16 DT = 1.772590712e-18
+Evolve time = 0.5006013 s; This step = 0.00652736 s; Avg. per step = 0.006586859211 s
+
+STEP 77 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.59989e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.60382729e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.079424817e+10, 0.07986032039 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2522264.469, 9.686757945e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 857.5916759, 3.293581257e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=857.5916759).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.60876e+03 (abs.), 2.54194e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 77 ends. TIME = 1.364894849e-16 DT = 1.772590712e-18
+Evolve time = 0.507178697 s; This step = 0.006577397 s; Avg. per step = 0.006586736325 s
+
+STEP 78 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.70121e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.705636119e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2993445979, 0.01106374194 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 7009042.774, 2.590534154e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 453.673078, 1.676770482e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=453.673078).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.61426e+03 (abs.), 2.44863e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 78 ends. TIME = 1.382620756e-16 DT = 1.772590712e-18
+Evolve time = 0.513720541 s; This step = 0.006541844 s; Avg. per step = 0.006586160782 s
+
+STEP 79 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.79878e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.802803507e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.146657985e+10, 0.04091110855 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2199541.337, 7.847647297e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 696.9394098, 2.486579626e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=696.9394098).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.25756e+03 (abs.), 2.23581e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 79 ends. TIME = 1.400346663e-16 DT = 1.772590712e-18
+Evolve time = 0.520257393 s; This step = 0.006536852 s; Avg. per step = 0.00658553662 s
+
+STEP 80 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.57427e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.576294309e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.449369997e+10, 0.05625793575 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3463423.677, 1.344343177e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 784.9067854, 3.046650309e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=784.9067854).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.02523e+03 (abs.), 2.34056e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 80 ends. TIME = 1.41807257e-16 DT = 1.772590712e-18
+Evolve time = 0.526617232 s; This step = 0.006359839 s; Avg. per step = 0.0065827154 s
+
+STEP 81 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.61113e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.612981631e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.511317836e+10, 0.05783882361 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 5528363.623, 2.115729999e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 638.5760628, 2.443859747e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=638.5760628).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.60299e+03 (abs.), 2.52879e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 81 ends. TIME = 1.435798477e-16 DT = 1.772590712e-18
+Evolve time = 0.532980789 s; This step = 0.006363557 s; Avg. per step = 0.006580009741 s
+
+STEP 82 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.84683e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.851270176e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.406646718e+10, 0.04933403819 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3381054.629, 1.185806472e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 339.6982228, 1.191392614e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=339.6982228).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.06110e+03 (abs.), 2.12907e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 82 ends. TIME = 1.453524384e-16 DT = 1.772590712e-18
+Evolve time = 0.539353752 s; This step = 0.006372963 s; Avg. per step = 0.00657748478 s
+
+STEP 83 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.63094e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.64356296e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.628193781e+10, 0.09941861878 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 842283.3443, 3.186167143e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 685.4835718, 2.593029113e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=685.4835718).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.63362e+03 (abs.), 2.52139e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 83 ends. TIME = 1.471250291e-16 DT = 1.772590712e-18
+Evolve time = 0.545727675 s; This step = 0.006373923 s; Avg. per step = 0.006575032229 s
+
+STEP 84 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.71375e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.718501538e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.872748906e+10, 0.06888901401 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2172359.784, 7.991019146e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 277.1955001, 1.019662841e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=277.1955001).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.76565e+03 (abs.), 2.49310e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 84 ends. TIME = 1.488976198e-16 DT = 1.772590712e-18
+Evolve time = 0.552245652 s; This step = 0.006517977 s; Avg. per step = 0.006574353 s
+
+STEP 85 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.63178e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.637631365e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.204364265e+10, 0.08357362951 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 6311937.273, 2.393032383e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 730.5286685, 2.769638995e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=730.5286685).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.87609e+03 (abs.), 2.61272e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 85 ends. TIME = 1.506702106e-16 DT = 1.772590712e-18
+Evolve time = 0.558684425 s; This step = 0.006438773 s; Avg. per step = 0.006572757941 s
+
+STEP 86 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.79208e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.799725263e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.759887725e+10, 0.0628593008 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2752041.034, 9.829682471e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 868.675673, 3.102717558e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=868.675673).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.88775e+03 (abs.), 2.82505e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 86 ends. TIME = 1.524428013e-16 DT = 1.772590712e-18
+Evolve time = 0.565159381 s; This step = 0.006474956 s; Avg. per step = 0.006571620709 s
+
+STEP 87 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.80655e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.810600913e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.232818036e+10, 0.04386314791 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 4859014.83, 1.728817068e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 805.023636, 2.864240285e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=805.023636).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.47641e+03 (abs.), 2.66392e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 87 ends. TIME = 1.54215392e-16 DT = 1.772590712e-18
+Evolve time = 0.571704131 s; This step = 0.00654475 s; Avg. per step = 0.006571311851 s
+
+STEP 88 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.62213e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.631903347e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.303523106e+10, 0.04952777266 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 6923052.768, 2.630435793e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 783.4201993, 2.976629823e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=783.4201993).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.09157e+03 (abs.), 3.08588e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 88 ends. TIME = 1.559879827e-16 DT = 1.772590712e-18
+Evolve time = 0.578084161 s; This step = 0.00638003 s; Avg. per step = 0.006569138193 s
+
+STEP 89 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.74957e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.757510401e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.875938796e+10, 0.06803016211 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1567297.57, 5.683741283e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 1322.208529, 4.794935781e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=1322.208529).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.54409e+03 (abs.), 3.10742e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 89 ends. TIME = 1.577605734e-16 DT = 1.772590712e-18
+Evolve time = 0.584354055 s; This step = 0.006269894 s; Avg. per step = 0.006565775899 s
+
+STEP 90 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.75107e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.753541812e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.453574052e+10, 0.0527892493 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2515282.341, 9.134716347e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 1043.112608, 3.788257737e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=1043.112608).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.92643e+03 (abs.), 2.88121e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 90 ends. TIME = 1.595331641e-16 DT = 1.772590712e-18
+Evolve time = 0.590641157 s; This step = 0.006287102 s; Avg. per step = 0.006562679522 s
+
+STEP 91 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.83076e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.834980137e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.400149562e+10, 0.04938833764 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1772314.088, 6.251592612e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 826.4076373, 2.915038545e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=826.4076373).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 9.33930e+03 (abs.), 3.29922e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 91 ends. TIME = 1.613057548e-16 DT = 1.772590712e-18
+Evolve time = 0.596923728 s; This step = 0.006282571 s; Avg. per step = 0.006559601407 s
+
+STEP 92 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.67442e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.68838283e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 2.222668523e+10, 0.08267678615 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 1749823.073, 6.508831455e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 1353.089029, 5.033096528e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=1353.089029).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.32523e+03 (abs.), 3.11292e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 92 ends. TIME = 1.630783455e-16 DT = 1.772590712e-18
+Evolve time = 0.603226396 s; This step = 0.006302668 s; Avg. per step = 0.006556808652 s
+
+STEP 93 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.72695e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.734313629e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 9711999486, 0.03551896675 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 6776858.574, 2.47844962e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 671.7594655, 2.456775472e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=671.7594655).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.72940e+03 (abs.), 3.20116e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 93 ends. TIME = 1.648509363e-16 DT = 1.772590712e-18
+Evolve time = 0.609498318 s; This step = 0.006271922 s; Avg. per step = 0.006553745355 s
+
+STEP 94 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.80650e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.815300631e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.544331801e+10, 0.0548549517 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 976863.7387, 3.469838098e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 824.6419793, 2.929143589e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=824.6419793).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.58210e+03 (abs.), 3.05793e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 94 ends. TIME = 1.66623527e-16 DT = 1.772590712e-18
+Evolve time = 0.615878023 s; This step = 0.006379705 s; Avg. per step = 0.006551893862 s
+
+STEP 95 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.78002e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.800149686e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.67355281e+10, 0.05976654816 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 7475605.248, 2.669716296e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 644.477904, 2.301583759e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=644.477904).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.64514e+03 (abs.), 3.10974e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 95 ends. TIME = 1.683961177e-16 DT = 1.772590712e-18
+Evolve time = 0.622383425 s; This step = 0.006505402 s; Avg. per step = 0.006551404474 s
+
+STEP 96 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.70256e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.709320245e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.950891408e+10, 0.07200667443 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 6927651.31, 2.556970266e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 711.0966544, 2.624631236e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=711.0966544).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.12556e+03 (abs.), 3.00662e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 96 ends. TIME = 1.701687084e-16 DT = 1.772590712e-18
+Evolve time = 0.628719197 s; This step = 0.006335772 s; Avg. per step = 0.006549158302 s
+
+STEP 97 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.76532e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.774180548e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.786693525e+10, 0.06440437074 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 475732.662, 1.71485833e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 4347.033619, 1.566961322e-08 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=4347.033619).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 9.04132e+03 (abs.), 3.26954e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 97 ends. TIME = 1.719412991e-16 DT = 1.772590712e-18
+Evolve time = 0.635061462 s; This step = 0.006342265 s; Avg. per step = 0.006547025381 s
+
+STEP 98 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.71671e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.724237233e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 9532898615, 0.03499290921 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 2396561.879, 8.797184951e-06 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 891.4245252, 3.272198597e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=891.4245252).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.06188e+03 (abs.), 2.59943e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 98 ends. TIME = 1.737138898e-16 DT = 1.772590712e-18
+Evolve time = 0.641377498 s; This step = 0.006316036 s; Avg. per step = 0.006544668347 s
+
+STEP 99 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.71443e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.725537528e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 1.715063197e+10, 0.06292568637 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3912580.598, 1.435526224e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 1172.575432, 4.302180469e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=1172.575432).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 7.88354e+03 (abs.), 2.90431e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 99 ends. TIME = 1.754864805e-16 DT = 1.772590712e-18
+Evolve time = 0.647684263 s; This step = 0.006306765 s; Avg. per step = 0.006542265283 s
+
+STEP 100 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 2.73061e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 2.732435613e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 4942455027, 0.01808809329 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 3545603.26, 1.2975981e-05 (rel.)
+GMRES (PETSc KSP): iter = 3, residual = 1439.917866, 5.269722952e-09 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=1439.917866).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 8.13344e+03 (abs.), 2.97861e-08 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 100 ends. TIME = 1.772590712e-16 DT = 1.772590712e-18
+Evolve time = 0.653995534 s; This step = 0.006311271 s; Avg. per step = 0.00653995534 s
+
+
+**** WARNINGS ******************************************************************
+* GLOBAL warning list  after  [ THE END ]
+*
+* --> [!! ] [MatrixPC] [raised 4 times]
+*     pc_mass_matrix_width is nonnegative but unable to get mass matrices from
+*     operator.
+*     setting m_pc_mass_matrix_width = -1 (no mass matrix in PC).
+*     @ Raised by: ALL
+*
+********************************************************************************
+
+Total Time                     : 0.7872703075
+****************************************************************************************************************************************************************
+***                                WIDEN YOUR WINDOW TO 160 CHARACTERS.  Use 'enscript -r -fCourier9' to print this document                                 ***
+****************************************************************************************************************************************************************
+
+------------------------------------------------------------------ PETSc Performance Summary: ------------------------------------------------------------------
+
+/g/g92/ghosh5/Codes/WarpX-builds/dane/build/bin/warpx.1d on a arch-opt-quartz-mvapich2 named dane11 with 4 processes, by ghosh5 on Mon Oct 27 17:22:58 2025
+Using PETSc Release Version 3.23.6, unknown
+
+                         Max       Max/Min     Avg       Total
+Time (sec):           7.875e-01     1.000   7.875e-01
+Objects:              0.000e+00     0.000   0.000e+00
+Flops:                8.526e+05     1.000   8.526e+05  3.410e+06
+Flops/sec:            1.083e+06     1.000   1.083e+06  4.331e+06
+MPI Msg Count:        4.000e+00     1.000   4.000e+00  1.600e+01
+MPI Msg Len (bytes):  3.200e+01     1.000   8.000e+00  1.280e+02
+MPI Reductions:       1.038e+03     1.000
+
+Flop counting convention: 1 flop = 1 real number operation of type (multiply/divide/add/subtract)
+                            e.g., VecAXPY() for real vectors of length N --> 2N flops
+                            and VecAXPY() for complex vectors of length N --> 8N flops
+
+Summary of Stages:   ----- Time ------  ----- Flop ------  --- Messages ---  -- Message Lengths --  -- Reductions --
+                        Avg     %Total     Avg     %Total    Count   %Total     Avg         %Total    Count   %Total
+ 0:      Main Stage: 7.8746e-01 100.0%  3.4104e+06 100.0%  1.600e+01 100.0%  8.000e+00      100.0%  1.020e+03  98.3%
+
+------------------------------------------------------------------------------------------------------------------------
+See the 'Profiling' chapter of the users' manual for details on interpreting output.
+Phase summary info:
+   Count: number of times phase was executed
+   Time and Flop: Max - maximum over all processors
+                  Ratio - ratio of maximum to minimum over all processors
+   Mess: number of messages sent
+   AvgLen: average message length (bytes)
+   Reduct: number of global reductions
+   Global: entire computation
+   Stage: stages of a computation. Set stages with PetscLogStagePush() and PetscLogStagePop().
+      %T - percent time in this phase         %F - percent flop in this phase
+      %M - percent messages in this phase     %L - percent message lengths in this phase
+      %R - percent reductions in this phase
+   Total Mflop/s: 1e-6 * (sum of flop over all processors)/(max time over all processors)
+------------------------------------------------------------------------------------------------------------------------
+Event                Count      Time (sec)     Flop                              --- Global ---  --- Stage ----  Total
+                   Max Ratio  Max     Ratio   Max  Ratio  Mess   AvgLen  Reduct  %T %F %M %L %R  %T %F %M %L %R Mflop/s
+------------------------------------------------------------------------------------------------------------------------
+
+--- Event Stage 0: Main Stage
+
+BuildTwoSided        101 1.0 1.2262e-03 3.3 0.00e+00 0.0 8.0e+00 4.0e+00 1.0e+02  0  0 50 25 10   0  0 50 25 10     0
+BuildTwoSidedF       100 1.0 1.3039e-03 2.8 0.00e+00 0.0 0.0e+00 0.0e+00 1.0e+02  0  0  0  0 10   0  0  0  0 10     0
+VecMDot              300 1.0 1.8818e-03 1.6 2.32e+05 1.0 0.0e+00 0.0e+00 3.0e+02  0 27  0  0 29   0 27  0  0 29   494
+VecNorm              400 1.0 1.8039e-03 1.1 1.55e+05 1.0 0.0e+00 0.0e+00 4.0e+02  0 18  0  0 39   0 18  0  0 39   343
+VecScale             400 1.0 1.0037e-04 1.2 7.76e+04 1.0 0.0e+00 0.0e+00 0.0e+00  0  9  0  0  0   0  9  0  0  0  3092
+VecCopy              700 1.0 1.6236e-04 1.5 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+VecSet               200 1.0 4.6015e-05 1.7 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+VecAXPY              100 1.0 5.0545e-05 1.5 3.88e+04 1.0 0.0e+00 0.0e+00 0.0e+00  0  5  0  0  0   0  5  0  0  0  3071
+VecMAXPY             400 1.0 1.2779e-04 1.2 3.49e+05 1.0 0.0e+00 0.0e+00 0.0e+00  0 41  0  0  0   0 41  0  0  0 10930
+VecNormalize         400 1.0 2.0278e-03 1.1 2.32e+05 1.0 0.0e+00 0.0e+00 4.0e+02  0 27  0  0 39   0 27  0  0 39   458
+MatMult              300 1.0 1.9936e-01 1.0 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00 25  0  0  0  0  25  0  0  0  0     0
+MatSolve             400 1.0 5.0611e-02 1.0 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  6  0  0  0  0   6  0  0  0  0     0
+MatLUFactor          100 1.0 1.5735e-01 1.0 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00 20  0  0  0  0  20  0  0  0  0     0
+MatAssemblyBegin     200 1.0 1.8673e-03 1.7 0.00e+00 0.0 0.0e+00 0.0e+00 1.0e+02  0  0  0  0 10   0  0  0  0 10     0
+MatAssemblyEnd       200 1.0 1.3487e-03 1.0 0.00e+00 0.0 1.6e+01 8.0e+00 2.0e+02  0  0 100 100 20   0  0 100 100 20     0
+MatGetRowIJ          100 1.0 1.4544e-05 1.7 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+MatGetLocalMat       100 1.0 2.7735e-03 1.3 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+KSPSetUp               1 1.0 2.2650e-05 2.4 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+KSPSolve             100 1.0 4.0907e-01 1.0 8.53e+05 1.0 0.0e+00 0.0e+00 7.0e+02 52 100  0  0 67  52 100  0  0 69     8
+KSPGMRESOrthog       300 1.0 2.1260e-03 1.5 4.65e+05 1.0 0.0e+00 0.0e+00 3.0e+02  0 55  0  0 29   0 55  0  0 29   875
+PCSetUp              100 1.0 1.5775e-01 1.0 0.00e+00 0.0 0.0e+00 0.0e+00 2.0e+00 20  0  0  0  0  20  0  0  0  0     0
+PCApply              400 1.0 5.0709e-02 1.0 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  6  0  0  0  0   6  0  0  0  0     0
+SFSetGraph             1 1.0 2.6226e-06 1.8 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+SFSetUp                1 1.0 5.5075e-05 1.3 0.00e+00 0.0 1.6e+01 8.0e+00 1.0e+00  0  0 100 100  0   0  0 100 100  0     0
+------------------------------------------------------------------------------------------------------------------------
+
+Object Type          Creations   Destructions. Reports information only for process 0.
+
+--- Event Stage 0: Main Stage
+
+           Container     1              1
+              Vector    19             19
+              Matrix   107            107
+       Krylov Solver     1              1
+      Preconditioner     1              1
+           Index Set     2              2
+   Star Forest Graph     3              3
+    Distributed Mesh     1              1
+     Discrete System     1              1
+           Weak Form     1              1
+========================================================================================================================
+Average time to get PetscTime(): 2.38419e-08
+Average time for MPI_Barrier(): 1.09673e-06
+Average time for zero size MPI_Send(): 2.44379e-06
+#PETSc Option Table entries:
+-log_view # (source: command line)
+-pc_type lu # (source: command line)
+#End of PETSc Option Table entries
+Compiled without FORTRAN kernels
+Compiled with full precision matrices (default)
+sizeof(short) 2 sizeof(int) 4 sizeof(long) 8 sizeof(void*) 8 sizeof(PetscScalar) 8 sizeof(PetscInt) 4
+Configure options: --with-batch --with-cc=mpicc --with-fc=mpif90 --with-cxx=mpicxx COPTFLAGS="-O2 -std=c99" FOPTFLAGS=-O2 CXXOPTFLAGS=-O2 --with-shared-libraries --with-debugging=0 --download-make --download-cmake --download-hypre --download-superlu --download-superlu_dist --download-parmetis --download-metis --with-cxx-dialect=C++11
+-----------------------------------------
+Libraries compiled on 2025-09-09 00:33:16 on dane2
+Machine characteristics: Linux-4.18.0-553.69.1.1toss.t4.x86_64-x86_64-with-glibc2.28
+Using PETSc directory: /g/g92/ghosh5/Codes/petsc
+Using PETSc arch: arch-opt-quartz-mvapich2
+-----------------------------------------
+
+Using C compiler: mpicc  -fPIC -Wall -Wwrite-strings -Wno-unknown-pragmas -Wno-lto-type-mismatch -fstack-protector -fvisibility=hidden -O2 -std=c99 
+Using Fortran compiler: mpif90  -fPIC -Wall -ffree-line-length-none -ffree-line-length-0 -Wno-lto-type-mismatch -Wno-unused-dummy-argument -O2   
+-----------------------------------------
+
+Using include paths: -I/g/g92/ghosh5/Codes/petsc/include -I/g/g92/ghosh5/Codes/petsc/arch-opt-quartz-mvapich2/include
+-----------------------------------------
+
+Using C linker: mpicc
+Using Fortran linker: mpif90
+Using libraries: -Wl,-rpath,/g/g92/ghosh5/Codes/petsc/arch-opt-quartz-mvapich2/lib -L/g/g92/ghosh5/Codes/petsc/arch-opt-quartz-mvapich2/lib -lpetsc -Wl,-rpath,/g/g92/ghosh5/Codes/petsc/arch-opt-quartz-mvapich2/lib -L/g/g92/ghosh5/Codes/petsc/arch-opt-quartz-mvapich2/lib -Wl,-rpath,/usr/tce/packages/mvapich2/mvapich2-2.3.7-gcc-10.3.1/lib -L/usr/tce/packages/mvapich2/mvapich2-2.3.7-gcc-10.3.1/lib -Wl,-rpath,/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib/gcc/x86_64-redhat-linux/10 -L/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib/gcc/x86_64-redhat-linux/10 -Wl,-rpath,/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib/gcc -L/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib/gcc -Wl,-rpath,/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib64 -L/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib64 -Wl,-rpath,/usr/tce/packages/mkl/mkl-2022.1.0/lib/intel64 -L/usr/tce/packages/mkl/mkl-2022.1.0/lib/intel64 -Wl,-rpath,/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib -L/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib -lHYPRE -lsuperlu_dist -lsuperlu -lopenblas -lpthread -lparmetis -lmetis -lm -lX11 -ldl -lmpifort -lmpi -lgfortran -lm -lgfortran -lm -lgcc_s -lquadmath -lstdc++ -ldl
+-----------------------------------------
+
+Finalized PETSc.
+
+
+TinyProfiler total time across processes [min...avg...max]: 0.7991 ... 0.7994 ... 0.7996
+
+----------------------------------------------------------------------------------------------------------
+Name                                                       NCalls  Excl. Min  Excl. Avg  Excl. Max   Max %
+----------------------------------------------------------------------------------------------------------
+PhysicalParticleContainer::Evolve::GatherAndPush             1000     0.2897     0.2937      0.297  37.14%
+KSP_impl::solve()                                             100     0.2123     0.2129     0.2131  26.65%
+FillBoundary_finish()                                        5705    0.01415     0.1174     0.1563  19.55%
+WarpX::InitData()                                               1  0.0001528    0.03275     0.1305  16.32%
+WarpXParticleContainer::DepositCurrent::CurrentDeposition    1000    0.05134    0.05199    0.05285   6.61%
+FillBoundary_nowait()                                        5705     0.0142    0.01478    0.01523   1.90%
+ParticleContainer::RedistributeCPU()                          202   0.007566   0.007724   0.007879   0.99%
+PhysicalParticleContainer::Evolve()                          1000   0.004243   0.004306   0.004409   0.55%
+PETScSolver_impl::assemblePCMatrix()                          100   0.003715   0.003937   0.004063   0.51%
+amrex::Copy()                                                6603   0.002943   0.003199    0.00339   0.42%
+ThetaImplicitEM::UpdateWarpXFields()                          600   0.002757   0.002903   0.003115   0.39%
+JacobianFunctionMF::apply()                                   300   0.002346   0.002476   0.002636   0.33%
+WarpX::EvolveB()                                              600   0.002294   0.002391   0.002501   0.31%
+NewtonSolver::Solve()                                         100   0.001987   0.002236   0.002469   0.31%
+ThetaImplicitEM::OneStep()                                    100   0.001884   0.002161   0.002321   0.29%
+WarpXParticleContainer::ApplyBoundaryConditions()             200   0.002242   0.002261   0.002304   0.29%
+printKSPSResidual()                                           400   0.001248   0.001582   0.002146   0.27%
+FabArray::setVal()                                           3323   0.001759   0.001874   0.001969   0.25%
+ImplicitSolver::PreRHSOp()                                    500   0.001792   0.001879   0.001957   0.24%
+ParticleContainer::RedistributeMPI()                          202   0.001136   0.001359   0.001569   0.20%
+MatrixPC::Assemble()                                          201   0.001498   0.001537   0.001566   0.20%
+NewtonSolver::EvalResidual()                                  200   0.001336    0.00144   0.001517   0.19%
+WarpX::Evolve::step                                           100  0.0009883   0.001168    0.00141   0.18%
+WarpXParticleContainer::DepositCurrent::Accumulate           1000   0.001348    0.00137   0.001399   0.17%
+MultiFab::Copy()                                             6600   0.001156   0.001217   0.001352   0.17%
+KSP_impl::createObjects()                                       1   0.001333   0.001333   0.001334   0.17%
+ablastr::utils::communication::FillBoundary                  4200   0.001181   0.001231   0.001321   0.17%
+WarpX::ImplicitComputeRHSE()                                  500   0.001117   0.001158   0.001197   0.15%
+FabArray::LinComb()                                          2100   0.001073   0.001121   0.001193   0.15%
+FabArrayBase::getFB()                                        5705   0.001032   0.001076   0.001104   0.14%
+FabArray::FillBoundaryAndSync()                              4203  0.0009949   0.001025   0.001079   0.13%
+FillBoundaryAndSync_finish()                                 4203  0.0008169   0.000833  0.0008593   0.11%
+FillBoundaryAndSync_nowait()                                 4203  0.0007478  0.0007702  0.0008148   0.10%
+WarpX::SyncCurrent()                                          500   0.000559  0.0005713  0.0005821   0.07%
+ThetaImplicitEM::FinishFieldUpdate()                          100  0.0005186  0.0005304  0.0005405   0.07%
+main()                                                          1  0.0004108  0.0004296   0.000444   0.06%
+FabArray<FAB>::SumBoundary()                                 1500  0.0004057  0.0004199  0.0004343   0.05%
+FabArray<FAB>::SumBoundary_nowait()                          1500  0.0003473  0.0003572  0.0003645   0.05%
+FabArray<FAB>::SumBoundary_finish()                          1500  0.0003325  0.0003425   0.000354   0.04%
+ablastr::utils::communication::SumBoundary                   1500  0.0003265  0.0003428  0.0003521   0.04%
+ThetaImplicitEM::ComputeRHS()                                 500  0.0002789  0.0002922  0.0003043   0.04%
+warpx_petsc::applyMatOp()                                     300  0.0002602  0.0002872  0.0003015   0.04%
+PETScSolver_impl::applyOp()                                   300  0.0001394  0.0001471  0.0001506   0.02%
+WarpX::OneStep()                                              100    7.1e-05  7.752e-05  9.142e-05   0.01%
+MatrixPC::Update()                                            200  6.062e-05  6.365e-05  7.219e-05   0.01%
+WarpX::Evolve()                                                 1   3.18e-05  4.096e-05  5.593e-05   0.01%
+REG::WarpX::Evolve()                                            1   8.57e-07  1.217e-06  1.834e-06   0.00%
+Other                                                        6367   0.003973   0.004327   0.004854   0.61%
+----------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------
+Name                                                       NCalls  Incl. Min  Incl. Avg  Incl. Max   Max %
+----------------------------------------------------------------------------------------------------------
+main()                                                          1     0.7872     0.7873     0.7873  98.46%
+REG::WarpX::Evolve()                                            1     0.6547     0.7525     0.7851  98.18%
+WarpX::Evolve()                                                 1     0.6547     0.7525     0.7851  98.18%
+WarpX::Evolve::step                                           100     0.6547     0.7525     0.7851  98.18%
+WarpX::OneStep()                                              100     0.6417     0.7397     0.7725  96.60%
+ThetaImplicitEM::OneStep()                                    100     0.6416     0.7396     0.7723  96.59%
+NewtonSolver::Solve()                                         100     0.6302     0.7283     0.7612  95.20%
+ThetaImplicitEM::ComputeRHS()                                 500     0.3977     0.4958     0.5289  66.15%
+KSP_impl::solve()                                             100     0.4176     0.4177     0.4179  52.26%
+ImplicitSolver::PreRHSOp()                                    500     0.3718      0.372     0.3721  46.53%
+PhysicalParticleContainer::Evolve()                          1000     0.3468     0.3513     0.3557  44.48%
+NewtonSolver::EvalResidual()                                  200     0.2081     0.3065     0.3395  42.46%
+PhysicalParticleContainer::Evolve::GatherAndPush             1000     0.2897     0.2937      0.297  37.14%
+warpx_petsc::applyMatOp()                                     300     0.1989      0.199     0.1992  24.91%
+PETScSolver_impl::applyOp()                                   300     0.1979      0.198     0.1982  24.79%
+JacobianFunctionMF::apply()                                   300     0.1978     0.1979     0.1981  24.77%
+ThetaImplicitEM::UpdateWarpXFields()                          600    0.02805     0.1263     0.1596  19.95%
+FillBoundary_finish()                                        5705    0.01415     0.1174     0.1563  19.55%
+ablastr::utils::communication::FillBoundary                  4200    0.02309     0.1214     0.1549  19.37%
+FabArray::FillBoundaryAndSync()                              4203    0.02194     0.1202     0.1538  19.23%
+FillBoundaryAndSync_finish()                                 4203   0.008835     0.1074     0.1415  17.69%
+WarpX::InitData()                                               1   0.001628    0.03422      0.132  16.51%
+WarpXParticleContainer::DepositCurrent::CurrentDeposition    1000    0.05134    0.05199    0.05285   6.61%
+WarpX::SyncCurrent()                                          500    0.01325    0.01771    0.02238   2.80%
+ablastr::utils::communication::SumBoundary                   1500    0.01267    0.01714    0.02181   2.73%
+FabArray<FAB>::SumBoundary()                                 1500    0.01232    0.01679    0.02147   2.68%
+FillBoundary_nowait()                                        5705    0.01529    0.01588    0.01635   2.04%
+FabArray<FAB>::SumBoundary_finish()                          1500   0.006494    0.01117    0.01596   2.00%
+FillBoundaryAndSync_nowait()                                 4203     0.0113    0.01179    0.01227   1.53%
+ParticleContainer::RedistributeCPU()                          202   0.009267   0.009344   0.009444   1.18%
+FabArray<FAB>::SumBoundary_nowait()                          1500   0.005083   0.005206   0.005388   0.67%
+MultiFab::Copy()                                             6600   0.004101   0.004411   0.004736   0.59%
+PETScSolver_impl::assemblePCMatrix()                          100   0.003715   0.003937   0.004063   0.51%
+ThetaImplicitEM::FinishFieldUpdate()                          100   0.003725    0.00376   0.003824   0.48%
+amrex::Copy()                                                6603   0.002943   0.003199    0.00339   0.42%
+WarpX::EvolveB()                                              600   0.002294   0.002391   0.002501   0.31%
+WarpXParticleContainer::ApplyBoundaryConditions()             200   0.002242   0.002261   0.002304   0.29%
+printKSPSResidual()                                           400   0.001248   0.001582   0.002146   0.27%
+WarpX::ImplicitComputeRHSE()                                  500   0.001916   0.001999   0.002081   0.26%
+FabArray::setVal()                                           3323   0.001759   0.001874   0.001969   0.25%
+ParticleContainer::RedistributeMPI()                          202   0.001287   0.001514   0.001721   0.22%
+MatrixPC::Update()                                            200    0.00156     0.0016   0.001633   0.20%
+MatrixPC::Assemble()                                          201   0.001498   0.001537   0.001566   0.20%
+WarpXParticleContainer::DepositCurrent::Accumulate           1000   0.001348    0.00137   0.001399   0.17%
+KSP_impl::createObjects()                                       1   0.001335   0.001335   0.001336   0.17%
+FabArray::LinComb()                                          2100   0.001073   0.001121   0.001193   0.15%
+FabArrayBase::getFB()                                        5705   0.001057   0.001101    0.00113   0.14%
+Other                                                        6367   0.005826   0.006282   0.006935   0.87%
+----------------------------------------------------------------------------------------------------------
+
+
+
+BEGIN REGION WarpX::Evolve()
+
+----------------------------------------------------------------------------------------------------------
+Name                                                       NCalls  Excl. Min  Excl. Avg  Excl. Max   Max %
+----------------------------------------------------------------------------------------------------------
+PhysicalParticleContainer::Evolve::GatherAndPush             1000     0.2897     0.2937      0.297  37.14%
+KSP_impl::solve()                                             100     0.2123     0.2129     0.2131  26.65%
+FillBoundary_finish()                                        5702    0.01414     0.1174     0.1563  19.54%
+WarpXParticleContainer::DepositCurrent::CurrentDeposition    1000    0.05134    0.05199    0.05285   6.61%
+FillBoundary_nowait()                                        5702    0.01417    0.01476     0.0152   1.90%
+ParticleContainer::RedistributeCPU()                          200   0.007484   0.007639   0.007788   0.97%
+PhysicalParticleContainer::Evolve()                          1000   0.004243   0.004306   0.004409   0.55%
+PETScSolver_impl::assemblePCMatrix()                          100   0.003715   0.003937   0.004063   0.51%
+amrex::Copy()                                                6600   0.002938   0.003194   0.003384   0.42%
+ThetaImplicitEM::UpdateWarpXFields()                          600   0.002757   0.002903   0.003115   0.39%
+JacobianFunctionMF::apply()                                   300   0.002346   0.002476   0.002636   0.33%
+WarpX::EvolveB()                                              600   0.002294   0.002391   0.002501   0.31%
+NewtonSolver::Solve()                                         100   0.001987   0.002236   0.002469   0.31%
+ThetaImplicitEM::OneStep()                                    100   0.001884   0.002161   0.002321   0.29%
+WarpXParticleContainer::ApplyBoundaryConditions()             200   0.002242   0.002261   0.002304   0.29%
+printKSPSResidual()                                           400   0.001248   0.001582   0.002146   0.27%
+ImplicitSolver::PreRHSOp()                                    500   0.001792   0.001879   0.001957   0.24%
+FabArray::setVal()                                           3302   0.001736    0.00185   0.001947   0.24%
+MatrixPC::Assemble()                                          201   0.001498   0.001537   0.001566   0.20%
+NewtonSolver::EvalResidual()                                  200   0.001336    0.00144   0.001517   0.19%
+ParticleContainer::RedistributeMPI()                          200   0.001119    0.00132   0.001517   0.19%
+WarpX::Evolve::step                                           100  0.0009883   0.001168    0.00141   0.18%
+WarpXParticleContainer::DepositCurrent::Accumulate           1000   0.001348    0.00137   0.001399   0.17%
+MultiFab::Copy()                                             6600   0.001156   0.001217   0.001352   0.17%
+ablastr::utils::communication::FillBoundary                  4200   0.001181   0.001231   0.001321   0.17%
+WarpX::ImplicitComputeRHSE()                                  500   0.001117   0.001158   0.001197   0.15%
+FabArray::FillBoundaryAndSync()                              4200  0.0009941   0.001024   0.001079   0.13%
+FillBoundaryAndSync_finish()                                 4200   0.000816   0.000832  0.0008582   0.11%
+FillBoundaryAndSync_nowait()                                 4200  0.0007469  0.0007692  0.0008139   0.10%
+WarpX::SyncCurrent()                                          500   0.000559  0.0005713  0.0005821   0.07%
+ThetaImplicitEM::FinishFieldUpdate()                          100  0.0005186  0.0005304  0.0005405   0.07%
+FabArray<FAB>::SumBoundary()                                 1500  0.0004057  0.0004199  0.0004343   0.05%
+FabArray<FAB>::SumBoundary_nowait()                          1500  0.0003473  0.0003572  0.0003645   0.05%
+FabArray<FAB>::SumBoundary_finish()                          1500  0.0003325  0.0003425   0.000354   0.04%
+ablastr::utils::communication::SumBoundary                   1500  0.0003265  0.0003428  0.0003521   0.04%
+ThetaImplicitEM::ComputeRHS()                                 500  0.0002789  0.0002922  0.0003043   0.04%
+warpx_petsc::applyMatOp()                                     300  0.0002602  0.0002872  0.0003015   0.04%
+PETScSolver_impl::applyOp()                                   300  0.0001394  0.0001471  0.0001506   0.02%
+WarpX::OneStep()                                              100    7.1e-05  7.752e-05  9.142e-05   0.01%
+MatrixPC::Update()                                            200  6.062e-05  6.365e-05  7.219e-05   0.01%
+WarpX::Evolve()                                                 1   3.18e-05  4.096e-05  5.593e-05   0.01%
+REG::WarpX::Evolve()                                            1   8.57e-07  1.217e-06  1.834e-06   0.00%
+Other                                                       14144     0.0061   0.006481   0.007041   0.88%
+----------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------
+Name                                                       NCalls  Incl. Min  Incl. Avg  Incl. Max   Max %
+----------------------------------------------------------------------------------------------------------
+REG::WarpX::Evolve()                                            1     0.6547     0.7525     0.7851  98.18%
+WarpX::Evolve()                                                 1     0.6547     0.7525     0.7851  98.18%
+WarpX::Evolve::step                                           100     0.6547     0.7525     0.7851  98.18%
+WarpX::OneStep()                                              100     0.6417     0.7397     0.7725  96.60%
+ThetaImplicitEM::OneStep()                                    100     0.6416     0.7396     0.7723  96.59%
+NewtonSolver::Solve()                                         100     0.6302     0.7283     0.7612  95.20%
+ThetaImplicitEM::ComputeRHS()                                 500     0.3977     0.4958     0.5289  66.15%
+KSP_impl::solve()                                             100     0.4176     0.4177     0.4179  52.26%
+ImplicitSolver::PreRHSOp()                                    500     0.3718      0.372     0.3721  46.53%
+PhysicalParticleContainer::Evolve()                          1000     0.3468     0.3513     0.3557  44.48%
+NewtonSolver::EvalResidual()                                  200     0.2081     0.3065     0.3395  42.46%
+PhysicalParticleContainer::Evolve::GatherAndPush             1000     0.2897     0.2937      0.297  37.14%
+warpx_petsc::applyMatOp()                                     300     0.1989      0.199     0.1992  24.91%
+PETScSolver_impl::applyOp()                                   300     0.1979      0.198     0.1982  24.79%
+JacobianFunctionMF::apply()                                   300     0.1978     0.1979     0.1981  24.77%
+ThetaImplicitEM::UpdateWarpXFields()                          600    0.02805     0.1263     0.1596  19.95%
+FillBoundary_finish()                                        5702    0.01414     0.1174     0.1563  19.54%
+ablastr::utils::communication::FillBoundary                  4200    0.02309     0.1214     0.1549  19.37%
+FabArray::FillBoundaryAndSync()                              4200    0.02188     0.1202     0.1537  19.22%
+FillBoundaryAndSync_finish()                                 4200   0.008824     0.1074     0.1415  17.69%
+WarpXParticleContainer::DepositCurrent::CurrentDeposition    1000    0.05134    0.05199    0.05285   6.61%
+WarpX::SyncCurrent()                                          500    0.01325    0.01771    0.02238   2.80%
+ablastr::utils::communication::SumBoundary                   1500    0.01267    0.01714    0.02181   2.73%
+FabArray<FAB>::SumBoundary()                                 1500    0.01232    0.01679    0.02147   2.68%
+FillBoundary_nowait()                                        5702    0.01525    0.01584    0.01631   2.04%
+FabArray<FAB>::SumBoundary_finish()                          1500   0.006494    0.01117    0.01596   2.00%
+FillBoundaryAndSync_nowait()                                 4200    0.01126    0.01175    0.01222   1.53%
+ParticleContainer::RedistributeCPU()                          200   0.009163    0.00922   0.009288   1.16%
+FabArray<FAB>::SumBoundary_nowait()                          1500   0.005083   0.005206   0.005388   0.67%
+MultiFab::Copy()                                             6600   0.004101   0.004411   0.004736   0.59%
+PETScSolver_impl::assemblePCMatrix()                          100   0.003715   0.003937   0.004063   0.51%
+ThetaImplicitEM::FinishFieldUpdate()                          100   0.003725    0.00376   0.003824   0.48%
+amrex::Copy()                                                6600   0.002938   0.003194   0.003384   0.42%
+WarpX::EvolveB()                                              600   0.002294   0.002391   0.002501   0.31%
+WarpXParticleContainer::ApplyBoundaryConditions()             200   0.002242   0.002261   0.002304   0.29%
+printKSPSResidual()                                           400   0.001248   0.001582   0.002146   0.27%
+WarpX::ImplicitComputeRHSE()                                  500   0.001916   0.001999   0.002081   0.26%
+FabArray::setVal()                                           3302   0.001736    0.00185   0.001947   0.24%
+ParticleContainer::RedistributeMPI()                          200    0.00127   0.001475   0.001673   0.21%
+MatrixPC::Update()                                            200    0.00156     0.0016   0.001633   0.20%
+MatrixPC::Assemble()                                          201   0.001498   0.001537   0.001566   0.20%
+WarpXParticleContainer::DepositCurrent::Accumulate           1000   0.001348    0.00137   0.001399   0.17%
+Other                                                       14144   0.006744   0.007177   0.007818   0.98%
+----------------------------------------------------------------------------------------------------------
+
+END REGION WarpX::Evolve()
+Pinned Memory Usage:
+---------------------------------------------------------------------------------------------------------------------
+Name                            Nalloc  Nfree  AvgMem min  AvgMem avg  AvgMem max  MaxMem min  MaxMem avg  MaxMem max
+---------------------------------------------------------------------------------------------------------------------
+The_Pinned_Arena::Initialize()       4      4      17 KiB      18 KiB      19 KiB    8192 KiB    8192 KiB    8192 KiB
+main()                             320    320     470   B     470   B     471   B     480   B     480   B     480   B
+Unprofiled                          40     40       0   B       0   B       0   B      32   B      32   B      32   B
+---------------------------------------------------------------------------------------------------------------------
+
+Cpu Memory Usage:
+-------------------------------------------------------------------------------------------------------------------------------
+Name                                      Nalloc  Nfree  AvgMem min  AvgMem avg  AvgMem max  MaxMem min  MaxMem avg  MaxMem max
+-------------------------------------------------------------------------------------------------------------------------------
+ThetaImplicitEM::Define()                     60     36    7835   B    7838   B    7841   B    7944   B    7944   B    7944   B
+JacobianFunctionMF::::define()                48     48    6081   B    6087   B    6090   B    6208   B    6208   B    6208   B
+WarpX::InitData()                             36     36    4836   B    4840   B    4843   B    4936   B    4936   B    4936   B
+NewtonSolver::Define()                        36     36    4561   B    4565   B    4567   B    4656   B    4656   B    4656   B
+PhysicalParticleContainer::Evolve()           24     24    2686   B    2688   B    2690   B    3296   B    3296   B    3296   B
+KSP_impl::createObjects()                     24     24    2528   B    2530   B    2532   B    3104   B    3104   B    3104   B
+ParticleContainer::BuildRedistributeMask       8      8     846   B     846   B     847   B    1056   B    1056   B    1056   B
+OwnerMask()                                   12     12     632   B     632   B     633   B     776   B     776   B     776   B
+FillBoundary_nowait()                      45640  45640       3   B      13   B      18   B     160   B     160   B     160   B
+-------------------------------------------------------------------------------------------------------------------------------
+
+AMReX (25.10-19-g546a888ef041) finalized

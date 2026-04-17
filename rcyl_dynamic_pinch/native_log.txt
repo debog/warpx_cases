@@ -1,0 +1,501 @@
+Executable file is /g/g92/ghosh5/Codes/WarpX-builds/dane/build/bin/warpx.rcylinder.
+
+======================================
+  Case: native_newton_gmres
+  Native Newton + AMReX GMRES
+======================================
+  creating directory .run_native_newton_gmres_dane
+  running WarpX...
+Initializing AMReX (26.03-96-gf30ca3d33848)...
+MPI initialized with 56 MPI processes
+MPI initialized with thread support level 3
+OMP initialized with 1 OMP threads
+AMReX (26.03-96-gf30ca3d33848) initialized
+Initialized PETSc.
+WarpX (26.03-59-gcfa7db36df91)
+
+                                   ___
+    __        __             ___  /  /
+    \ \      / /_ _ _ __ _ __\  \/  /
+     \ \ /\ / / _` | '__| '_ \\    /
+      \ V  V / (_| | |  | |_) /    \
+       \_/\_/ \__,_|_|  | .__/__/\  \
+                        |_|       \__\
+
+--- INFO    : restart from checkpoint ../common/checkpoint110860/
+Defined DOF object for linear solves (total DOFs = 674).
+Level 0: dt = 1e-12 ; dr = 7.142857143e-05
+
+Grids Summary:
+  Level 0   56 grids  224 cells  100 % of domain
+            smallest grid: 4  biggest grid: 4
+
+-------------------------------------------------------------------------------
+--------------------------- MAIN EM PIC PARAMETERS ----------------------------
+-------------------------------------------------------------------------------
+Precision:            | DOUBLE
+Particle precision:   | DOUBLE
+Geometry:             | 1D (RCYLINDER)
+Operation mode:       | Electromagnetic
+                      | - vacuum
+-------------------------------------------------------------------------------
+Current Deposition:   | Villasenor 
+Guard cells           | - ng_alloc_J  = (3)
+ (allocated for J)    | 
+Particle Pusher:      | Higuera-Cary 
+Charge Deposition:    | standard 
+Field Gathering:      | energy-conserving 
+Particle Shape Factor:| 2
+-------------------------------------------------------------------------------
+Maxwell Solver:       | Yee 
+-------------------------------------------------------------------------------
+
+-----------------------------------------------------------
+----------- THETA IMPLICIT EM SOLVER PARAMETERS -----------
+-----------------------------------------------------------
+Time-bias parameter theta:           0.5
+max particle iterations:             11
+particle relative tolerance:         1e-10
+use particle suborbits:              true
+print unconverged particle details:  false
+Nonlinear solver type:               newton
+use mass matrices:                   true
+    for jacobian calc:   true
+        skip particle picard init:  false
+    for preconditioner:  true
+    mass matrices pc width:  1
+    ncomp_xx:  (7);  ncomp_pc_xx:  (3)
+    ncomp_xy:  (8);  ncomp_pc_xy:  (0)
+    ncomp_xz:  (8);  ncomp_pc_xz:  (0)
+    ncomp_yx:  (8);  ncomp_pc_yx:  (0)
+    ncomp_yy:  (9);  ncomp_pc_yy:  (3)
+    ncomp_yz:  (9);  ncomp_pc_yz:  (0)
+    ncomp_zx:  (8);  ncomp_pc_zx:  (0)
+    ncomp_zy:  (9);  ncomp_pc_zy:  (0)
+    ncomp_zz:  (9);  ncomp_pc_zz:  (3)
+Newton verbose:             true
+Newton max iterations:      20
+Newton relative tolerance:  1e-08
+Newton absolute tolerance:  0
+Newton require convergence: true
+Newton JFNK epsilon:        -1
+Newton linear solver:       amrex_gmres
+Linear solver (amrex_gmres) verbose:            2
+Linear solver (amrex_gmres) restart length:     30
+Linear solver (amrex_gmres) max iterations:     100
+Linear solver (amrex_gmres) relative tolerance: 0.0001
+Linear solver (amrex_gmres) absolute tolerance: 0
+Preconditioner type:      pc_petsc
+pc_petsc verbose:                false
+pc_petsc pc_diagonal_only:       false
+pc_petsc include_mass_matrices:  true
+-----------------------------------------------------------
+
+For full input parameters, see the file: warpx_used_inputs
+
+STEP 110861 starts ...
+--- INFO    : updating timestep
+Newton: iteration =   0, norm = 3.47657e+11 (abs.), 1.00000e+00 (rel.)
+GMRES: iter = 0, residual = 3.476573218e+11, 1 (rel.)
+amrex::Abort::0::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::2::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::5::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::6::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::8::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::9::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::10::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::11::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::13::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::14::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::16::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::17::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::18::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::19::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::20::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::21::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::23::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::24::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::25::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::26::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::27::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::28::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::29::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::32::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::33::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::34::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::35::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::36::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::37::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::38::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::39::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::41::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::42::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::43::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::44::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::45::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::46::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::47::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::49::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::50::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::53::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::54::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::1::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::3::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::4::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::7::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::15::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::22::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::30::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::31::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::48::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::51::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::52::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::12::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::40::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+amrex::Abort::55::
+### ERROR   : MatrixPC<T,Ops>::Apply() - native matrix solvers not implemented.
+#            Use with external library, eg, PETSc.
+#            (/g/g92/ghosh5/Codes/WarpX/Source/NonlinearSolvers/MatrixPC.H:836)
+ !!!
+SIGABRT
+See Backtrace.55.0 file for details
+See Backtrace.53.0 file for details
+See Backtrace.15.0 file for details
+See Backtrace.45.0 file for details
+See Backtrace.51.0 file for details
+See Backtrace.7.0 file for details
+See Backtrace.49.0 file for details
+See Backtrace.17.0 file for details
+See Backtrace.9.0 file for details
+See Backtrace.3.0 file for details
+See Backtrace.1.0 file for details
+See Backtrace.47.0 file for details
+See Backtrace.37.0 file for details
+See Backtrace.23.0 file for details
+See Backtrace.19.0 file for details
+See Backtrace.43.0 file for details
+See Backtrace.21.0 file for details
+See Backtrace.39.0 file for details
+See Backtrace.13.0 file for details
+See Backtrace.41.0 file for details
+See Backtrace.33.0 file for details
+See Backtrace.27.0 file for details
+See Backtrace.25.0 file for details
+See Backtrace.35.0 file for details
+See Backtrace.29.0 file for details
+See Backtrace.31.0 file for details
+See Backtrace.11.0 file for details
+See Backtrace.20.0 file for details
+See Backtrace.54.0 file for details
+See Backtrace.5.0 file for details
+See Backtrace.26.0 file for details
+See Backtrace.52.0 file for details
+See Backtrace.16.0 file for details
+See Backtrace.10.0 file for details
+See Backtrace.0.0 file for details
+See Backtrace.4.0 file for details
+See Backtrace.22.0 file for details
+See Backtrace.8.0 file for details
+See Backtrace.32.0 file for details
+See Backtrace.14.0 file for details
+See Backtrace.12.0 file for details
+See Backtrace.18.0 file for details
+See Backtrace.2.0 file for details
+See Backtrace.6.0 file for details
+See Backtrace.38.0 file for details
+See Backtrace.50.0 file for details
+See Backtrace.46.0 file for details
+See Backtrace.40.0 file for details
+See Backtrace.48.0 file for details
+See Backtrace.34.0 file for details
+See Backtrace.42.0 file for details
+See Backtrace.36.0 file for details
+See Backtrace.24.0 file for details
+See Backtrace.44.0 file for details
+See Backtrace.30.0 file for details
+See Backtrace.28.0 file for details
+application called MPI_Abort(comm=0x84000002, 6) - process 55
+[cli_55]: aborting job:
+application called MPI_Abort(comm=0x84000002, 6) - process 55
+application called MPI_Abort(comm=0x84000002, 6) - process 53
+[cli_53]: aborting job:
+application called MPI_Abort(comm=0x84000002, 6) - process 53
+[2026-04-07T19:59:53.212] error: *** STEP 5665509.0 ON dane14 CANCELLED AT 2026-04-07T19:59:53 DUE to SIGNAL Killed ***
+srun: Job step aborted: Waiting up to 62 seconds for job step to finish.
+srun: error: dane14: tasks 0-55: Killed
+  Done (exit code: 0)

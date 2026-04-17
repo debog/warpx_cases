@@ -1,0 +1,528 @@
+Initializing AMReX (25.10-33-ga3892dee9444)...
+MPI initialized with 64 MPI processes
+MPI initialized with thread support level 3
+OMP initialized with 1 OMP threads
+AMReX (25.10-33-ga3892dee9444) initialized
+Initialized PETSc.
+WarpX (25.10-106-ga4fd9fd29514-dirty)
+
+                                   ___
+    __        __             ___  /  /
+    \ \      / /_ _ _ __ _ __\  \/  /
+     \ \ /\ / / _` | '__| '_ \\    /
+      \ V  V / (_| | |  | |_) /    \
+       \_/\_/ \__,_|_|  | .__/__/\  \
+                        |_|       \__\
+
+Level 0: dt = 1.772590712e-18 ; dx = 2.075817682e-10 ; dz = 2.075817682e-10
+Defined DOF object for linear solves (total DOFs = 204864).
+KSP_impl: Initialized PETSc's KSP solver.
+
+Grids Summary:
+  Level 0   64 grids  65536 cells  100 % of domain
+            smallest grid: 32 x 32  biggest grid: 32 x 32
+
+-------------------------------------------------------------------------------
+--------------------------- MAIN EM PIC PARAMETERS ----------------------------
+-------------------------------------------------------------------------------
+Precision:            | DOUBLE
+Particle precision:   | DOUBLE
+Geometry:             | 2D (XZ)
+Operation mode:       | Electromagnetic
+                      | - vacuum
+-------------------------------------------------------------------------------
+Current Deposition:   | Villasenor 
+Guard cells           | - ng_alloc_J  = (2,2)
+ (allocated for J)    | 
+Particle Pusher:      | Boris 
+Charge Deposition:    | standard 
+Field Gathering:      | energy-conserving 
+Particle Shape Factor:| 2
+-------------------------------------------------------------------------------
+Maxwell Solver:       | Yee 
+-------------------------------------------------------------------------------
+
+-----------------------------------------------------------
+----------- THETA IMPLICIT EM SOLVER PARAMETERS -----------
+-----------------------------------------------------------
+Time-bias parameter theta:           0.5
+max particle iterations:             21
+particle relative tolerance:         1e-12
+use particle suborbits:              false
+print unconverged particle details:  false
+Nonlinear solver type:               newton
+use mass matrices:                   false
+Newton verbose:             true
+Newton max iterations:      100
+Newton relative tolerance:  0.0001
+Newton absolute tolerance:  0
+Newton require convergence: false
+Newton linear solver:       petsc_ksp
+Linear solver (petsc_ksp) verbose:            2
+Linear solver (petsc_ksp) restart length:     30
+Linear solver (petsc_ksp) max iterations:     100
+Linear solver (petsc_ksp) relative tolerance: 1e-06
+Linear solver (petsc_ksp) absolute tolerance: 0
+Preconditioner type:      pc_petsc
+pc_petsc verbose:                   true
+pc_petsc pc_diagonal_only:          false
+pc_petsc pc_mass_matrix_width:      -1
+pc_petsc pc_mass_matrix_include_ij: false
+-----------------------------------------------------------
+
+For full input parameters, see the file: warpx_used_inputs
+
+STEP 1 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 5.46554e+11 (abs.), 1.00000e+00 (rel.)
+KSP_impl: Using PETSc preconditioner - lu.
+GMRES (PETSc KSP): iter = 0, residual = 5.57681601e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 402897763.6, 0.0007224512389 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 257033.702, 4.608968657e-07 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=257033.702).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 6.41573e+05 (abs.), 1.17385e-06 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+
+
+**** WARNINGS ******************************************************************
+* GLOBAL warning list  after  [ FIRST STEP ]
+*
+* --> [!! ] [MatrixPC] [raised 64 times]
+*     pc_mass_matrix_width is nonnegative but unable to get mass matrices from
+*     operator.
+*     setting m_pc_mass_matrix_width = -1 (no mass matrix in PC).
+*     @ Raised by: ALL
+*
+********************************************************************************
+
+STEP 1 ends. TIME = 1.772590712e-18 DT = 1.772590712e-18
+Evolve time = 3.953130083 s; This step = 3.953130083 s; Avg. per step = 3.953130083 s
+
+STEP 2 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 9.34832e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 9.552729857e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 484975156, 0.0005076822681 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 324873.1154, 3.4008406e-07 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=324873.1154).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 2.53849e+06 (abs.), 2.71545e-06 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 2 ends. TIME = 3.545181425e-18 DT = 1.772590712e-18
+Evolve time = 7.235572744 s; This step = 3.282442661 s; Avg. per step = 3.617786372 s
+
+STEP 3 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 8.86265e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 9.054328767e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 500693621, 0.0005529881163 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 276800.7519, 3.057109577e-07 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=276800.7519).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 1.18586e+06 (abs.), 1.33804e-06 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 3 ends. TIME = 5.317772137e-18 DT = 1.772590712e-18
+Evolve time = 10.66648271 s; This step = 3.430909968 s; Avg. per step = 3.555494237 s
+
+STEP 4 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 6.71138e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 6.848085606e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 449087692.8, 0.000655785746 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 298030.633, 4.352028437e-07 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=298030.633).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 4.46427e+05 (abs.), 6.65178e-07 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 4 ends. TIME = 7.09036285e-18 DT = 1.772590712e-18
+Evolve time = 14.15106107 s; This step = 3.484578356 s; Avg. per step = 3.537765267 s
+
+STEP 5 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 6.38241e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 6.520961334e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 400087812.3, 0.0006135411512 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 242681.421, 3.721558963e-07 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=242681.421).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 3.16352e+05 (abs.), 4.95663e-07 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 5 ends. TIME = 8.862953562e-18 DT = 1.772590712e-18
+Evolve time = 17.67629148 s; This step = 3.525230416 s; Avg. per step = 3.535258297 s
+
+STEP 6 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 7.61683e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 7.785861171e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 434937135.8, 0.0005586243143 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 261221.4575, 3.355074689e-07 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=261221.4575).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 2.64624e+05 (abs.), 3.47420e-07 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 6 ends. TIME = 1.063554427e-17 DT = 1.772590712e-18
+Evolve time = 21.18826428 s; This step = 3.511972798 s; Avg. per step = 3.53137738 s
+
+STEP 7 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 8.15893e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 8.334427985e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 440454880.3, 0.0005284764367 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 274682.5743, 3.295757967e-07 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=274682.5743).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 4.99808e+05 (abs.), 6.12590e-07 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 7 ends. TIME = 1.240813499e-17 DT = 1.772590712e-18
+Evolve time = 24.71031011 s; This step = 3.522045833 s; Avg. per step = 3.530044302 s
+
+STEP 8 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 7.59769e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 7.761761801e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 415700128.2, 0.0005355744467 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 268307.761, 3.456789424e-07 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=268307.761).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 3.42001e+05 (abs.), 4.50138e-07 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 8 ends. TIME = 1.41807257e-17 DT = 1.772590712e-18
+Evolve time = 28.23800592 s; This step = 3.527695806 s; Avg. per step = 3.52975074 s
+
+STEP 9 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 6.98689e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 7.138207045e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 384718076.4, 0.0005389561748 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 248292.6154, 3.478361077e-07 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=248292.6154).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 2.51650e+05 (abs.), 3.60174e-07 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 9 ends. TIME = 1.595331641e-17 DT = 1.772590712e-18
+Evolve time = 31.76297361 s; This step = 3.524967685 s; Avg. per step = 3.52921929 s
+
+STEP 10 starts ...
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   0, norm = 7.08612e+11 (abs.), 1.00000e+00 (rel.)
+GMRES (PETSc KSP): iter = 0, residual = 7.242560231e+11, 1 (rel.)
+GMRES (PETSc KSP): iter = 1, residual = 368838250.4, 0.0005092650094 (rel.)
+GMRES (PETSc KSP): iter = 2, residual = 235263.6051, 3.248348617e-07 (rel.)
+GMRES (PETSc KSP): exited due to "CONVERGED_RTOL" (abs. norm=235263.6051).
+Updating pc_petsc: theta*dt = 8.862953562e-19,  coefficients: alpha = 7.059896813e-20
+Newton: iteration =   1, norm = 2.37529e+05 (abs.), 3.35204e-07 (rel.)
+Newton: exiting at iteration =   1. Satisfied relative tolerance 0.0001
+STEP 10 ends. TIME = 1.772590712e-17 DT = 1.772590712e-18
+Evolve time = 35.2835536 s; This step = 3.520579998 s; Avg. per step = 3.52835536 s
+
+
+**** WARNINGS ******************************************************************
+* GLOBAL warning list  after  [ THE END ]
+*
+* --> [!! ] [MatrixPC] [raised 64 times]
+*     pc_mass_matrix_width is nonnegative but unable to get mass matrices from
+*     operator.
+*     setting m_pc_mass_matrix_width = -1 (no mass matrix in PC).
+*     @ Raised by: ALL
+*
+********************************************************************************
+
+Total Time                     : 36.02317214
+****************************************************************************************************************************************************************
+***                                WIDEN YOUR WINDOW TO 160 CHARACTERS.  Use 'enscript -r -fCourier9' to print this document                                 ***
+****************************************************************************************************************************************************************
+
+------------------------------------------------------------------ PETSc Performance Summary: ------------------------------------------------------------------
+
+/g/g92/ghosh5/Codes/WarpX-builds/dane/build/bin/warpx.2d on a arch-opt-quartz-mvapich2 named dane8 with 64 processes, by ghosh5 on Mon Oct 27 18:49:56 2025
+Using PETSc Release Version 3.23.6, unknown
+
+                         Max       Max/Min     Avg       Total
+Time (sec):           3.602e+01     1.000   3.602e+01
+Objects:              0.000e+00     0.000   0.000e+00
+Flops:                8.642e+05     1.000   8.642e+05  5.531e+07
+Flops/sec:            2.399e+04     1.000   2.399e+04  1.535e+06
+MPI Msg Count:        1.600e+01     1.333   1.400e+01  8.960e+02
+MPI Msg Len (bytes):  1.624e+03     1.041   1.140e+02  1.021e+05
+MPI Reductions:       1.180e+02     1.000
+
+Flop counting convention: 1 flop = 1 real number operation of type (multiply/divide/add/subtract)
+                            e.g., VecAXPY() for real vectors of length N --> 2N flops
+                            and VecAXPY() for complex vectors of length N --> 8N flops
+
+Summary of Stages:   ----- Time ------  ----- Flop ------  --- Messages ---  -- Message Lengths --  -- Reductions --
+                        Avg     %Total     Avg     %Total    Count   %Total     Avg         %Total    Count   %Total
+ 0:      Main Stage: 3.6024e+01 100.0%  5.5309e+07 100.0%  8.960e+02 100.0%  1.140e+02      100.0%  1.000e+02  84.7%
+
+------------------------------------------------------------------------------------------------------------------------
+See the 'Profiling' chapter of the users' manual for details on interpreting output.
+Phase summary info:
+   Count: number of times phase was executed
+   Time and Flop: Max - maximum over all processors
+                  Ratio - ratio of maximum to minimum over all processors
+   Mess: number of messages sent
+   AvgLen: average message length (bytes)
+   Reduct: number of global reductions
+   Global: entire computation
+   Stage: stages of a computation. Set stages with PetscLogStagePush() and PetscLogStagePop().
+      %T - percent time in this phase         %F - percent flop in this phase
+      %M - percent messages in this phase     %L - percent message lengths in this phase
+      %R - percent reductions in this phase
+   Total Mflop/s: 1e-6 * (sum of flop over all processors)/(max time over all processors)
+------------------------------------------------------------------------------------------------------------------------
+Event                Count      Time (sec)     Flop                              --- Global ---  --- Stage ----  Total
+                   Max Ratio  Max     Ratio   Max  Ratio  Mess   AvgLen  Reduct  %T %F %M %L %R  %T %F %M %L %R Mflop/s
+------------------------------------------------------------------------------------------------------------------------
+
+--- Event Stage 0: Main Stage
+
+BuildTwoSided         11 1.0 4.4401e-03 2.3 0.00e+00 0.0 4.5e+02 4.0e+00 1.1e+01  0  0 50  2  9   0  0 50  2 11     0
+BuildTwoSidedF        10 1.0 4.3740e-03 2.4 0.00e+00 0.0 0.0e+00 0.0e+00 1.0e+01  0  0  0  0  8   0  0  0  0 10     0
+VecMDot               20 1.0 4.1173e-02 35.7 1.92e+05 1.0 0.0e+00 0.0e+00 2.0e+01  0 22  0  0 17   0 22  0  0 20   298
+VecNorm               30 1.0 8.7979e-03 1.7 1.92e+05 1.0 0.0e+00 0.0e+00 3.0e+01  0 22  0  0 25   0 22  0  0 30  1397
+VecScale              30 1.0 5.2214e-05 1.3 9.60e+04 1.0 0.0e+00 0.0e+00 0.0e+00  0 11  0  0  0   0 11  0  0  0 117707
+VecCopy               60 1.0 3.0112e-04 1.6 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+VecSet                20 1.0 6.6757e-05 1.5 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+VecAXPY               10 1.0 7.8201e-05 2.0 6.40e+04 1.0 0.0e+00 0.0e+00 0.0e+00  0  7  0  0  0   0  7  0  0  0 52394
+VecMAXPY              30 1.0 9.0122e-05 1.2 3.20e+05 1.0 0.0e+00 0.0e+00 0.0e+00  0 37  0  0  0   0 37  0  0  0 227318
+VecNormalize          30 1.0 8.9066e-03 1.7 2.88e+05 1.0 0.0e+00 0.0e+00 3.0e+01  0 33  0  0 25   0 33  0  0 30  2070
+MatMult               20 1.0 1.0692e+01 1.0 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00 30  0  0  0  0  30  0  0  0  0     0
+MatSolve              30 1.0 4.8349e-01 1.0 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  1  0  0  0  0   1  0  0  0  0     0
+MatLUFactor           10 1.0 5.9354e+00 1.0 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00 16  0  0  0  0  16  0  0  0  0     0
+MatAssemblyBegin      20 1.0 4.5362e-03 2.3 0.00e+00 0.0 0.0e+00 0.0e+00 1.0e+01  0  0  0  0  8   0  0  0  0 10     0
+MatAssemblyEnd        20 1.0 5.6317e-03 1.1 0.00e+00 0.0 9.0e+02 1.1e+02 2.4e+01  0  0 100 100 20   0  0 100 100 24     0
+MatGetRowIJ           10 1.0 3.8147e-06 4.0 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+MatGetLocalMat        10 1.0 1.9526e-03 1.6 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+KSPSetUp               1 1.0 5.6982e-05 2.7 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+KSPSolve              10 1.0 1.5495e+01 1.0 8.64e+05 1.0 0.0e+00 0.0e+00 5.0e+01 43 100  0  0 42  43 100  0  0 50     4
+KSPGMRESOrthog        20 1.0 4.1273e-02 33.1 3.84e+05 1.0 0.0e+00 0.0e+00 2.0e+01  0 44  0  0 17   0 44  0  0 20   596
+PCSetUp               10 1.0 5.9361e+00 1.0 0.00e+00 0.0 0.0e+00 0.0e+00 2.0e+00 16  0  0  0  2  16  0  0  0  2     0
+PCApply               30 1.0 4.8355e-01 1.0 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  1  0  0  0  0   1  0  0  0  0     0
+SFSetGraph             1 1.0 8.3447e-06 1.7 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+SFSetUp                1 1.0 7.6270e-04 4.2 0.00e+00 0.0 9.0e+02 1.1e+02 1.0e+00  0  0 100 100  1   0  0 100 100  1     0
+------------------------------------------------------------------------------------------------------------------------
+
+Object Type          Creations   Destructions. Reports information only for process 0.
+
+--- Event Stage 0: Main Stage
+
+           Container     1              1
+              Vector     9              9
+              Matrix    17             17
+       Krylov Solver     1              1
+      Preconditioner     1              1
+           Index Set     2              2
+   Star Forest Graph     3              3
+    Distributed Mesh     1              1
+     Discrete System     1              1
+           Weak Form     1              1
+========================================================================================================================
+Average time to get PetscTime(): 2.38419e-08
+Average time for MPI_Barrier(): 8.96454e-06
+Average time for zero size MPI_Send(): 5.04777e-06
+#PETSc Option Table entries:
+-log_view # (source: command line)
+-pc_type lu # (source: command line)
+#End of PETSc Option Table entries
+Compiled without FORTRAN kernels
+Compiled with full precision matrices (default)
+sizeof(short) 2 sizeof(int) 4 sizeof(long) 8 sizeof(void*) 8 sizeof(PetscScalar) 8 sizeof(PetscInt) 4
+Configure options: --with-batch --with-cc=mpicc --with-fc=mpif90 --with-cxx=mpicxx COPTFLAGS="-O2 -std=c99" FOPTFLAGS=-O2 CXXOPTFLAGS=-O2 --with-shared-libraries --with-debugging=0 --download-make --download-cmake --download-hypre --download-superlu --download-superlu_dist --download-parmetis --download-metis --with-cxx-dialect=C++11
+-----------------------------------------
+Libraries compiled on 2025-09-09 00:33:16 on dane2
+Machine characteristics: Linux-4.18.0-553.69.1.1toss.t4.x86_64-x86_64-with-glibc2.28
+Using PETSc directory: /g/g92/ghosh5/Codes/petsc
+Using PETSc arch: arch-opt-quartz-mvapich2
+-----------------------------------------
+
+Using C compiler: mpicc  -fPIC -Wall -Wwrite-strings -Wno-unknown-pragmas -Wno-lto-type-mismatch -fstack-protector -fvisibility=hidden -O2 -std=c99 
+Using Fortran compiler: mpif90  -fPIC -Wall -ffree-line-length-none -ffree-line-length-0 -Wno-lto-type-mismatch -Wno-unused-dummy-argument -O2   
+-----------------------------------------
+
+Using include paths: -I/g/g92/ghosh5/Codes/petsc/include -I/g/g92/ghosh5/Codes/petsc/arch-opt-quartz-mvapich2/include
+-----------------------------------------
+
+Using C linker: mpicc
+Using Fortran linker: mpif90
+Using libraries: -Wl,-rpath,/g/g92/ghosh5/Codes/petsc/arch-opt-quartz-mvapich2/lib -L/g/g92/ghosh5/Codes/petsc/arch-opt-quartz-mvapich2/lib -lpetsc -Wl,-rpath,/g/g92/ghosh5/Codes/petsc/arch-opt-quartz-mvapich2/lib -L/g/g92/ghosh5/Codes/petsc/arch-opt-quartz-mvapich2/lib -Wl,-rpath,/usr/tce/packages/mvapich2/mvapich2-2.3.7-gcc-10.3.1/lib -L/usr/tce/packages/mvapich2/mvapich2-2.3.7-gcc-10.3.1/lib -Wl,-rpath,/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib/gcc/x86_64-redhat-linux/10 -L/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib/gcc/x86_64-redhat-linux/10 -Wl,-rpath,/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib/gcc -L/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib/gcc -Wl,-rpath,/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib64 -L/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib64 -Wl,-rpath,/usr/tce/packages/mkl/mkl-2022.1.0/lib/intel64 -L/usr/tce/packages/mkl/mkl-2022.1.0/lib/intel64 -Wl,-rpath,/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib -L/collab/usr/global/tools/tce4/packages/gcc/gcc-10.3.1/lib -lHYPRE -lsuperlu_dist -lsuperlu -lopenblas -lpthread -lparmetis -lmetis -lm -lX11 -ldl -lmpifort -lmpi -lgfortran -lm -lgfortran -lm -lgcc_s -lquadmath -lstdc++ -ldl
+-----------------------------------------
+
+Finalized PETSc.
+
+
+TinyProfiler total time across processes [min...avg...max]: 36.06 ... 36.06 ... 36.06
+
+----------------------------------------------------------------------------------------------------------
+Name                                                       NCalls  Excl. Min  Excl. Avg  Excl. Max   Max %
+----------------------------------------------------------------------------------------------------------
+PhysicalParticleContainer::Evolve::GatherAndPush              320      20.41      20.93      21.37  59.25%
+KSP_impl::solve()                                              10      6.412       6.42      6.452  17.89%
+WarpXParticleContainer::DepositCurrent::CurrentDeposition     320      5.221      5.336      5.503  15.26%
+FillBoundary_finish()                                         485     0.1574     0.9091       1.91   5.30%
+ThetaImplicitEM::OneStep()                                     10     0.5131      1.064      1.328   3.68%
+PhysicalParticleContainer::AddPlasma()                          2     0.5861     0.5993     0.6123   1.70%
+ParticleContainer::RedistributeCPU()                           22     0.4889     0.5045     0.5288   1.47%
+ParticleContainer::RedistributeMPI()                           22    0.03795    0.09192     0.1446   0.40%
+main()                                                          1    0.01043    0.03356    0.04626   0.13%
+NewtonSolver::EvalResidual()                                   20   0.001605   0.006892    0.02585   0.07%
+WarpX::InitData()                                               1   0.001504   0.001863    0.01427   0.04%
+WarpX::Evolve::step                                            10  0.0008659   0.003372    0.01048   0.03%
+WarpX::Evolve()                                                 1  0.0001631     0.0067    0.00896   0.02%
+JacobianFunctionMF::apply()                                    20   0.002799   0.003201   0.003976   0.01%
+PhysicalParticleContainer::Evolve()                            80   0.002874   0.003324   0.003791   0.01%
+NewtonSolver::Solve()                                          10   0.002424   0.002719   0.003617   0.01%
+PhysicalParticleContainer::AddParticles()                       2  0.0008469  0.0009986   0.001159   0.00%
+ThetaImplicitEM::UpdateWarpXFields()                           50  0.0005435  0.0005823  0.0006555   0.00%
+ThetaImplicitEM::FinishFieldUpdate()                           10  0.0001995   0.000362  0.0004927   0.00%
+ImplicitSolver::PreRHSOp()                                     40  0.0003566  0.0003928  0.0004347   0.00%
+ThetaImplicitEM::ComputeRHS()                                  40  8.906e-05  0.0001762  0.0004241   0.00%
+ablastr::utils::communication::FillBoundary                   360  0.0002126  0.0002494  0.0003031   0.00%
+FabArray::FillBoundaryAndSync()                               360  0.0001562  0.0001847  0.0002273   0.00%
+WarpX::SyncCurrent()                                           40  0.0001323  0.0001437  0.0001641   0.00%
+warpx_petsc::applyMatOp()                                      20  8.083e-05  0.0001076  0.0001293   0.00%
+FillBoundaryAndSync_finish()                                  360  9.778e-05  0.0001059  0.0001161   0.00%
+FabArray<FAB>::SumBoundary()                                  120  8.008e-05  8.953e-05   9.98e-05   0.00%
+PETScSolver_impl::applyOp()                                    20  5.311e-05  6.843e-05  8.935e-05   0.00%
+ablastr::utils::communication::SumBoundary                    120  6.004e-05  6.532e-05  7.219e-05   0.00%
+WarpX::OneStep()                                               10  2.614e-05  4.518e-05  6.609e-05   0.00%
+FabArray<FAB>::SumBoundary_finish()                           120  4.863e-05  5.284e-05   5.81e-05   0.00%
+REG::WarpX::Evolve()                                            1  1.201e-06  1.534e-06  3.469e-06   0.00%
+Other                                                        4208    0.06978    0.09007     0.1457   0.40%
+----------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------
+Name                                                       NCalls  Incl. Min  Incl. Avg  Incl. Max   Max %
+----------------------------------------------------------------------------------------------------------
+main()                                                          1      35.99      36.01      36.02  99.89%
+REG::WarpX::Evolve()                                            1      35.29       35.3       35.3  97.89%
+WarpX::Evolve()                                                 1      35.29       35.3       35.3  97.89%
+WarpX::Evolve::step                                            10      35.28       35.3       35.3  97.89%
+WarpX::OneStep()                                               10      34.69      34.74      34.78  96.43%
+ThetaImplicitEM::OneStep()                                     10      34.69      34.74      34.78  96.43%
+NewtonSolver::Solve()                                          10      33.39      33.55      33.86  93.89%
+ThetaImplicitEM::ComputeRHS()                                  40      26.89      27.06      27.38  75.92%
+ImplicitSolver::PreRHSOp()                                     40      26.84      26.88      26.89  74.58%
+PhysicalParticleContainer::Evolve()                            80      25.67      26.27       26.8  74.31%
+PhysicalParticleContainer::Evolve::GatherAndPush              320      20.41      20.93      21.37  59.25%
+KSP_impl::solve()                                              10      17.15      17.15      17.15  47.55%
+NewtonSolver::EvalResidual()                                   20      16.24      16.39      16.71  46.33%
+warpx_petsc::applyMatOp()                                      20      10.65      10.68      10.69  29.65%
+PETScSolver_impl::applyOp()                                    20      10.65      10.68      10.69  29.65%
+JacobianFunctionMF::apply()                                    20      10.65      10.68      10.69  29.65%
+WarpXParticleContainer::DepositCurrent::CurrentDeposition     320      5.221      5.336      5.503  15.26%
+FillBoundary_finish()                                         485     0.1574     0.9091       1.91   5.30%
+WarpX::SyncCurrent()                                           40    0.08532     0.6088      1.228   3.40%
+ablastr::utils::communication::SumBoundary                    120    0.08517     0.6087      1.228   3.40%
+FabArray<FAB>::SumBoundary()                                  120     0.0851     0.6086      1.228   3.40%
+FabArray<FAB>::SumBoundary_finish()                           120    0.08193     0.6054      1.224   3.39%
+ablastr::utils::communication::FillBoundary                   360    0.02628     0.3005     0.8923   2.47%
+FabArray::FillBoundaryAndSync()                               360    0.02606     0.3002     0.8921   2.47%
+FillBoundaryAndSync_finish()                                  360    0.01908     0.2921     0.8835   2.45%
+WarpX::InitData()                                               1     0.6724     0.6728     0.6851   1.90%
+ParticleContainer::RedistributeCPU()                           22     0.5719     0.6241     0.6725   1.86%
+PhysicalParticleContainer::AddParticles()                       2      0.587     0.6003     0.6132   1.70%
+PhysicalParticleContainer::AddPlasma()                          2     0.5861     0.5993     0.6123   1.70%
+ThetaImplicitEM::UpdateWarpXFields()                           50    0.02522      0.183     0.4964   1.38%
+ThetaImplicitEM::FinishFieldUpdate()                           10   0.002442     0.1203     0.4024   1.12%
+ParticleContainer::RedistributeMPI()                           22    0.05021     0.1077     0.1614   0.45%
+Other                                                        4208    0.08881     0.1349     0.2126   0.59%
+----------------------------------------------------------------------------------------------------------
+
+
+
+BEGIN REGION WarpX::Evolve()
+
+----------------------------------------------------------------------------------------------------------
+Name                                                       NCalls  Excl. Min  Excl. Avg  Excl. Max   Max %
+----------------------------------------------------------------------------------------------------------
+PhysicalParticleContainer::Evolve::GatherAndPush              320      20.41      20.93      21.37  59.25%
+KSP_impl::solve()                                              10      6.412       6.42      6.452  17.89%
+WarpXParticleContainer::DepositCurrent::CurrentDeposition     320      5.221      5.336      5.503  15.26%
+FillBoundary_finish()                                         482     0.1573      0.909       1.91   5.30%
+ThetaImplicitEM::OneStep()                                     10     0.5131      1.064      1.328   3.68%
+ParticleContainer::RedistributeCPU()                           20     0.4402     0.4561      0.484   1.34%
+NewtonSolver::EvalResidual()                                   20   0.001605   0.006892    0.02585   0.07%
+WarpX::Evolve::step                                            10  0.0008659   0.003372    0.01048   0.03%
+WarpX::Evolve()                                                 1  0.0001631     0.0067    0.00896   0.02%
+JacobianFunctionMF::apply()                                    20   0.002799   0.003201   0.003976   0.01%
+PhysicalParticleContainer::Evolve()                            80   0.002874   0.003324   0.003791   0.01%
+NewtonSolver::Solve()                                          10   0.002424   0.002719   0.003617   0.01%
+ThetaImplicitEM::UpdateWarpXFields()                           50  0.0005435  0.0005823  0.0006555   0.00%
+ThetaImplicitEM::FinishFieldUpdate()                           10  0.0001995   0.000362  0.0004927   0.00%
+ImplicitSolver::PreRHSOp()                                     40  0.0003566  0.0003928  0.0004347   0.00%
+ThetaImplicitEM::ComputeRHS()                                  40  8.906e-05  0.0001762  0.0004241   0.00%
+ablastr::utils::communication::FillBoundary                   360  0.0002126  0.0002494  0.0003031   0.00%
+FabArray::FillBoundaryAndSync()                               360  0.0001562  0.0001847  0.0002273   0.00%
+WarpX::SyncCurrent()                                           40  0.0001323  0.0001437  0.0001641   0.00%
+warpx_petsc::applyMatOp()                                      20  8.083e-05  0.0001076  0.0001293   0.00%
+FillBoundaryAndSync_finish()                                  360  9.778e-05  0.0001059  0.0001161   0.00%
+FabArray<FAB>::SumBoundary()                                  120  8.008e-05  8.953e-05   9.98e-05   0.00%
+PETScSolver_impl::applyOp()                                    20  5.311e-05  6.843e-05  8.935e-05   0.00%
+ablastr::utils::communication::SumBoundary                    120  6.004e-05  6.532e-05  7.219e-05   0.00%
+WarpX::OneStep()                                               10  2.614e-05  4.518e-05  6.609e-05   0.00%
+FabArray<FAB>::SumBoundary_finish()                           120  4.863e-05  5.284e-05   5.81e-05   0.00%
+REG::WarpX::Evolve()                                            1  1.201e-06  1.534e-06  3.469e-06   0.00%
+Other                                                        4172    0.09416     0.1593     0.2528   0.70%
+----------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------
+Name                                                       NCalls  Incl. Min  Incl. Avg  Incl. Max   Max %
+----------------------------------------------------------------------------------------------------------
+REG::WarpX::Evolve()                                            1      35.29       35.3       35.3  97.89%
+WarpX::Evolve()                                                 1      35.29       35.3       35.3  97.89%
+WarpX::Evolve::step                                            10      35.28       35.3       35.3  97.89%
+WarpX::OneStep()                                               10      34.69      34.74      34.78  96.43%
+ThetaImplicitEM::OneStep()                                     10      34.69      34.74      34.78  96.43%
+NewtonSolver::Solve()                                          10      33.39      33.55      33.86  93.89%
+ThetaImplicitEM::ComputeRHS()                                  40      26.89      27.06      27.38  75.92%
+ImplicitSolver::PreRHSOp()                                     40      26.84      26.88      26.89  74.58%
+PhysicalParticleContainer::Evolve()                            80      25.67      26.27       26.8  74.31%
+PhysicalParticleContainer::Evolve::GatherAndPush              320      20.41      20.93      21.37  59.25%
+KSP_impl::solve()                                              10      17.15      17.15      17.15  47.55%
+NewtonSolver::EvalResidual()                                   20      16.24      16.39      16.71  46.33%
+warpx_petsc::applyMatOp()                                      20      10.65      10.68      10.69  29.65%
+PETScSolver_impl::applyOp()                                    20      10.65      10.68      10.69  29.65%
+JacobianFunctionMF::apply()                                    20      10.65      10.68      10.69  29.65%
+WarpXParticleContainer::DepositCurrent::CurrentDeposition     320      5.221      5.336      5.503  15.26%
+FillBoundary_finish()                                         482     0.1573      0.909       1.91   5.30%
+WarpX::SyncCurrent()                                           40    0.08532     0.6088      1.228   3.40%
+ablastr::utils::communication::SumBoundary                    120    0.08517     0.6087      1.228   3.40%
+FabArray<FAB>::SumBoundary()                                  120     0.0851     0.6086      1.228   3.40%
+FabArray<FAB>::SumBoundary_finish()                           120    0.08193     0.6054      1.224   3.39%
+ablastr::utils::communication::FillBoundary                   360    0.02628     0.3005     0.8923   2.47%
+FabArray::FillBoundaryAndSync()                               360    0.02606     0.3002     0.8921   2.47%
+FillBoundaryAndSync_finish()                                  360    0.01908     0.2921     0.8835   2.45%
+ParticleContainer::RedistributeCPU()                           20     0.5115     0.5562     0.5922   1.64%
+ThetaImplicitEM::UpdateWarpXFields()                           50    0.02522      0.183     0.4964   1.38%
+ThetaImplicitEM::FinishFieldUpdate()                           10   0.002442     0.1203     0.4024   1.12%
+Other                                                        4172     0.1273     0.2174     0.3339   0.93%
+----------------------------------------------------------------------------------------------------------
+
+END REGION WarpX::Evolve()
+Pinned Memory Usage:
+---------------------------------------------------------------------------------------------------------------------
+Name                            Nalloc  Nfree  AvgMem min  AvgMem avg  AvgMem max  MaxMem min  MaxMem avg  MaxMem max
+---------------------------------------------------------------------------------------------------------------------
+The_Pinned_Arena::Initialize()      64     64     613   B     869   B    1010   B    8192 KiB    8192 KiB    8192 KiB
+main()                            5376   5376     478   B     478   B     478   B     480   B     480   B     480   B
+Unprofiled                        1280   1280       0   B       0   B       0   B      32   B      32   B      32   B
+---------------------------------------------------------------------------------------------------------------------
+
+Cpu Memory Usage:
+-------------------------------------------------------------------------------------------------------------------------------
+Name                                      Nalloc  Nfree  AvgMem min  AvgMem avg  AvgMem max  MaxMem min  MaxMem avg  MaxMem max
+-------------------------------------------------------------------------------------------------------------------------------
+ThetaImplicitEM::Define()                    960    576     137 KiB     137 KiB     137 KiB     137 KiB     137 KiB     137 KiB
+JacobianFunctionMF::::define()               768    768      99 KiB      99 KiB      99 KiB     100 KiB     100 KiB     100 KiB
+WarpX::InitData()                            576    576      93 KiB      93 KiB      93 KiB      93 KiB      93 KiB      93 KiB
+NewtonSolver::Define()                       576    576      74 KiB      74 KiB      74 KiB      75 KiB      75 KiB      75 KiB
+KSP_impl::createObjects()                    384    384      48 KiB      48 KiB      48 KiB      50 KiB      50 KiB      50 KiB
+PhysicalParticleContainer::Evolve()          384    384      21 KiB      21 KiB      21 KiB      21 KiB      21 KiB      21 KiB
+ParticleContainer::BuildRedistributeMask     128    128      15 KiB      15 KiB      15 KiB      18 KiB      18 KiB      18 KiB
+FillBoundary_nowait()                      62080  62080      41   B     242   B     472   B      13 KiB      13 KiB      13 KiB
+OwnerMask()                                  192    192      12 KiB      12 KiB      12 KiB      12 KiB      12 KiB      12 KiB
+-------------------------------------------------------------------------------------------------------------------------------
+
+AMReX (25.10-33-ga3892dee9444) finalized
