@@ -1,0 +1,5 @@
+# Python dependencies for the 2d_planar_pinch plotting scripts.
+# Install with:  python3 -m pip install -r requirements.txt
+numpy>=1.24
+matplotlib>=3.7
+yt>=4.4
