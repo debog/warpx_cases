@@ -1,0 +1,4 @@
+#-pc_type asm
+#-pc_asm_overlap 4
+#-sub_pc_type lu
+-log_view
