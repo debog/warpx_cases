@@ -19,8 +19,6 @@ my_constants.u0 = sqrt(PB0/rho0)    # implosion speed [m/s]
 my_constants.t0 = R0/u0             # implosion time [m/s]
 
 ###   simulation parameters
-#my_constants.wpe0 = q_e*sqrt(n0/(m_e*epsilon0))
-#my_constants.de0 = clight/wpe0
 my_constants.tsim = 220.e-9  # sim time = 1.35*t0 [s]
 my_constants.rise_time = t0/20.0  # current rise time [s]
 my_constants.dt = 2.0e-3*1.0e-9   # time step [s]
@@ -33,11 +31,7 @@ my_constants.Nppc_z = 20      # particles per cell
 stop_time = tsim
 max_step = 2200000
 amr.n_cell =  256 32
-#amr.max_grid_size_x = 256
-#amr.max_grid_size_y = 8
-#amr.blocking_factor = 32
 amr.max_level = 0
-warpx.numprocs = 1 4
 geometry.dims = 2
 geometry.prob_lo = 0.0 0.0
 geometry.prob_hi = 1.60e-2 1.60e-2*32/256
@@ -66,12 +60,10 @@ insulator.By_x_hi(y,z,t) = min(t/rise_time,1)*B0
 warpx.verbose = 1
 warpx.limit_verbose_step = false
 warpx.const_dt = dt
-#warpx.cfl = 0.5656
 warpx.use_filter = 0
 
 algo.maxwell_solver = Yee
 algo.evolve_scheme = "theta_implicit_em"
-#algo.evolve_scheme = "semi_implicit_em"
 
 implicit_evolve.theta = 0.5
 implicit_evolve.max_particle_iterations = 11
@@ -89,7 +81,6 @@ newton.diagnostic_file = "diags/reduced_files/newton_solver.txt"
 newton.diagnostic_interval = 100
 
 gmres.verbose_int = 2
-#gmres.restart_length = 4
 gmres.max_iterations = 1000
 gmres.relative_tolerance = 1.0e-3
 gmres.absolute_tolerance = 0.0
@@ -104,9 +95,7 @@ pc_petsc.type = asm
 pc_petsc.asm_overlap = 4
 pc_petsc.sub_type = lu
 
-#algo.particle_pusher = "boris"
 algo.particle_pusher = "higuera"
-
 particles.crop_on_PEC_boundary = true
 particles.max_grid_crossings = 2
 algo.particle_shape = 2
