@@ -24,6 +24,10 @@
 #   -v, --verbose         Enable verbose output
 #   -h, --help            Show this help message
 #
+# Additional WarpX parameters can be passed as non-option arguments:
+#   Example: ./run_warpx.sh -c case1 jacobian.pc_type=none
+#   Example: ./run_warpx.sh -c case1 max_step=100 amrex.verbose=2
+#
 # Environment:
 #   LCHOST            LC platform identifier (auto-detected for LC machines)
 #   NERSC_HOST        NERSC platform identifier (auto-detected for NERSC machines)
@@ -250,17 +254,17 @@ EOF
         local total_gpus=$((NTASKS * GPUS_PER_TASK))
         if [[ "$PLATFORM" == "perlmutter" ]]; then
             # Perlmutter-specific GPU handling
-            cat >> "$jobfile" << 'EOF'
+            cat >> "$jobfile" << EOF
 # CUDA visible devices are ordered inverse to local task IDs for Perlmutter
 srun --cpu-bind=cores -n ${NTASKS} bash -c "
-    export CUDA_VISIBLE_DEVICES=\$((3-SLURM_LOCALID));
+    export CUDA_VISIBLE_DEVICES=\\\$((3-SLURM_LOCALID));
     ${EXEC} ${INP} ${WARPX_EXTRA_ARGS}" 2>&1 | tee out.${PLATFORM}.log
 EOF
         else
-            echo "srun --exclusive -N ${NNODES} -G ${total_gpus} -n ${NTASKS} \$EXEC \$INP \$WARPX_EXTRA_ARGS 2>&1 | tee out.\${PLATFORM}.log" >> "$jobfile"
+            echo "srun --exclusive -N ${NNODES} -G ${total_gpus} -n ${NTASKS} ${EXEC} ${INP} ${WARPX_EXTRA_ARGS} 2>&1 | tee out.${PLATFORM}.log" >> "$jobfile"
         fi
     else
-        echo "srun -N ${NNODES} -n ${NTASKS} \$EXEC \$INP \$WARPX_EXTRA_ARGS 2>&1 | tee out.\${PLATFORM}.log" >> "$jobfile"
+        echo "srun -N ${NNODES} -n ${NTASKS} ${EXEC} ${INP} ${WARPX_EXTRA_ARGS} 2>&1 | tee out.${PLATFORM}.log" >> "$jobfile"
     fi
 }
 
@@ -296,7 +300,7 @@ rm -rf diags
 
 export OMP_NUM_THREADS=1
 
-flux run --exclusive --nodes=${NNODES} --ntasks ${NTASKS} \$EXEC \$INP \$WARPX_EXTRA_ARGS 2>&1 | tee out.${PLATFORM}.log
+flux run --exclusive --nodes=${NNODES} --ntasks ${NTASKS} ${EXEC} ${INP} ${WARPX_EXTRA_ARGS} 2>&1 | tee out.${PLATFORM}.log
 EOF
 }
 
@@ -543,14 +547,15 @@ OVERRIDE_WALLTIME=""
 MAX_STEPS=""
 DRY_RUN=""
 VERBOSE=""
+EXTRA_WARPX_ARGS=()
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -c|--case=*)
             if [[ "$1" == -c ]]; then
                 shift
-                # Collect all non-option arguments as case names
-                while [[ $# -gt 0 && "$1" != -* ]]; do
+                # Collect all non-option arguments as case names (but not key=value pairs)
+                while [[ $# -gt 0 && "$1" != -* && "$1" != *"="* ]]; do
                     # Expand wildcards by checking if pattern matches any input files
                     if [[ "$1" == *"*"* ]] || [[ "$1" == *"?"* ]]; then
                         # This is a glob pattern - expand it
@@ -588,7 +593,11 @@ while [[ $# -gt 0 ]]; do
         -l|--list-cases) list_cases; exit 0 ;;
         -P|--list-platforms) list_platforms; exit 0 ;;
         -h|--help)      usage ;;
-        *)              error "Unknown option: $1" ;;
+        -*)
+            error "Unknown option: $1" ;;
+        *)
+            # Non-option arguments are WarpX parameters (e.g., jacobian.pc_type=none)
+            EXTRA_WARPX_ARGS+=("$1") ;;
     esac
     shift
 done
@@ -666,11 +675,20 @@ cd "$WORKDIR"
 cp "$INPUT_FILE" .
 INP="$(basename "$INPUT_FILE")"
 
+# Copy .petscrc file if it exists
+if [[ -f "$INPUTS_DIR/.petscrc" ]]; then
+    cp "$INPUTS_DIR/.petscrc" .
+fi
+
 # Build extra arguments for WarpX
 WARPX_EXTRA_ARGS=""
 [[ -n "$MAX_STEPS" ]] && WARPX_EXTRA_ARGS="max_step=$MAX_STEPS"
 # Add GPU-aware MPI flag for GPU platforms
 [[ "$GPU_SUPPORT" == "true" ]] && WARPX_EXTRA_ARGS="$WARPX_EXTRA_ARGS amrex.use_gpu_aware_mpi=1"
+# Add user-specified WarpX arguments
+for arg in "${EXTRA_WARPX_ARGS[@]}"; do
+    WARPX_EXTRA_ARGS="$WARPX_EXTRA_ARGS $arg"
+done
 
 # Generate run.sh and warpx.job scripts in the run directory
 info "Generating run scripts in $WORKDIR"
