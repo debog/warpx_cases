@@ -46,7 +46,10 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 CONFIG_FILE="$SCRIPT_DIR/platforms.conf"
 INPUTS_DIR="$ROOT_DIR/inputs"
 DEFAULT_CASE="planar_pinch_2d"
-DIM="2d"
+# DIM is auto-derived from the case-name suffix (_1d, _2d, _3d, _rz) in the
+# per-case loop below; default if no matching suffix is found is "2d".
+DEFAULT_DIM="2d"
+DIM="$DEFAULT_DIM"
 
 # =============================================================================
 # Color output (disabled if not a terminal)
@@ -640,6 +643,16 @@ for CASE in "${CASES[@]}"; do
         info "=========================================="
         info ""
     fi
+
+# Derive dimensionality from case-name suffix (_1d, _2d, _3d, _rz)
+case "$CASE" in
+    *_1d|*_1D) DIM="1d" ;;
+    *_2d|*_2D) DIM="2d" ;;
+    *_3d|*_3D) DIM="3d" ;;
+    *_rz|*_RZ) DIM="rz" ;;
+    *)         DIM="$DEFAULT_DIM" ;;
+esac
+debug "Derived DIM=$DIM from CASE=$CASE"
 
 # Validate inputs and environment
 validate
