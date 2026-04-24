@@ -4,12 +4,15 @@
 # Usage:
 #   plot_species.py <run_dir> [--outdir <plots_dir>] [--steps S1,S2,...]
 #
-# WarpX particle_fields diagnostic (do_average=0) sums:
+# Auto-detects WarpX dimensionality from the plotfile. WarpX particle_fields
+# diagnostic (do_average=0) sums:
 #   num  = Σ w_p
 #   ux   = Σ w_p v_x
 #   enex = Σ w_p (1/(1+γ)) u_x² c²   (non-relativistic: ≈ Σ w_p v_x²/2)
 # From these we build per-cell n, T, ⟨v⟩. Outputs land in
-# <outdir>/species_2d/<step>.png and <outdir>/species_profile/<step>.png.
+#   1D: <outdir>/species_profile/<step>.png   (only 1D lineouts in z)
+#   2D: <outdir>/species_2d/<step>.png        (n, T, <v_x> per species, 2D)
+#       <outdir>/species_profile/<step>.png   (z-averaged 1D profiles in x)
 import argparse
 import glob
 import os
@@ -33,33 +36,45 @@ SPECIES_MASS = {"electrons": M_E, "deuterium": M_D}
 def read_level0(pf_path):
     ds = yt.load(pf_path)
     t = float(ds.current_time)
+    dim = int(ds.dimensionality)
     dims = ds.domain_dimensions.copy()
     left = ds.domain_left_edge.to("m").d
     right = ds.domain_right_edge.to("m").d
-    nx, nz = int(dims[0]), int(dims[1])
-    dx = (right[0] - left[0]) / nx
-    dz = (right[1] - left[1]) / nz
-    vcell = dx * dz * 1.0
     cg = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
                           dims=ds.domain_dimensions)
     fnames = [fn for (ft, fn) in ds.field_list if ft == "boxlib"]
     species = sorted({fn.split("_", 1)[1] for fn in fnames if fn.startswith("num_")})
+
+    if dim == 1:
+        nz = int(dims[0])
+        dz = (right[0] - left[0]) / nz
+        # In 1D, "cell volume" is just dz (per unit transverse area). Particle
+        # deposition is per-unit-transverse-area, so num/dz gives n in m^-3.
+        vcell = dz
+        z = np.linspace(left[0], right[0], nz + 1)
+        z = 0.5 * (z[:-1] + z[1:])
+        coord = {"dim": 1, "z": z}
+    else:
+        nx, nz = int(dims[0]), int(dims[1])
+        dx = (right[0] - left[0]) / nx
+        dz = (right[1] - left[1]) / nz
+        vcell = dx * dz * 1.0
+        x = np.linspace(left[0], right[0], nx + 1)
+        x = 0.5 * (x[:-1] + x[1:])
+        z = np.linspace(left[1], right[1], nz + 1)
+        z = 0.5 * (z[:-1] + z[1:])
+        coord = {"dim": 2, "x": x, "z": z}
+
     data = {}
     for s in species:
         d = {}
         for k in ["num", "ux", "uy", "uz", "enex", "eney", "enez"]:
             key = ("boxlib", f"{k}_{s}")
             if key in ds.field_list:
-                arr = np.array(cg[key])
-                if arr.ndim == 3:
-                    arr = arr[:, :, 0]
+                arr = np.array(cg[key]).squeeze()
                 d[k] = arr
         data[s] = d
-    x = np.linspace(left[0], right[0], nx + 1)
-    x = 0.5 * (x[:-1] + x[1:])
-    z = np.linspace(left[1], right[1], nz + 1)
-    z = 0.5 * (z[:-1] + z[1:])
-    return x, z, data, t, vcell
+    return {"coord": coord, "data": data, "t": t, "vcell": vcell}
 
 
 def moments(d, mass):
@@ -78,13 +93,57 @@ def moments(d, mass):
     return vx, vy, vz, T_eV
 
 
-def plot_one(pf_path, outdir):
-    x, z, data, t, vcell = read_level0(pf_path)
-    step = re.search(r"(\d+)$", os.path.basename(pf_path)).group(1)
+def plot_one_1d(meta, step, outdir):
+    coord = meta["coord"]
+    data = meta["data"]
+    t = meta["t"]
+    vcell = meta["vcell"]
+    z = coord["z"]
+    species = list(data.keys())
+    if not species:
+        return
+    dir_prof = os.path.join(outdir, "species_profile")
+    os.makedirs(dir_prof, exist_ok=True)
+
+    profiles = {}
+    for s in species:
+        d = data[s]
+        if "num" not in d:
+            continue
+        mass = SPECIES_MASS.get(s, M_U)
+        n_cc = d["num"] / vcell
+        vx, vy, vz, T_eV = moments(d, mass)
+        # In 1D the bulk flow coordinate is v_z (not v_x).
+        profiles[s] = (n_cc, vz, T_eV)
+
+    fig, axes = plt.subplots(3, 1, figsize=(8, 8), sharex=True)
+    for s, (n_cc, vz, T_eV) in profiles.items():
+        axes[0].plot(z * 100, n_cc, label=s)
+        axes[1].plot(z * 100, T_eV, label=s)
+        axes[2].plot(z * 100, vz,   label=s)
+    axes[0].set_ylabel("n (m^-3)")
+    axes[1].set_ylabel("T (eV)")
+    axes[2].set_ylabel("<v_z> (m/s)")
+    axes[2].set_xlabel("z (cm)")
+    axes[0].set_title(f"1D species profiles  (t={t*1e9:.2f} ns, step {step})")
+    for ax in axes:
+        ax.legend(fontsize=8)
+        ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(os.path.join(dir_prof, f"{step}.png"), dpi=150)
+    plt.close(fig)
+
+
+def plot_one_2d(meta, step, outdir):
+    coord = meta["coord"]
+    data = meta["data"]
+    t = meta["t"]
+    vcell = meta["vcell"]
+    x = coord["x"]
+    z = coord["z"]
     extent = [x[0] * 100, x[-1] * 100, z[0] * 100, z[-1] * 100]
     species = list(data.keys())
     if not species:
-        print(f"  no species in {pf_path}")
         return
     dir_2d = os.path.join(outdir, "species_2d")
     dir_prof = os.path.join(outdir, "species_profile")
@@ -143,6 +202,18 @@ def plot_one(pf_path, outdir):
     fig.tight_layout()
     fig.savefig(os.path.join(dir_prof, f"{step}.png"), dpi=150)
     plt.close(fig)
+
+
+def plot_one(pf_path, outdir):
+    meta = read_level0(pf_path)
+    step = re.search(r"(\d+)$", os.path.basename(pf_path)).group(1)
+    if not meta["data"]:
+        print(f"  no species in {pf_path}")
+        return
+    if meta["coord"]["dim"] == 1:
+        plot_one_1d(meta, step, outdir)
+    else:
+        plot_one_2d(meta, step, outdir)
 
 
 def main():

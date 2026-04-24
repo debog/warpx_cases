@@ -1,9 +1,10 @@
 #!/bin/bash
 #
-# Plotting driver for 2d_planar_pinch results.
+# Plotting driver for planar_pinch results (1D and 2D siblings).
 # Intended to run on the HPC machine after a simulation finishes.
-# Loops over .run_planar_pinch_2d.*/ directories under the parent case dir
+# Loops over .run_planar_pinch_{1,2}d.*/ directories under the parent case dir
 # and invokes plot_reduced.py, plot_fields.py, plot_species.py on each.
+# The Python plotters auto-detect dimensionality from the plotfiles.
 #
 # Usage:
 #   ./run_plots.sh [OPTIONS]
@@ -13,8 +14,9 @@
 #                         Default: the parent of this script's directory.
 #   -r, --run-dir=DIR     Plot only this run dir (absolute or relative to ROOT).
 #                         May be given multiple times. Default: all .run_*.
-#   -p, --platform=NAME   Shortcut for --run-dir: matches .run_planar_pinch_2d.NAME.*.
+#   -p, --platform=NAME   Shortcut for --run-dir: matches .run_planar_pinch_*d.NAME.*.
 #                         May be given multiple times (dane/matrix/tuolumne).
+#   -D, --dim=1d|2d|all   Restrict to a given dim (1d / 2d / all). Default: all.
 #   -s, --steps=LIST      Comma-separated plotfile steps for field/species plots.
 #                         Default: all plotfiles in mesh_data/.
 #   -o, --outdir=DIR      Output dir name relative to each run dir. Default: plots.
@@ -57,6 +59,7 @@ RUN_DIRS=()
 PLATFORMS=()
 STEPS=""
 OUTDIR_REL="plots"
+DIM_FILTER="all"
 DO_REDUCED=1
 DO_FIELDS=1
 DO_SPECIES=1
@@ -71,6 +74,8 @@ while [[ $# -gt 0 ]]; do
         --run-dir=*) RUN_DIRS+=("${1#*=}"); shift ;;
         -p|--platform) PLATFORMS+=("$2"); shift 2 ;;
         --platform=*) PLATFORMS+=("${1#*=}"); shift ;;
+        -D|--dim) DIM_FILTER="$2"; shift 2 ;;
+        --dim=*) DIM_FILTER="${1#*=}"; shift ;;
         -s|--steps) STEPS="$2"; shift 2 ;;
         --steps=*) STEPS="${1#*=}"; shift ;;
         -o|--outdir) OUTDIR_REL="$2"; shift 2 ;;
@@ -88,16 +93,24 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Choose the run-dir glob pattern from the dim filter.
+case "$DIM_FILTER" in
+    1d|1D)  DIM_GLOB="1d" ;;
+    2d|2D)  DIM_GLOB="2d" ;;
+    all|"") DIM_GLOB="?d" ;;
+    *) err "unknown --dim value: $DIM_FILTER (expected 1d|2d|all)"; exit 1 ;;
+esac
+
 # Expand --platform entries into run-dir candidates.
 for plat in "${PLATFORMS[@]}"; do
-    for d in "$ROOT_DIR"/.run_planar_pinch_2d."$plat".*; do
+    for d in "$ROOT_DIR"/.run_planar_pinch_${DIM_GLOB}."$plat".*; do
         [[ -d "$d" ]] && RUN_DIRS+=("$d")
     done
 done
 
-# Default: all .run_* under ROOT.
+# Default: all .run_* under ROOT matching the dim filter.
 if [[ ${#RUN_DIRS[@]} -eq 0 ]]; then
-    for d in "$ROOT_DIR"/.run_planar_pinch_2d.*; do
+    for d in "$ROOT_DIR"/.run_planar_pinch_${DIM_GLOB}.*; do
         [[ -d "$d" ]] && RUN_DIRS+=("$d")
     done
 fi
