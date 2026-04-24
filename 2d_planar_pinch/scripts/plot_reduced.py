@@ -26,6 +26,19 @@ def load(path):
     return cols, data
 
 
+def up_to_date(output_path, input_paths):
+    """True iff output exists and is at least as new as every input that exists."""
+    if not os.path.isfile(output_path):
+        return False
+    out_mtime = os.path.getmtime(output_path)
+    for p in input_paths:
+        if not os.path.isfile(p):
+            continue
+        if os.path.getmtime(p) > out_mtime:
+            return False
+    return True
+
+
 def col(cols, data, name):
     for i, c in enumerate(cols):
         if c.split("(")[0] == name.split("(")[0]:
@@ -37,8 +50,12 @@ def col(cols, data, name):
     raise KeyError(f"{name} not in {cols}")
 
 
-def plot_particle_energy(path, outdir):
+def plot_particle_energy(path, outdir, force=False):
     if not os.path.isfile(path):
+        return
+    out = os.path.join(outdir, "particle_energy.png")
+    if not force and up_to_date(out, [path]):
+        print(f"  up-to-date, skipping particle_energy.png")
         return
     cols, data = load(path)
     t_ns = data[:, 1] * 1e9
@@ -65,12 +82,16 @@ def plot_particle_energy(path, outdir):
     ax2.legend(fontsize=8)
     ax2.grid(True, alpha=0.3)
     fig.tight_layout()
-    fig.savefig(os.path.join(outdir, "particle_energy.png"), dpi=150)
+    fig.savefig(out, dpi=150)
     plt.close(fig)
 
 
-def plot_field_energy(path, outdir):
+def plot_field_energy(path, outdir, force=False):
     if not os.path.isfile(path):
+        return
+    out = os.path.join(outdir, "field_energy.png")
+    if not force and up_to_date(out, [path]):
+        print(f"  up-to-date, skipping field_energy.png")
         return
     cols, data = load(path)
     t_ns = data[:, 1] * 1e9
@@ -84,12 +105,16 @@ def plot_field_energy(path, outdir):
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
-    fig.savefig(os.path.join(outdir, "field_energy.png"), dpi=150)
+    fig.savefig(out, dpi=150)
     plt.close(fig)
 
 
-def plot_poynting(path, outdir):
+def plot_poynting(path, outdir, force=False):
     if not os.path.isfile(path):
+        return
+    out = os.path.join(outdir, "poynting_flux.png")
+    if not force and up_to_date(out, [path]):
+        print(f"  up-to-date, skipping poynting_flux.png")
         return
     cols, data = load(path)
     t_ns = data[:, 1] * 1e9
@@ -111,12 +136,16 @@ def plot_poynting(path, outdir):
     ax2.legend(fontsize=8)
     ax2.grid(True, alpha=0.3)
     fig.tight_layout()
-    fig.savefig(os.path.join(outdir, "poynting_flux.png"), dpi=150)
+    fig.savefig(out, dpi=150)
     plt.close(fig)
 
 
-def plot_newton(path, outdir):
+def plot_newton(path, outdir, force=False):
     if not os.path.isfile(path):
+        return
+    out = os.path.join(outdir, "newton_solver.png")
+    if not force and up_to_date(out, [path]):
+        print(f"  up-to-date, skipping newton_solver.png")
         return
     cols, data = load(path)
     t_ns = data[:, 1] * 1e9
@@ -148,12 +177,16 @@ def plot_newton(path, outdir):
     ax.set_title("GMRES last residual")
     ax.grid(True, which="both", alpha=0.3)
     fig.tight_layout()
-    fig.savefig(os.path.join(outdir, "newton_solver.png"), dpi=150)
+    fig.savefig(out, dpi=150)
     plt.close(fig)
 
 
-def plot_energy_conservation(pe_path, fe_path, py_path, outdir):
+def plot_energy_conservation(pe_path, fe_path, py_path, outdir, force=False):
     if not (os.path.isfile(pe_path) and os.path.isfile(fe_path)):
+        return
+    out = os.path.join(outdir, "energy_conservation.png")
+    if not force and up_to_date(out, [pe_path, fe_path, py_path]):
+        print(f"  up-to-date, skipping energy_conservation.png")
         return
     pe_cols, pe = load(pe_path)
     fe_cols, fe = load(fe_path)
@@ -189,7 +222,7 @@ def plot_energy_conservation(pe_path, fe_path, py_path, outdir):
     ax2.set_title("relative energy conservation error")
     ax2.grid(True, alpha=0.3)
     fig.tight_layout()
-    fig.savefig(os.path.join(outdir, "energy_conservation.png"), dpi=150)
+    fig.savefig(out, dpi=150)
     plt.close(fig)
 
 
@@ -197,6 +230,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("run_dir")
     ap.add_argument("--outdir", default=None)
+    ap.add_argument("--force", action="store_true",
+                    help="regenerate plots even if they are newer than the reduced-diag files")
     args = ap.parse_args()
     rdir = os.path.abspath(args.run_dir)
     outdir = args.outdir or os.path.join(rdir, "plots")
@@ -206,11 +241,11 @@ def main():
     fe = os.path.join(rf, "field_energy.txt")
     py = os.path.join(rf, "poynting_flux.txt")
     nw = os.path.join(rf, "newton_solver.txt")
-    plot_particle_energy(pe, outdir)
-    plot_field_energy(fe, outdir)
-    plot_poynting(py, outdir)
-    plot_newton(nw, outdir)
-    plot_energy_conservation(pe, fe, py, outdir)
+    plot_particle_energy(pe, outdir, force=args.force)
+    plot_field_energy(fe, outdir, force=args.force)
+    plot_poynting(py, outdir, force=args.force)
+    plot_newton(nw, outdir, force=args.force)
+    plot_energy_conservation(pe, fe, py, outdir, force=args.force)
     print(f"wrote reduced plots -> {outdir}")
 
 

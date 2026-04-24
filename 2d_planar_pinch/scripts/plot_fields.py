@@ -29,6 +29,26 @@ DEFAULT_FIELDS_1D = ["rho", "Bx", "jy", "Ez", "part_per_cell"]
 SYM_FIELDS = {"jx", "jy", "jz", "Ex", "Ey", "Ez", "Bx", "By", "Bz", "divE", "divB"}
 
 
+def _plotfile_mtime(pf_path):
+    # AMReX plotfile is a directory; dir mtime reflects last-added file, Header
+    # is typically written last. Take the max of the two.
+    mt = os.path.getmtime(pf_path)
+    hdr = os.path.join(pf_path, "Header")
+    if os.path.isfile(hdr):
+        mt = max(mt, os.path.getmtime(hdr))
+    return mt
+
+
+def up_to_date(outputs, input_mtime):
+    """True iff every output exists and is at least as new as the input."""
+    for out in outputs:
+        if not os.path.isfile(out):
+            return False
+        if os.path.getmtime(out) < input_mtime:
+            return False
+    return True
+
+
 def read_level0(pf_path, fields):
     ds = yt.load(pf_path)
     t = float(ds.current_time)
@@ -123,10 +143,23 @@ def plot_one_2d(meta, step, outdir):
     plt.close(fig)
 
 
-def plot_one(pf_path, outdir, fields):
-    meta = read_level0(pf_path, fields)
+def plot_one(pf_path, outdir, fields, force=False):
     step_match = re.search(r"(\d+)$", os.path.basename(pf_path))
     step = step_match.group(1) if step_match else "xxx"
+    # Decide up-front whether outputs are current; peek at dim only if needed.
+    prof_png = os.path.join(outdir, "fields_profile", f"{step}.png")
+    twod_png = os.path.join(outdir, "fields_2d", f"{step}.png")
+    if not force:
+        in_mtime = _plotfile_mtime(pf_path)
+        # If the 1D-only output is current and no 2D output exists, we can skip
+        # without loading yt. If a 2D output exists, require both to be current.
+        has_2d_out = os.path.isfile(twod_png)
+        required = [prof_png] + ([twod_png] if has_2d_out else [])
+        if up_to_date(required, in_mtime):
+            print(f"  up-to-date, skipping {os.path.basename(pf_path)}")
+            return
+    print(f"  plotting {os.path.basename(pf_path)}")
+    meta = read_level0(pf_path, fields)
     if not meta["data"]:
         print(f"  no requested fields in {pf_path}")
         return
@@ -149,6 +182,8 @@ def main():
                     help="comma-separated list of step numbers to plot; default=all")
     ap.add_argument("--fields", default=None,
                     help="comma-separated field list; default auto-picks per dimensionality")
+    ap.add_argument("--force", action="store_true",
+                    help="regenerate plots even if they are newer than the plotfile")
     args = ap.parse_args()
     rdir = os.path.abspath(args.run_dir)
     outdir = args.outdir or os.path.join(rdir, "plots")
@@ -167,8 +202,7 @@ def main():
     else:
         fields = [f.strip() for f in args.fields.split(",") if f.strip()]
     for p in pfs:
-        print(f"  plotting {os.path.basename(p)}")
-        plot_one(p, outdir, fields)
+        plot_one(p, outdir, fields, force=args.force)
     print(f"wrote field plots -> {outdir}")
 
 

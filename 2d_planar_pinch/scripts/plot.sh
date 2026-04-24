@@ -12,8 +12,11 @@
 # Options:
 #   -R, --root-dir=DIR    Parent dir containing .run_* subdirs.
 #                         Default: the parent of this script's directory.
-#   -r, --run-dir=DIR     Plot only this run dir (absolute or relative to ROOT).
-#                         May be given multiple times. Default: all .run_*.
+#   -r, --run-dir=PATH    Plot only this run dir. May be an absolute path, a
+#                         path relative to ROOT_DIR, or a glob pattern (e.g.
+#                         '.run_planar_pinch_*d.tuolumne.*' — quote it so the
+#                         shell doesn't expand in CWD). May be given multiple
+#                         times. Default: all .run_planar_pinch_*d.* under ROOT.
 #   -p, --platform=NAME   Shortcut for --run-dir: matches .run_planar_pinch_*d.NAME.*.
 #                         May be given multiple times (dane/matrix/tuolumne).
 #   -D, --dim=1d|2d|all   Restrict to a given dim (1d / 2d / all). Default: all.
@@ -26,6 +29,8 @@
 #       --skip-reduced    Skip plot_reduced.py.
 #       --skip-fields     Skip plot_fields.py.
 #       --skip-species    Skip plot_species.py.
+#   -f, --force           Regenerate plots even if they are newer than inputs.
+#                         Default: per-output mtime check, skip when up-to-date.
 #   -d, --dry-run         Show commands without executing.
 #   -v, --verbose         Verbose Python output.
 #   -h, --help            Show this message.
@@ -63,17 +68,19 @@ DIM_FILTER="all"
 DO_REDUCED=1
 DO_FIELDS=1
 DO_SPECIES=1
+FORCE=0
 DRYRUN=0
 VERBOSE=0
 
+USER_SELECTED=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -R|--root-dir) ROOT_DIR="$2"; shift 2 ;;
         --root-dir=*) ROOT_DIR="${1#*=}"; shift ;;
-        -r|--run-dir) RUN_DIRS+=("$2"); shift 2 ;;
-        --run-dir=*) RUN_DIRS+=("${1#*=}"); shift ;;
-        -p|--platform) PLATFORMS+=("$2"); shift 2 ;;
-        --platform=*) PLATFORMS+=("${1#*=}"); shift ;;
+        -r|--run-dir) RUN_DIRS+=("$2"); USER_SELECTED=1; shift 2 ;;
+        --run-dir=*) RUN_DIRS+=("${1#*=}"); USER_SELECTED=1; shift ;;
+        -p|--platform) PLATFORMS+=("$2"); USER_SELECTED=1; shift 2 ;;
+        --platform=*) PLATFORMS+=("${1#*=}"); USER_SELECTED=1; shift ;;
         -D|--dim) DIM_FILTER="$2"; shift 2 ;;
         --dim=*) DIM_FILTER="${1#*=}"; shift ;;
         -s|--steps) STEPS="$2"; shift 2 ;;
@@ -86,6 +93,7 @@ while [[ $# -gt 0 ]]; do
         --skip-reduced) DO_REDUCED=0; shift ;;
         --skip-fields)  DO_FIELDS=0;  shift ;;
         --skip-species) DO_SPECIES=0; shift ;;
+        -f|--force) FORCE=1; shift ;;
         -d|--dry-run) DRYRUN=1; shift ;;
         -v|--verbose) VERBOSE=1; shift ;;
         -h|--help) usage; exit 0 ;;
@@ -101,6 +109,36 @@ case "$DIM_FILTER" in
     *) err "unknown --dim value: $DIM_FILTER (expected 1d|2d|all)"; exit 1 ;;
 esac
 
+# Expand any glob patterns in RUN_DIRS entries. Each entry is tried first
+# as-given (absolute or relative to CWD) and then relative to ROOT_DIR.
+# Entries without glob metacharacters are passed through unchanged; entries
+# with no matches in either context are flagged with a warning.
+expand_run_dirs() {
+    local -a expanded=()
+    local entry matches
+    for entry in "${RUN_DIRS[@]}"; do
+        if [[ "$entry" == *"*"* || "$entry" == *"?"* || "$entry" == *"["* ]]; then
+            shopt -s nullglob
+            # shellcheck disable=SC2206
+            matches=( $entry )
+            if [[ ${#matches[@]} -eq 0 ]]; then
+                # shellcheck disable=SC2206
+                matches=( "$ROOT_DIR"/$entry )
+            fi
+            shopt -u nullglob
+            if [[ ${#matches[@]} -eq 0 ]]; then
+                warn "no matches for pattern: $entry"
+            else
+                expanded+=( "${matches[@]}" )
+            fi
+        else
+            expanded+=( "$entry" )
+        fi
+    done
+    RUN_DIRS=( "${expanded[@]}" )
+}
+expand_run_dirs
+
 # Expand --platform entries into run-dir candidates.
 for plat in "${PLATFORMS[@]}"; do
     for d in "$ROOT_DIR"/.run_planar_pinch_${DIM_GLOB}."$plat".*; do
@@ -108,8 +146,14 @@ for plat in "${PLATFORMS[@]}"; do
     done
 done
 
-# Default: all .run_* under ROOT matching the dim filter.
+# Default: all .run_* under ROOT matching the dim filter — but only if the
+# user did not specify any -r / -p. If they did and got zero matches, treat
+# that as "plot nothing" (not "plot everything"), which is the sensible intent.
 if [[ ${#RUN_DIRS[@]} -eq 0 ]]; then
+    if [[ $USER_SELECTED -eq 1 ]]; then
+        err "no run directories matched any of your -r/-p selections"
+        exit 1
+    fi
     for d in "$ROOT_DIR"/.run_planar_pinch_${DIM_GLOB}.*; do
         [[ -d "$d" ]] && RUN_DIRS+=("$d")
     done
@@ -146,17 +190,20 @@ plot_one_dir() {
     local has_species=0
     compgen -G "$rdir/mesh_data/species_data*" > /dev/null && has_species=1
 
+    local force_flag=()
+    [[ $FORCE -eq 1 ]] && force_flag=(--force)
+
     if [[ $DO_REDUCED -eq 1 && $has_reduced -eq 1 ]]; then
-        run_cmd "$PY" "$PLOT_REDUCED" "$rdir" --outdir "$outdir"
+        run_cmd "$PY" "$PLOT_REDUCED" "$rdir" --outdir "$outdir" "${force_flag[@]}"
     elif [[ $DO_REDUCED -eq 1 ]]; then
         warn "  no diags/reduced_files/ — skipping plot_reduced.py"
     fi
 
     if [[ $DO_FIELDS -eq 1 && $has_fields -eq 1 ]]; then
         if [[ -n "$STEPS" ]]; then
-            run_cmd "$PY" "$PLOT_FIELDS" "$rdir" --outdir "$outdir" --steps "$STEPS"
+            run_cmd "$PY" "$PLOT_FIELDS" "$rdir" --outdir "$outdir" --steps "$STEPS" "${force_flag[@]}"
         else
-            run_cmd "$PY" "$PLOT_FIELDS" "$rdir" --outdir "$outdir"
+            run_cmd "$PY" "$PLOT_FIELDS" "$rdir" --outdir "$outdir" "${force_flag[@]}"
         fi
     elif [[ $DO_FIELDS -eq 1 ]]; then
         warn "  no mesh_data/field_data* — skipping plot_fields.py"
@@ -164,9 +211,9 @@ plot_one_dir() {
 
     if [[ $DO_SPECIES -eq 1 && $has_species -eq 1 ]]; then
         if [[ -n "$STEPS" ]]; then
-            run_cmd "$PY" "$PLOT_SPECIES" "$rdir" --outdir "$outdir" --steps "$STEPS"
+            run_cmd "$PY" "$PLOT_SPECIES" "$rdir" --outdir "$outdir" --steps "$STEPS" "${force_flag[@]}"
         else
-            run_cmd "$PY" "$PLOT_SPECIES" "$rdir" --outdir "$outdir"
+            run_cmd "$PY" "$PLOT_SPECIES" "$rdir" --outdir "$outdir" "${force_flag[@]}"
         fi
     elif [[ $DO_SPECIES -eq 1 ]]; then
         warn "  no mesh_data/species_data* — skipping plot_species.py"

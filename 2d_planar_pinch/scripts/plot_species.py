@@ -33,6 +33,24 @@ M_D = 2.01410177812 * M_U - M_E
 SPECIES_MASS = {"electrons": M_E, "deuterium": M_D}
 
 
+def _plotfile_mtime(pf_path):
+    # AMReX plotfile is a directory; Header is typically written last.
+    mt = os.path.getmtime(pf_path)
+    hdr = os.path.join(pf_path, "Header")
+    if os.path.isfile(hdr):
+        mt = max(mt, os.path.getmtime(hdr))
+    return mt
+
+
+def up_to_date(outputs, input_mtime):
+    for out in outputs:
+        if not os.path.isfile(out):
+            return False
+        if os.path.getmtime(out) < input_mtime:
+            return False
+    return True
+
+
 def read_level0(pf_path):
     ds = yt.load(pf_path)
     t = float(ds.current_time)
@@ -204,9 +222,19 @@ def plot_one_2d(meta, step, outdir):
     plt.close(fig)
 
 
-def plot_one(pf_path, outdir):
-    meta = read_level0(pf_path)
+def plot_one(pf_path, outdir, force=False):
     step = re.search(r"(\d+)$", os.path.basename(pf_path)).group(1)
+    prof_png = os.path.join(outdir, "species_profile", f"{step}.png")
+    twod_png = os.path.join(outdir, "species_2d", f"{step}.png")
+    if not force:
+        in_mtime = _plotfile_mtime(pf_path)
+        has_2d_out = os.path.isfile(twod_png)
+        required = [prof_png] + ([twod_png] if has_2d_out else [])
+        if up_to_date(required, in_mtime):
+            print(f"  up-to-date, skipping {os.path.basename(pf_path)}")
+            return
+    print(f"  plotting {os.path.basename(pf_path)}")
+    meta = read_level0(pf_path)
     if not meta["data"]:
         print(f"  no species in {pf_path}")
         return
@@ -221,6 +249,8 @@ def main():
     ap.add_argument("run_dir")
     ap.add_argument("--outdir", default=None)
     ap.add_argument("--steps", default=None)
+    ap.add_argument("--force", action="store_true",
+                    help="regenerate plots even if they are newer than the plotfile")
     args = ap.parse_args()
     rdir = os.path.abspath(args.run_dir)
     outdir = args.outdir or os.path.join(rdir, "plots")
@@ -235,8 +265,7 @@ def main():
         print(f"no species_data* plotfiles in {rdir}/mesh_data")
         return 0
     for p in pfs:
-        print(f"  plotting {os.path.basename(p)}")
-        plot_one(p, outdir)
+        plot_one(p, outdir, force=args.force)
     print(f"wrote species plots -> {outdir}")
 
 
