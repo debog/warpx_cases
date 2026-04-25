@@ -13,21 +13,18 @@ data:
   warpx_input: /home/ghosh/Runs/warpx/2d_planar_pinch/inputs/planar_pinch_2d.in
 
   ppc_tiers:
-    - {name: ppc0049, ppc: 49,
-       run_dir: .run_planar_pinch_2d.tuolumne.ppc0049.nproc00016}
-    - {name: ppc0100, ppc: 100,
-       run_dir: .run_planar_pinch_2d.tuolumne.ppc0100.nproc00016}
-    - {name: ppc0400, ppc: 400,
-       run_dir: .run_planar_pinch_2d.tuolumne.ppc0400.nproc00016}
-    - {name: ppc1600, ppc: 1600, ground_truth: true,
-       run_dir: .run_planar_pinch_2d.tuolumne.ppc1600.nproc00016}
+    - {name: ppc0004, ppc: 4,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc0004.nproc00016}
+    - {name: ppc0016, ppc: 16,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc0016.nproc00016}
+    - {name: ppc0064, ppc: 64,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc0064.nproc00016}
+    - {name: ppc0256, ppc: 256,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc0256.nproc00016}
+    - {name: ppc1024, ppc: 1024, ground_truth: true,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc1024.nproc00016}
 
-  # ppc1600 is the bottleneck (still running); cap the step list at what it
-  # has so every training pair is complete. Set to null once ppc1600 finishes.
-  steps: [0, 2200, 4400, 6600, 8800, 11000, 13200, 15400, 17600, 19800,
-          22000, 24200, 26400, 28600, 30800, 33000, 35200, 37400, 39600,
-          41800, 44000, 46200, 48400, 50600, 52800, 55000, 57200, 59400,
-          61600, 63800, 66000, 68200, 70400, 72600, 74800, 77000]
+  steps: 
 
   val_fraction: 0.15
 
