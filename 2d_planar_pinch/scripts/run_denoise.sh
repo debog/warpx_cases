@@ -223,9 +223,9 @@ EOF
     # For multi-GPU, use srun
     if [[ "$GPU_SUPPORT" == "true" && "$NTASKS" -gt 1 ]]; then
         local total_gpus=$((NTASKS * GPUS_PER_TASK))
-        echo "srun --exclusive -N ${NNODES} -G ${total_gpus} -n ${NTASKS} $cmd 2>&1 | tee $WORKDIR/denoise.${PLATFORM}.log" >> "$jobfile"
+        echo "srun --exclusive -N ${NNODES} -G ${total_gpus} -n ${NTASKS} $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
     else
-        echo "$cmd 2>&1 | tee $WORKDIR/denoise.${PLATFORM}.log" >> "$jobfile"
+        echo "$cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
     fi
 }
 
@@ -270,9 +270,9 @@ EOF
     [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd="$cmd $EXTRA_DENOISE_ARGS"
 
     if [[ "$GPU_SUPPORT" == "true" && "$NTASKS" -gt 1 ]]; then
-        echo "flux run --exclusive --nodes=${NNODES} --ntasks ${NTASKS} $cmd 2>&1 | tee $WORKDIR/denoise.${PLATFORM}.log" >> "$jobfile"
+        echo "flux run --exclusive --nodes=${NNODES} --ntasks ${NTASKS} $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
     else
-        echo "$cmd 2>&1 | tee $WORKDIR/denoise.${PLATFORM}.log" >> "$jobfile"
+        echo "$cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
     fi
 }
 
@@ -335,9 +335,9 @@ EOF
 EOF
 
     if [[ -n "$runcmd" ]]; then
-        echo "$runcmd $cmd 2>&1 | tee $WORKDIR/denoise.${PLATFORM}.log" >> "$runfile"
+        echo "$runcmd $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$runfile"
     else
-        echo "$cmd 2>&1 | tee $WORKDIR/denoise.${PLATFORM}.log" >> "$runfile"
+        echo "$cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$runfile"
     fi
 
     chmod +x "$runfile"
@@ -409,7 +409,7 @@ run_interactive() {
     [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd="$cmd $EXTRA_DENOISE_ARGS"
 
     # For interactive mode, use --exclusive to get all resources on allocated node
-    local logfile="$WORKDIR/denoise.${PLATFORM}.log"
+    local logfile="$WORKDIR/denoise_${ACTION}.${PLATFORM}.log"
     local debug_queue=$(get_config "$PLATFORM" "debug_queue" "pdebug")
 
     # Export platform-specific environment variables
@@ -514,7 +514,7 @@ run_batch() {
 
     info "Job submitted from directory: $ROOT_DIR"
     info "Job script: $jobfile"
-    info "Log will be saved to: $WORKDIR/denoise.${PLATFORM}.log"
+    info "Log will be saved to: $WORKDIR/denoise_${ACTION}.${PLATFORM}.log"
 }
 
 # =============================================================================
@@ -621,7 +621,7 @@ debug "  scheduler=$SCHEDULER ntasks=$NTASKS nnodes=$NNODES"
 debug "  queue=$QUEUE walltime=$WALLTIME gpu=$GPU_SUPPORT"
 
 # Create working directory for logs and job scripts
-WORKDIR="$ROOT_DIR/.run_denoise_${ACTION}.${PLATFORM}"
+WORKDIR="$ROOT_DIR/.run_denoise.${PLATFORM}"
 if [[ -d "$WORKDIR" ]]; then
     info "Using existing directory: $WORKDIR"
 else
