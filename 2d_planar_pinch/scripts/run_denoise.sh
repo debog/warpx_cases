@@ -635,6 +635,11 @@ else
     mkdir -p "$WORKDIR"
 fi
 
+# Set default output directory for training if not specified
+if [[ "$ACTION" == "train" && -z "$OUT_DIR" ]]; then
+    OUT_DIR="$WORKDIR"
+fi
+
 # Generate run.sh and denoise.job scripts in the working directory
 info "Generating run scripts in $WORKDIR"
 generate_run_script
