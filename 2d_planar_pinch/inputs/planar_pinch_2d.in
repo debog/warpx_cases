@@ -140,7 +140,7 @@ diag1_.deuterium.variables = x z w ux uy uz
 
 checkpoint.format = checkpoint
 checkpoint.diag_type = Full
-checkpoint.intervals = 50000
+checkpoint.intervals = 10000
 checkpoint.dump_last_timestep = 1
 
 em_fields.write_species = 0
