@@ -277,7 +277,7 @@ EOF
 }
 
 generate_run_script() {
-    local runfile="$WORKDIR/run.sh"
+    local runfile="$WORKDIR/run_${ACTION}.sh"
     local scheduler=$(get_config "$PLATFORM" "scheduler")
     local runcmd=""
 
@@ -344,7 +344,7 @@ EOF
 }
 
 generate_standalone_job_script() {
-    local jobfile="$WORKDIR/denoise.job"
+    local jobfile="$WORKDIR/denoise_${ACTION}.job"
     local scheduler=$(get_config "$PLATFORM" "scheduler")
 
     if [[ "$scheduler" == "direct" ]]; then
@@ -354,11 +354,11 @@ generate_standalone_job_script() {
 #
 # Job script for particle-denoise: $ACTION
 # Platform '$PLATFORM' does not support batch mode
-# Use ./run.sh to run interactively
+# Use ./run_${ACTION}.sh to run interactively
 #
 
 echo "Platform '$PLATFORM' does not support batch submission."
-echo "Please use ./run.sh to run interactively."
+echo "Please use ./run_${ACTION}.sh to run interactively."
 exit 1
 EOF
         chmod +x "$jobfile"
@@ -462,7 +462,7 @@ run_interactive() {
 
 run_batch() {
     local scheduler=$(get_config "$PLATFORM" "scheduler")
-    local jobfile="$WORKDIR/denoise.job"
+    local jobfile="$WORKDIR/denoise_${ACTION}.job"
 
     if [[ "$scheduler" == "direct" ]]; then
         warn "Platform '$PLATFORM' does not support batch mode, falling back to interactive"
@@ -633,8 +633,8 @@ fi
 info "Generating run scripts in $WORKDIR"
 generate_run_script
 generate_standalone_job_script
-info "  Created run.sh for interactive execution"
-info "  Created denoise.job for batch submission"
+info "  Created run_${ACTION}.sh for interactive execution"
+info "  Created denoise_${ACTION}.job for batch submission"
 
 # Execute based on mode
 case "$MODE" in
