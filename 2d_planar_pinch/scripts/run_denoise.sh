@@ -220,12 +220,12 @@ EOF
 
     echo "" >> "$jobfile"
 
-    # For multi-GPU, use srun
-    if [[ "$GPU_SUPPORT" == "true" && "$NTASKS" -gt 1 ]]; then
+    # Build srun command with GPU support if needed
+    if [[ "$GPU_SUPPORT" == "true" ]]; then
         local total_gpus=$((NTASKS * GPUS_PER_TASK))
         echo "srun --exclusive -N ${NNODES} -G ${total_gpus} -n ${NTASKS} $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
     else
-        echo "$cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
+        echo "srun -N ${NNODES} -n ${NTASKS} $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
     fi
 }
 
@@ -269,11 +269,7 @@ EOF
     [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
     [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd="$cmd $EXTRA_DENOISE_ARGS"
 
-    if [[ "$GPU_SUPPORT" == "true" && "$NTASKS" -gt 1 ]]; then
-        echo "flux run --exclusive --nodes=${NNODES} --ntasks ${NTASKS} $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
-    else
-        echo "$cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
-    fi
+    echo "flux run --exclusive --nodes=${NNODES} --ntasks ${NTASKS} $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
 }
 
 generate_run_script() {
@@ -284,16 +280,15 @@ generate_run_script() {
     case "$scheduler" in
         slurm)
             local debug_queue=$(get_config "$PLATFORM" "debug_queue" "pdebug")
-            if [[ "$GPU_SUPPORT" == "true" && "$NTASKS" -gt 1 ]]; then
+            runcmd="srun --exclusive -N $NNODES -n $NTASKS -p $debug_queue --export=ALL"
+            if [[ "$GPU_SUPPORT" == "true" ]]; then
                 local total_gpus=$((NTASKS * GPUS_PER_TASK))
-                runcmd="srun --exclusive -N $NNODES -n $NTASKS -G $total_gpus -p $debug_queue"
-            else
-                runcmd="srun --exclusive -N $NNODES -n $NTASKS -p $debug_queue"
+                runcmd="$runcmd -G ${total_gpus} --gpus-per-task=${GPUS_PER_TASK}"
             fi
             ;;
         flux)
             local debug_queue=$(get_config "$PLATFORM" "debug_queue" "pdebug")
-            runcmd="flux run --exclusive --nodes=$NNODES --ntasks=$NTASKS -q=$debug_queue --setattr=thp=always"
+            runcmd="flux run --exclusive --nodes=$NNODES --ntasks=$NTASKS --verbose --setopt=mpibind=verbose:1 -q=$debug_queue"
             ;;
         direct)
             runcmd=""
@@ -429,16 +424,15 @@ run_interactive() {
 
     case "$scheduler" in
         slurm)
-            if [[ "$GPU_SUPPORT" == "true" && "$NTASKS" -gt 1 ]]; then
+            local runcmd="srun --exclusive -N $NNODES -n $NTASKS -p $debug_queue --export=ALL"
+            if [[ "$GPU_SUPPORT" == "true" ]]; then
                 local total_gpus=$((NTASKS * GPUS_PER_TASK))
-                local runcmd="srun --exclusive -N $NNODES -n $NTASKS -G $total_gpus -p $debug_queue"
-            else
-                local runcmd="srun --exclusive -N $NNODES -n $NTASKS -p $debug_queue"
+                runcmd="$runcmd -G ${total_gpus} --gpus-per-task=${GPUS_PER_TASK}"
             fi
             local full_cmd="$runcmd $cmd"
             ;;
         flux)
-            local runcmd="flux run --exclusive --nodes=$NNODES --ntasks=$NTASKS -q=$debug_queue --setattr=thp=always"
+            local runcmd="flux run --exclusive --nodes=$NNODES --ntasks=$NTASKS --verbose --setopt=mpibind=verbose:1 -q=$debug_queue"
             local full_cmd="$runcmd $cmd"
             ;;
         direct)
