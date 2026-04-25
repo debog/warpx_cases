@@ -190,10 +190,6 @@ EOF
     [[ -n "$ACCOUNT" ]] && echo "#SBATCH -A ${ACCOUNT}" >> "$jobfile"
     [[ -n "$QUEUE" ]] && echo "#SBATCH -p ${QUEUE}" >> "$jobfile"
 
-    if [[ "$GPU_SUPPORT" == "true" ]]; then
-        echo "#SBATCH --gpus-per-task=${GPUS_PER_TASK}" >> "$jobfile"
-    fi
-
     cat >> "$jobfile" << EOF
 
 # Change to the directory where the script was invoked
@@ -283,7 +279,7 @@ generate_run_script() {
             runcmd="srun --exclusive -N $NNODES -n $NTASKS -p $debug_queue --export=ALL"
             if [[ "$GPU_SUPPORT" == "true" ]]; then
                 local total_gpus=$((NTASKS * GPUS_PER_TASK))
-                runcmd="$runcmd -G ${total_gpus} --gpus-per-task=${GPUS_PER_TASK}"
+                runcmd="$runcmd -G ${total_gpus}"
             fi
             ;;
         flux)
@@ -427,7 +423,7 @@ run_interactive() {
             local runcmd="srun --exclusive -N $NNODES -n $NTASKS -p $debug_queue --export=ALL"
             if [[ "$GPU_SUPPORT" == "true" ]]; then
                 local total_gpus=$((NTASKS * GPUS_PER_TASK))
-                runcmd="$runcmd -G ${total_gpus} --gpus-per-task=${GPUS_PER_TASK}"
+                runcmd="$runcmd -G ${total_gpus}"
             fi
             local full_cmd="$runcmd $cmd"
             ;;
