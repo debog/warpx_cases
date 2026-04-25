@@ -284,11 +284,16 @@ generate_run_script() {
     case "$scheduler" in
         slurm)
             local debug_queue=$(get_config "$PLATFORM" "debug_queue" "pdebug")
-            runcmd="srun --exclusive -N $NNODES -p $debug_queue"
+            if [[ "$GPU_SUPPORT" == "true" && "$NTASKS" -gt 1 ]]; then
+                local total_gpus=$((NTASKS * GPUS_PER_TASK))
+                runcmd="srun --exclusive -N $NNODES -n $NTASKS -G $total_gpus -p $debug_queue"
+            else
+                runcmd="srun --exclusive -N $NNODES -n $NTASKS -p $debug_queue"
+            fi
             ;;
         flux)
             local debug_queue=$(get_config "$PLATFORM" "debug_queue" "pdebug")
-            runcmd="flux run --exclusive --nodes=$NNODES -q=$debug_queue --setattr=thp=always"
+            runcmd="flux run --exclusive --nodes=$NNODES --ntasks=$NTASKS -q=$debug_queue --setattr=thp=always"
             ;;
         direct)
             runcmd=""
@@ -309,6 +314,7 @@ generate_run_script() {
 #
 # Platform: $PLATFORM
 # Nodes:    $NNODES
+# Tasks:    $NTASKS
 #
 
 set -e
@@ -392,6 +398,7 @@ run_interactive() {
     info "  Action:     $ACTION"
     info "  Config:     $CONFIG_YAML"
     info "  Nodes:      $NNODES"
+    info "  Tasks:      $NTASKS"
     if [[ "$ACTION" == "train" ]]; then
         if [[ -n "$OUT_DIR" ]]; then
             info "  Output dir: $OUT_DIR"
@@ -422,11 +429,16 @@ run_interactive() {
 
     case "$scheduler" in
         slurm)
-            local runcmd="srun --exclusive -N $NNODES -p $debug_queue"
+            if [[ "$GPU_SUPPORT" == "true" && "$NTASKS" -gt 1 ]]; then
+                local total_gpus=$((NTASKS * GPUS_PER_TASK))
+                local runcmd="srun --exclusive -N $NNODES -n $NTASKS -G $total_gpus -p $debug_queue"
+            else
+                local runcmd="srun --exclusive -N $NNODES -n $NTASKS -p $debug_queue"
+            fi
             local full_cmd="$runcmd $cmd"
             ;;
         flux)
-            local runcmd="flux run --exclusive --nodes=$NNODES -q=$debug_queue --setattr=thp=always"
+            local runcmd="flux run --exclusive --nodes=$NNODES --ntasks=$NTASKS -q=$debug_queue --setattr=thp=always"
             local full_cmd="$runcmd $cmd"
             ;;
         direct)
@@ -608,8 +620,8 @@ validate
 
 # Load platform configuration
 SCHEDULER=$(get_config "$PLATFORM" "scheduler")
-NTASKS="${OVERRIDE_NTASKS:-1}"
-NNODES="${OVERRIDE_NNODES:-1}"
+NTASKS="${OVERRIDE_NTASKS:-$(get_config "$PLATFORM" "ntasks" "1")}"
+NNODES="${OVERRIDE_NNODES:-$(get_config "$PLATFORM" "nnodes" "1")}"
 QUEUE="${OVERRIDE_QUEUE:-$(get_config "$PLATFORM" "queue")}"
 WALLTIME="${OVERRIDE_WALLTIME:-$(get_config "$PLATFORM" "walltime" "4:00:00")}"
 GPU_SUPPORT=$(get_config "$PLATFORM" "gpu_support" "false")
