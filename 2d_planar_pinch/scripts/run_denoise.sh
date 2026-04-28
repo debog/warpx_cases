@@ -113,8 +113,8 @@ set -e
 # =============================================================================
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-CONFIG_FILE="$SCRIPT_DIR/platforms.conf"
-DENOISE_EXEC="particle-denoise"
+CONFIG_FILE="$SCRIPT_DIR/platforms_denoise.conf"
+# DENOISE_EXEC is set dynamically based on case name (see below)
 
 # =============================================================================
 # Color output (disabled if not a terminal)
@@ -935,6 +935,27 @@ if [[ -n "$CONFIG_YAML" ]]; then
     CONFIG_YAML=$(expand_config_path "$CONFIG_YAML")
 fi
 
+# Extract case name from config file (needed to determine which executable to use)
+# Expected format: planar_pinch_2d_<case>.yaml
+if [[ -n "$CONFIG_YAML" ]]; then
+    CONFIG_BASENAME=$(basename "$CONFIG_YAML")
+    if [[ "$CONFIG_BASENAME" =~ planar_pinch_2d_(.+)\.yaml ]]; then
+        CASE_NAME="${BASH_REMATCH[1]}"
+    else
+        # Fallback: use full basename without extension
+        CASE_NAME="${CONFIG_BASENAME%.yaml}"
+    fi
+
+    # Select the appropriate denoise executable based on case name
+    # localdenoise_* cases use local-particle-denoise
+    # denoise_* cases use particle-denoise
+    if [[ "$CASE_NAME" == localdenoise_* ]]; then
+        DENOISE_EXEC="local-particle-denoise"
+    else
+        DENOISE_EXEC="particle-denoise"
+    fi
+fi
+
 # Auto-detect platform
 if [[ -n "$NERSC_HOST" ]]; then
     # NERSC platform (Perlmutter, etc.)
@@ -975,25 +996,16 @@ ACCOUNT=$(get_config "$PLATFORM" "account")
 debug "Platform config loaded:"
 debug "  scheduler=$SCHEDULER ntasks=$NTASKS nnodes=$NNODES"
 debug "  queue=$QUEUE walltime=$WALLTIME gpu=$GPU_SUPPORT"
-
-# Extract case name from config file
-# Expected format: planar_pinch_2d_<case>.yaml
-CONFIG_BASENAME=$(basename "$CONFIG_YAML")
-if [[ "$CONFIG_BASENAME" =~ planar_pinch_2d_(.+)\.yaml ]]; then
-    CASE_NAME="${BASH_REMATCH[1]}"
-else
-    # Fallback: use full basename without extension
-    CASE_NAME="${CONFIG_BASENAME%.yaml}"
-fi
+debug "Using $DENOISE_EXEC for case: $CASE_NAME"
 
 # Create working directory for logs and job scripts
 WORKDIR="$ROOT_DIR/.run_pdn_${CASE_NAME}.${PLATFORM}"
 if [[ -d "$WORKDIR" ]]; then
-    info "Using existing directory: $WORKDIR"
-else
-    info "Creating working directory: $WORKDIR"
-    mkdir -p "$WORKDIR"
+    info "Removing existing directory: $WORKDIR"
+    rm -rf "$WORKDIR"
 fi
+info "Creating working directory: $WORKDIR"
+mkdir -p "$WORKDIR"
 
 # Set default output directory if not specified
 if [[ -z "$OUT_DIR" ]]; then

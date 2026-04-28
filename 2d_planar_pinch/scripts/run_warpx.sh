@@ -43,7 +43,7 @@ set -e
 # =============================================================================
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-CONFIG_FILE="$SCRIPT_DIR/platforms.conf"
+CONFIG_FILE="$SCRIPT_DIR/platforms_warpx.conf"
 INPUTS_DIR="$ROOT_DIR/inputs"
 DEFAULT_CASE="planar_pinch_2d"
 # DIM is auto-derived from the case-name suffix (_1d, _2d, _3d, _rz) in the
