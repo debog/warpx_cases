@@ -12,9 +12,11 @@
 #   evaluate               Run particle-denoise evaluate
 #   predict                Run particle-denoise predict (generate triptychs)
 #   diagnose               Run particle-denoise diagnose (RMSE bar charts)
+#   all                    Run inspect, train, and evaluate in sequence
 #
 # Options:
 #   -c, --config=FILE      Configuration YAML file (required)
+#   -l, --list             List available cases and exit
 #   -m, --mode=MODE        Execution mode: interactive (default) or batch
 #   -o, --out-dir=DIR      Output directory for training/predict (default: WORKDIR)
 #   -k, --checkpoint=FILE  Checkpoint file for evaluate/predict (required)
@@ -124,6 +126,27 @@ list_platforms() {
     done
 }
 
+# List available cases
+list_cases() {
+    echo "Available cases:"
+    local denoise_dir="${ROOT_DIR}/denoise"
+    if [[ ! -d "$denoise_dir" ]]; then
+        echo "  No denoise directory found at: $denoise_dir"
+        return
+    fi
+
+    for yaml in "$denoise_dir"/planar_pinch_2d_*.yaml; do
+        [[ ! -f "$yaml" ]] && continue
+        local basename=$(basename "$yaml")
+        # Skip the base file
+        [[ "$basename" == *"_base.yaml" ]] && continue
+        # Extract case name: planar_pinch_2d_<case>.yaml -> <case>
+        local case_name="${basename#planar_pinch_2d_}"
+        case_name="${case_name%.yaml}"
+        echo "  $case_name"
+    done
+}
+
 # Validate environment and inputs
 validate() {
     # Check particle-denoise is available
@@ -161,11 +184,11 @@ validate() {
 
     # Validate action
     if [[ -z "$ACTION" ]]; then
-        error "No action specified. Use one of: inspect, train, evaluate, predict, diagnose"
+        error "No action specified. Use one of: inspect, train, evaluate, predict, diagnose, all"
     fi
 
     case "$ACTION" in
-        inspect|train) ;;
+        inspect|train|all) ;;
         evaluate|predict)
             if [[ -z "$CHECKPOINT" ]]; then
                 error "Checkpoint file required for $ACTION. Use -k/--checkpoint to specify."
@@ -182,8 +205,59 @@ validate() {
                 error "Metrics CSV file not found: $METRICS_CSV"
             fi
             ;;
-        *) error "Unknown action: $ACTION (use inspect, train, evaluate, predict, or diagnose)" ;;
+        *) error "Unknown action: $ACTION (use inspect, train, evaluate, predict, diagnose, or all)" ;;
     esac
+}
+
+# Run all actions in sequence (inspect, train, evaluate)
+run_all_actions() {
+    info "Running all actions in sequence: inspect -> train -> evaluate"
+    echo
+
+    # Save original ACTION
+    local saved_action="$ACTION"
+
+    # Run inspect
+    ACTION="inspect"
+    info "Step 1/3: Running inspect"
+    run_interactive
+    local inspect_status=$?
+    if [[ $inspect_status -ne 0 && -z "$DRY_RUN" ]]; then
+        error "Inspect failed with exit code $inspect_status. Stopping."
+    fi
+    echo
+
+    # Run train
+    ACTION="train"
+    info "Step 2/3: Running train"
+    run_interactive
+    local train_status=$?
+    if [[ $train_status -ne 0 && -z "$DRY_RUN" ]]; then
+        error "Train failed with exit code $train_status. Stopping."
+    fi
+    echo
+
+    # Find the best checkpoint (skip check in dry-run mode)
+    if [[ -z "$DRY_RUN" && ! -f "$WORKDIR/best.pt" ]]; then
+        error "Training did not produce best.pt checkpoint. Cannot proceed to evaluate."
+    fi
+    CHECKPOINT="$WORKDIR/best.pt"
+
+    # Run evaluate
+    ACTION="evaluate"
+    info "Step 3/3: Running evaluate with checkpoint: $CHECKPOINT"
+    run_interactive
+    local eval_status=$?
+    if [[ $eval_status -ne 0 && -z "$DRY_RUN" ]]; then
+        error "Evaluate failed with exit code $eval_status."
+    fi
+
+    # Restore original ACTION
+    ACTION="$saved_action"
+
+    if [[ -z "$DRY_RUN" ]]; then
+        info "All actions completed successfully!"
+    fi
 }
 
 # =============================================================================
@@ -635,9 +709,10 @@ while [[ $# -gt 0 ]]; do
             [[ "$1" == -t ]] && { shift; OVERRIDE_WALLTIME="$1"; } || OVERRIDE_WALLTIME="${1#*=}" ;;
         -d|--dry-run)   DRY_RUN=1 ;;
         -v|--verbose)   VERBOSE=1 ;;
+        -l|--list)      list_cases; exit 0 ;;
         -P|--list-platforms) list_platforms; exit 0 ;;
         -h|--help)      usage ;;
-        inspect|train|evaluate|predict|diagnose)
+        inspect|train|evaluate|predict|diagnose|all)
             [[ -n "$ACTION" ]] && error "Multiple actions specified: $ACTION and $1"
             ACTION="$1" ;;
         -*)
@@ -695,8 +770,18 @@ debug "Platform config loaded:"
 debug "  scheduler=$SCHEDULER ntasks=$NTASKS nnodes=$NNODES"
 debug "  queue=$QUEUE walltime=$WALLTIME gpu=$GPU_SUPPORT"
 
+# Extract case name from config file
+# Expected format: planar_pinch_2d_<case>.yaml
+CONFIG_BASENAME=$(basename "$CONFIG_YAML")
+if [[ "$CONFIG_BASENAME" =~ planar_pinch_2d_(.+)\.yaml ]]; then
+    CASE_NAME="${BASH_REMATCH[1]}"
+else
+    # Fallback: use full basename without extension
+    CASE_NAME="${CONFIG_BASENAME%.yaml}"
+fi
+
 # Create working directory for logs and job scripts
-WORKDIR="$ROOT_DIR/.run_denoise.${PLATFORM}"
+WORKDIR="$ROOT_DIR/.run_pdn_${CASE_NAME}.${PLATFORM}"
 if [[ -d "$WORKDIR" ]]; then
     info "Using existing directory: $WORKDIR"
 else
@@ -727,17 +812,26 @@ generate_standalone_job_script
 info "  Created run_${ACTION}.sh for interactive execution"
 info "  Created denoise_${ACTION}.job for batch submission"
 
-# Execute based on mode
-case "$MODE" in
-    interactive|i)
-        run_interactive
-        ;;
-    batch|b)
-        run_batch
-        ;;
-    *)
-        error "Unknown mode: $MODE (use 'interactive' or 'batch')"
-        ;;
-esac
+# Execute based on mode and action
+if [[ "$ACTION" == "all" ]]; then
+    # Special handling for "all" action
+    if [[ "$MODE" == "batch" || "$MODE" == "b" ]]; then
+        error "Batch mode not supported for 'all' action. Use interactive mode."
+    fi
+    run_all_actions
+else
+    # Normal single-action execution
+    case "$MODE" in
+        interactive|i)
+            run_interactive
+            ;;
+        batch|b)
+            run_batch
+            ;;
+        *)
+            error "Unknown mode: $MODE (use 'interactive' or 'batch')"
+            ;;
+    esac
+fi
 
 info "Done."
