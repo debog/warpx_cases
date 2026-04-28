@@ -1,0 +1,85 @@
+# Shared base for the 2D Cartesian planar-pinch local-physics
+# denoiser cases on Tuolumne. Loaded by every variant via `base:`.
+#
+# This file is not meant to be passed directly to
+# `local-particle-denoise train`; pick a variant
+# (e.g., planar_pinch_2d_localdenoise_charbonnier.yaml) so the run
+# selects an explicit loss recipe.
+#
+# Same dataset as the global U-Net case
+# (planar_pinch_2d_denoise_base.yaml), but configures a patch-based
+# dataset and a local-physics model. The two case trees are
+# intentionally independent so each can pin its own training
+# settings without coupling.
+
+data:
+  reader: warpxPlotfile
+  warpx_input: /home/ghosh/Runs/warpx/2d_planar_pinch/inputs/planar_pinch_2d.in
+
+  ppc_tiers:
+    - {name: ppc0036, ppc: 36,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc0036.nproc00016}
+    - {name: ppc0064, ppc: 64,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc0064.nproc00016}
+    - {name: ppc0144, ppc: 144,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc0144.nproc00016}
+    - {name: ppc0256, ppc: 256,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc0256.nproc00016}
+    - {name: ppc1024, ppc: 1024, ground_truth: true,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc1024.nproc00016}
+
+  val_fraction: 0.15
+
+  # Local-physics dataset settings.
+  dataset_type: patch
+  # Per-axis BC for the planar pinch. The (x, z) layout is
+  # PEC-PEC on x_lo / x_hi (insulator-PEC) and periodic on z.
+  boundary_spec: ["pec", "periodic"]
+  # Append signed-distance-to-PEC channels to each patch. With one
+  # entry per spatial axis these add 2 channels on top of the
+  # canonical 25 input channels.
+  boundary_channels: true
+
+model:
+  name: localCNN
+  base_channels: 64
+  depth: 3
+  kernel: 3
+  activation: gelu
+  # 7-cell patch covers two shape-function widths plus margin for
+  # the WarpX 2nd-order spline deposition; trunk depth=3 with valid
+  # 3x3 convs takes 7 -> 5 -> 3 -> 1, naturally selecting the centre
+  # cell.
+  patch_size: 7
+
+loss:
+  recon: 1.0
+  # Same per-channel weights as the global case YAML: upweight the
+  # production-critical channels, downweight the deuterium energies.
+  recon_weights:
+    rho:             3.0
+    jx:              3.0
+    jy:              3.0
+    uy_electrons:    3.0
+    uz_electrons:    3.0
+    enex_deuterium:  0.3
+    eney_deuterium:  0.3
+    enez_deuterium:  0.3
+  # The conservation, spectral, and gradient terms are spatial; for
+  # per-cell predictions they reduce to zero or fail to apply, so
+  # they are disabled here. A snapshot-level conservation term is
+  # planned (see the working doc to-do list) and would re-enable
+  # `conservation` once that is in.
+  conservation: 0.0
+  spectral: 0.0
+  gradient: 0.0
+  gradient_kind: l2
+
+train:
+  # The patch dataset yields ~8 000 examples per snapshot, so
+  # batches can be much larger and epochs need only a few passes.
+  batch_size: 64
+  epochs: 50
+  lr: 1.0e-3
+  amp: true
+  early_stop_patience: 10
