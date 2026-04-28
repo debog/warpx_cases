@@ -1,0 +1,8 @@
+# Local-physics denoiser, Charbonnier reconstruction.
+# Recommended robust drop-in for L2.
+
+base: planar_pinch_2d_localdenoise_base.yaml
+
+loss:
+  recon_kind: charbonnier
+  recon_eps: 1.0e-3

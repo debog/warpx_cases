@@ -1,0 +1,9 @@
+# Local-physics denoiser, pure L2 reconstruction.
+# Baseline against which the robust kinds (Charbonnier, Huber, L1)
+# are compared.
+
+base: planar_pinch_2d_localdenoise_base.yaml
+
+loss:
+  recon_kind: l2
+  recon_eps: 1.0e-3       # unused for kind=l2

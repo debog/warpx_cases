@@ -1,0 +1,14 @@
+# Local-physics denoiser, kernel-predicting head (LocalKPCN).
+# Charbonnier reconstruction; the per-output kernel is non-negative
+# and sums to 1, so the output cannot exceed the input patch's
+# range and conserves linear moments by construction. Centerpiece
+# of the local-physics deployment plan.
+
+base: planar_pinch_2d_localdenoise_base.yaml
+
+model:
+  name: localKPCN
+
+loss:
+  recon_kind: charbonnier
+  recon_eps: 1.0e-3

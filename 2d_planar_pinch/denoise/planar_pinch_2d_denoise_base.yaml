@@ -1,0 +1,63 @@
+# Shared base for the 2D Cartesian planar-pinch denoiser cases on Tuolumne.
+# Variants under this directory layer their loss recipe on top of this.
+#
+# This file is itself a valid case config, but is not meant to be passed
+# directly to `particle-denoise train`. Use a variant file (e.g.,
+# planar_pinch_2d_denoise_l2.yaml) so the run picks an explicit loss recipe.
+
+data:
+  reader: warpxPlotfile
+  warpx_input: /home/ghosh/Runs/warpx/2d_planar_pinch/inputs/planar_pinch_2d.in
+
+  ppc_tiers:
+    - {name: ppc0036, ppc: 36,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc0036.nproc00016}
+    - {name: ppc0064, ppc: 64,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc0064.nproc00016}
+    - {name: ppc0144, ppc: 144,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc0144.nproc00016}
+    - {name: ppc0256, ppc: 256,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc0256.nproc00016}
+    - {name: ppc1024, ppc: 1024, ground_truth: true,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc1024.nproc00016}
+
+  val_fraction: 0.15
+
+model:
+  name: unet
+  base_channels: 32
+  depth: 3
+
+loss:
+  # Reconstruction-term weight + per-channel weights are case-specific,
+  # so they live in the base. The element-wise kind (recon_kind /
+  # recon_eps) and the gradient-of-error term are loss-recipe-specific
+  # and are set in each variant YAML.
+  recon: 1.0
+  # Per-channel recon weights. Upweight the four production-critical
+  # channels that the first training run left at or above the
+  # constant-mean baseline (RMSE >= 1 in channel-stddev units): rho,
+  # jx, jy, and the electron transverse momenta. Downweight the
+  # deuterium energy channels, which are already at RMSE ~ 1e-3
+  # (heavy ions, smooth moments). Channels not listed default to 1.0.
+  recon_weights:
+    rho:             3.0
+    jx:              3.0
+    jy:              3.0
+    uy_electrons:    3.0
+    uz_electrons:    3.0
+    enex_deuterium:  0.3
+    eney_deuterium:  0.3
+    enez_deuterium:  0.3
+  conservation: 0.1
+  spectral: 0.05
+
+train:
+  batch_size: 4
+  epochs: 200
+  lr: 1.0e-3
+  amp: true
+  # Cap training once validation loss has plateaued. The first run hit
+  # its best val at epoch ~170 (Matrix) / ~116 (Dane); patience=30 cuts
+  # the wasted epochs without affecting best.pt.
+  early_stop_patience: 30

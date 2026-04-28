@@ -1,0 +1,19 @@
+# Variant: Huber reconstruction loss.
+#
+# 0.5 * x^2          if |x| < eps
+# eps * (|x| - 0.5*eps) otherwise
+# Same robust intuition as Charbonnier but piecewise-defined: exactly
+# L2 inside |x| < eps, exactly L1 outside. The discontinuity in the
+# second derivative at |x| = eps is harmless for first-order
+# optimizers.
+#
+# eps choice: in channel-stddev units, the typical per-channel RMSE
+# from the first run was 0.5 - 1.5. eps=0.1 keeps the L2 regime small
+# enough that most non-trivial residuals fall in the L1 region; this
+# is the regime where Huber differs most from L2.
+
+base: planar_pinch_2d_denoise_base.yaml
+
+loss:
+  recon_kind: huber
+  recon_eps: 0.1
