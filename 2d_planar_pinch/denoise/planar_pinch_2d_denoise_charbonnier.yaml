@@ -1,0 +1,17 @@
+# Variant: Charbonnier reconstruction loss.
+#
+# rho(x) = sqrt(x^2 + eps^2) - eps
+# Smooth at 0 (gradient proportional to x for |x| << eps) and L1 in
+# the tails. Standard robust drop-in for L2 in image restoration
+# (Zhao et al. 2017). Expected to retain L2's optimization niceties
+# while reducing the "collapse to channel mean" failure mode.
+#
+# eps choice: inputs are normalized to channel-stddev units, so the
+# transition between L2-like and L1-like behavior at eps = 1e-3 puts
+# the L1 regime over essentially all non-trivial residuals.
+
+base: planar_pinch_2d_denoise_base.yaml
+
+loss:
+  recon_kind: charbonnier
+  recon_eps: 1.0e-3

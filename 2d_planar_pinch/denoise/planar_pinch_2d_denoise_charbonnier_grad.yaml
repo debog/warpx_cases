@@ -1,0 +1,19 @@
+# Variant: Charbonnier reconstruction + gradient-of-error term.
+#
+# This is the "recommended stack" called out in the loss-options
+# notes: a robust per-element kind (Charbonnier) plus an explicit
+# penalty on the prediction's spatial gradient matching the target's,
+# both attacking the "collapse to channel mean" failure mode from
+# different sides.
+#
+# Used as the primary candidate for the next training round. The
+# isolation variants (l2_grad, charbonnier alone, l2 alone) are
+# baselines that let us attribute any improvement to the right cause.
+
+base: planar_pinch_2d_denoise_base.yaml
+
+loss:
+  recon_kind: charbonnier
+  recon_eps: 1.0e-3
+  gradient: 0.1
+  gradient_kind: l2

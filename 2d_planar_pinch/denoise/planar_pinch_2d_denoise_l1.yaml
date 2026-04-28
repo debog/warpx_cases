@@ -1,0 +1,14 @@
+# Variant: pure L1 reconstruction loss.
+#
+# The Bayes-optimal predictor for L1 is the conditional median, which
+# preserves piecewise structure (e.g., the pinch sheath) better than
+# the conditional mean. The drawback is the discontinuous gradient at
+# zero, which can stall optimization. Charbonnier and Huber are
+# usually preferred over pure L1; this variant is here primarily as a
+# baseline at the asymptotic limit of Charbonnier (eps -> 0).
+
+base: planar_pinch_2d_denoise_base.yaml
+
+loss:
+  recon_kind: l1
+  recon_eps: 1.0e-3       # unused for kind=l1

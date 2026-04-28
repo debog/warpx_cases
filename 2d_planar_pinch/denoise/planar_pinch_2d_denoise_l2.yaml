@@ -1,0 +1,21 @@
+# Variant: pure L2 reconstruction loss.
+#
+# This was the original recipe used in the first end-to-end training
+# round (Apr 2026, Dane + Matrix). Kept as the baseline against which
+# the robust kinds (Charbonnier, Huber, L1) and the gradient-of-error
+# variants are compared.
+#
+# Why L2 alone is suspected to underperform on this problem:
+# the Bayes-optimal predictor for L2 loss is the conditional mean
+# E[y|x]. Under capacity / data shortages the path of least
+# resistance is the *unconditional* channel mean, which is exactly
+# the "collapse to channel mean" failure observed on rho, jx, jy,
+# uy_electrons, uz_electrons in the first run.
+
+base: planar_pinch_2d_denoise_base.yaml
+
+loss:
+  recon_kind: l2
+  # recon_eps is unused for kind=l2 but must be present (and must be
+  # finite). Leave at the framework default.
+  recon_eps: 1.0e-3

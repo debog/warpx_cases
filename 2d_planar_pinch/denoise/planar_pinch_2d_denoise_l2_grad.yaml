@@ -1,0 +1,22 @@
+# Variant: pure L2 reconstruction + gradient-of-error term.
+#
+# Adds a penalty on the spatial finite-difference of (pred - target).
+# A constant prediction ("collapse to channel mean") has zero spatial
+# gradient, so its gradient-of-error equals the gradient of -target
+# itself, which is large. Penalizing this drives the model away from
+# the constant-prediction failure mode without changing the
+# reconstruction kind.
+#
+# Useful as an isolation: comparing this against the plain L2 variant
+# tells us whether the gradient term helps independently of the
+# choice of reconstruction kind.
+#
+# Initial gradient weight = 0.1 (note's recommended starting point).
+
+base: planar_pinch_2d_denoise_base.yaml
+
+loss:
+  recon_kind: l2
+  recon_eps: 1.0e-3       # unused for kind=l2
+  gradient: 0.1
+  gradient_kind: l2

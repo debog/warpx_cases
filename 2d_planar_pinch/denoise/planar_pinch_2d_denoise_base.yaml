@@ -1,12 +1,9 @@
-# particle-denoise config for the 2D Cartesian planar-pinch paired ppc sweep
-# on Tuolumne.
+# Shared base for the 2D Cartesian planar-pinch denoiser cases on Tuolumne.
+# Variants under this directory layer their loss recipe on top of this.
 #
-# The framework's default config (~/Codes/particle-denoise/configs/default.yaml)
-# is loaded first; the CLI layers this case config on top. Overrides on the
-# CLI (key.sub=value) win over both.
-#
-# Run:
-#   particle-denoise train --config /home/ghosh/Runs/warpx/2d_planar_pinch/denoise/planar_pinch_2d_denoise.yaml
+# This file is itself a valid case config, but is not meant to be passed
+# directly to `particle-denoise train`. Use a variant file (e.g.,
+# planar_pinch_2d_denoise_l2.yaml) so the run picks an explicit loss recipe.
 
 data:
   reader: warpxPlotfile
@@ -32,13 +29,17 @@ model:
   depth: 3
 
 loss:
-  recon_l2: 1.0
+  # Reconstruction-term weight + per-channel weights are case-specific,
+  # so they live in the base. The element-wise kind (recon_kind /
+  # recon_eps) and the gradient-of-error term are loss-recipe-specific
+  # and are set in each variant YAML.
+  recon: 1.0
   # Per-channel recon weights. Upweight the four production-critical
-  # channels that the first training run left at or above the predict-
-  # mean baseline (RMSE >= 1 in channel-stddev units): rho, jx, jy, and
-  # the electron transverse momenta. Downweight the deuterium energy
-  # channels, which are already at RMSE ~ 1e-3 (heavy ions, smooth
-  # moments). Channels not listed default to 1.0.
+  # channels that the first training run left at or above the
+  # constant-mean baseline (RMSE >= 1 in channel-stddev units): rho,
+  # jx, jy, and the electron transverse momenta. Downweight the
+  # deuterium energy channels, which are already at RMSE ~ 1e-3
+  # (heavy ions, smooth moments). Channels not listed default to 1.0.
   recon_weights:
     rho:             3.0
     jx:              3.0
