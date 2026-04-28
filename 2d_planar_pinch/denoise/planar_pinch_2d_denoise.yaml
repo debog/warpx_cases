@@ -13,18 +13,16 @@ data:
   warpx_input: /home/ghosh/Runs/warpx/2d_planar_pinch/inputs/planar_pinch_2d.in
 
   ppc_tiers:
-    - {name: ppc0004, ppc: 4,
-       run_dir: .run_planar_pinch_2d.tuolumne.ppc0004.nproc00016}
-    - {name: ppc0016, ppc: 16,
-       run_dir: .run_planar_pinch_2d.tuolumne.ppc0016.nproc00016}
+    - {name: ppc0036, ppc: 36,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc0036.nproc00016}
     - {name: ppc0064, ppc: 64,
        run_dir: .run_planar_pinch_2d.tuolumne.ppc0064.nproc00016}
+    - {name: ppc0144, ppc: 144,
+       run_dir: .run_planar_pinch_2d.tuolumne.ppc0144.nproc00016}
     - {name: ppc0256, ppc: 256,
        run_dir: .run_planar_pinch_2d.tuolumne.ppc0256.nproc00016}
     - {name: ppc1024, ppc: 1024, ground_truth: true,
        run_dir: .run_planar_pinch_2d.tuolumne.ppc1024.nproc00016}
-
-  steps: 
 
   val_fraction: 0.15
 
