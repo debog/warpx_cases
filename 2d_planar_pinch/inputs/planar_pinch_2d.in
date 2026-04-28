@@ -41,8 +41,6 @@ warpx.serialize_initial_conditions = 1
 warpx.sort_intervals = -1
 warpx.do_device_synchronize = 0
 
-#amr.restart = "./diags/checkpoint024177/"
-
 #################################
 ####### Boundary condition ######
 #################################
@@ -132,7 +130,7 @@ deuterium.uz_th = sqrt(T0*q_e/mD)/clight
 
 ###   Diagnostics
 diagnostics.diags_names = diag1_ em_fields species_moms checkpoint
-diag1_.intervals = 11000
+diag1_.intervals = 225
 diag1_.diag_type = Full
 diag1_.fields_to_plot = part_per_cell Ex Ey Ez Bx By Bz jx jy jz rho divE
 diag1_.electrons.variables = x z w ux uy uz
@@ -144,7 +142,7 @@ checkpoint.intervals = 10000
 checkpoint.dump_last_timestep = 1
 
 em_fields.write_species = 0
-em_fields.intervals = 2200
+em_fields.intervals = 225
 em_fields.diag_type = Full
 em_fields.format = plotfile
 em_fields.fields_to_plot = part_per_cell Ex Ey Ez Bx By Bz jx jy jz rho divE divB
@@ -152,7 +150,7 @@ em_fields.file_prefix = mesh_data/field_data
 
 species_moms.fields_to_plot = none
 species_moms.write_species = 0
-species_moms.intervals = 2200
+species_moms.intervals = 225 
 species_moms.diag_type = Full
 species_moms.format = plotfile
 species_moms.file_prefix = mesh_data/species_data
@@ -175,7 +173,7 @@ species_moms.particle_fields.uz(x,y,z,ux,uy,uz) = "uz*clight"
 # Boundary scraping diagnostic disabled (requires openPMD)
 #bdry_scraping.diag_type = BoundaryScraping
 #bdry_scraping.format = openpmd
-#bdry_scraping.intervals = 2200
+#bdry_scraping.intervals = 225 
 #electrons.save_particles_at_xhi = 1
 #deuterium.save_particles_at_xhi = 1
 
