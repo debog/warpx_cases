@@ -15,26 +15,95 @@
 #   all                    Run inspect, train, and evaluate in sequence
 #
 # Options:
-#   -c, --config=FILE      Configuration YAML file (required)
+#   -c, --config=FILE      Configuration YAML file or short case name (required)
+#                          Example: -c denoise_l2 (short case name)
+#                          Example: -c denoise/planar_pinch_2d_denoise_l2.yaml (full path)
+#
 #   -l, --list             List available cases and exit
+#                          Example: ./run_denoise.sh -l
+#
 #   -m, --mode=MODE        Execution mode: interactive (default) or batch
+#                          Example: -m batch (submit SLURM/Flux job)
+#                          Example: -m interactive (run directly)
+#
 #   -o, --out-dir=DIR      Output directory for training/predict (default: WORKDIR)
-#   -k, --checkpoint=FILE  Checkpoint file for evaluate/predict (required)
-#   --metrics=FILE         Metrics CSV file for diagnose (required)
+#                          Example: -o /path/to/custom/output
+#
+#   -k, --checkpoint=FILE  Checkpoint file for evaluate/predict (required for these actions)
+#                          Example: -k .run_pdn_denoise_l2.matrix/best.pt
+#                          Example: -k /path/to/checkpoint.pt
+#
+#   --metrics=FILE         Metrics CSV file for diagnose action (required for diagnose)
+#                          Example: --metrics=.run_pdn_denoise_l2.matrix/metrics.csv
+#
 #   --tier=LIST            Comma-separated tier list for predict (default: all)
+#                          Example: --tier=0,1,2
+#                          Example: --tier=1
+#
 #   --steps=LIST           Comma-separated step list for predict (default: 4 evenly-spaced)
+#                          Example: --steps=0,100,200,300
+#                          Example: --steps=50,150,250
+#
 #   -n, --ntasks=N         Override number of MPI tasks (for multi-GPU)
+#                          Example: -n 8 (use 8 GPUs)
+#
 #   -N, --nnodes=N         Override number of nodes
+#                          Example: -N 2 (use 2 nodes)
+#
 #   -q, --queue=NAME       Override queue/partition name
-#   -t, --walltime=TIME    Override walltime (e.g., 4:00:00)
+#                          Example: -q pbatch
+#                          Example: -q debug
+#
+#   -t, --walltime=TIME    Override walltime (format: HH:MM:SS or H:MM:SS)
+#                          Example: -t 4:00:00 (4 hours)
+#                          Example: -t 0:30:00 (30 minutes)
+#
 #   -d, --dry-run          Show what would be executed without running
+#                          Example: ./run_denoise.sh -d -c config.yaml train
+#
 #   -P, --list-platforms   List supported platforms
+#                          Example: ./run_denoise.sh -P
+#
 #   -v, --verbose          Enable verbose output
+#                          Example: ./run_denoise.sh -v -c config.yaml inspect
+#
 #   -h, --help             Show this help message
 #
 # Additional particle-denoise parameters can be passed as non-option arguments:
 #   Example: ./run_denoise.sh -c config.yaml train train.lr=2e-4
 #   Example: ./run_denoise.sh -c config.yaml train model.base_channels=64
+#
+# Common Usage Examples:
+#
+#   1. List available cases:
+#      ./run_denoise.sh -l
+#
+#   2. Run all steps (inspect, train, evaluate) in interactive mode:
+#      ./run_denoise.sh -c denoise_l2 all
+#
+#   3. Submit batch job to run all steps:
+#      ./run_denoise.sh -m batch -c denoise_l2 all
+#
+#   4. Train with custom learning rate (interactive):
+#      ./run_denoise.sh -c denoise_l2 train train.lr=1e-4
+#
+#   5. Train in batch mode with 8 GPUs and 2-hour walltime:
+#      ./run_denoise.sh -m batch -n 8 -t 2:00:00 -c localdenoise_kpcn train
+#
+#   6. Evaluate with specific checkpoint:
+#      ./run_denoise.sh -c denoise_l2 -k .run_pdn_denoise_l2.matrix/best.pt evaluate
+#
+#   7. Generate prediction triptychs for specific tiers and steps:
+#      ./run_denoise.sh -c denoise_l2 -k best.pt --tier=0,1 --steps=50,100,150 predict
+#
+#   8. Run diagnose with metrics file:
+#      ./run_denoise.sh -c denoise_l2 --metrics=metrics.csv diagnose
+#
+#   9. Dry-run to see commands without executing:
+#      ./run_denoise.sh -d -c denoise_charbonnier train
+#
+#   10. Submit batch job to debug queue with verbose output:
+#       ./run_denoise.sh -v -m batch -q debug -c denoise_l2 inspect
 #
 
 set -e
@@ -145,6 +214,37 @@ list_cases() {
         case_name="${case_name%.yaml}"
         echo "  $case_name"
     done
+}
+
+# Expand short case name to full path if needed
+# Usage: expand_config_path <case_name_or_path>
+# Returns: full path to YAML file
+expand_config_path() {
+    local input="$1"
+
+    # If it's already an absolute path, use it as-is
+    if [[ "${input:0:1}" == "/" ]]; then
+        echo "$input"
+        return
+    fi
+
+    # If it's a relative path with directory separators, resolve it
+    if [[ "$input" == */* ]]; then
+        echo "$(pwd)/$input"
+        return
+    fi
+
+    # Otherwise, treat it as a short case name
+    # Try to find planar_pinch_2d_<case>.yaml in denoise directory
+    local denoise_dir="${ROOT_DIR}/denoise"
+    local full_path="${denoise_dir}/planar_pinch_2d_${input}.yaml"
+
+    if [[ -f "$full_path" ]]; then
+        echo "$full_path"
+    else
+        # Not found as short name, return original input (will fail validation later)
+        echo "$input"
+    fi
 }
 
 # Validate environment and inputs
@@ -298,26 +398,79 @@ EOF
         echo "" >> "$jobfile"
     fi
 
-    # Build command
-    local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
-    [[ "$ACTION" == "train" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
-    [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
-    [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
-    [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
-    [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && cmd="$cmd --tier $TIER_LIST"
-    [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && cmd="$cmd --steps $STEPS_LIST"
-    [[ "$ACTION" == "diagnose" && -n "$METRICS_CSV" ]] && cmd="$cmd --metrics $METRICS_CSV"
-    [[ "$ACTION" == "diagnose" && -n "$OUT_DIR" ]] && cmd="$cmd --out-path $OUT_DIR/per_channel_rmse.png"
-    [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd="$cmd $EXTRA_DENOISE_ARGS"
+    # Build srun prefix command with GPU support if needed
+    local srun_prefix=""
+    if [[ "$GPU_SUPPORT" == "true" ]]; then
+        local total_gpus=$((NTASKS * GPUS_PER_TASK))
+        srun_prefix="srun --exclusive -N ${NNODES} -G ${total_gpus} -n ${NTASKS}"
+    else
+        srun_prefix="srun -N ${NNODES} -n ${NTASKS}"
+    fi
 
     echo "" >> "$jobfile"
 
-    # Build srun command with GPU support if needed
-    if [[ "$GPU_SUPPORT" == "true" ]]; then
-        local total_gpus=$((NTASKS * GPUS_PER_TASK))
-        echo "srun --exclusive -N ${NNODES} -G ${total_gpus} -n ${NTASKS} $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
+    # Handle "all" action - run inspect, train, evaluate sequentially in same job
+    if [[ "$ACTION" == "all" ]]; then
+        cat >> "$jobfile" << 'EOFSCRIPT'
+# Step 1/3: Run inspect
+echo "==> Step 1/3: Running inspect"
+EOFSCRIPT
+        local cmd_inspect="$DENOISE_CMD inspect --config $CONFIG_YAML"
+        [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd_inspect="$cmd_inspect $EXTRA_DENOISE_ARGS"
+        echo "$srun_prefix $cmd_inspect 2>&1 | tee $WORKDIR/denoise_inspect.${PLATFORM}.log" >> "$jobfile"
+        cat >> "$jobfile" << 'EOFSCRIPT'
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    echo "ERROR: Inspect failed. Stopping."
+    exit 1
+fi
+echo ""
+
+# Step 2/3: Run train
+echo "==> Step 2/3: Running train"
+EOFSCRIPT
+        local cmd_train="$DENOISE_CMD train --config $CONFIG_YAML"
+        [[ -n "$OUT_DIR" ]] && cmd_train="$cmd_train --out-dir $OUT_DIR"
+        [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd_train="$cmd_train $EXTRA_DENOISE_ARGS"
+        echo "$srun_prefix $cmd_train 2>&1 | tee $WORKDIR/denoise_train.${PLATFORM}.log" >> "$jobfile"
+        cat >> "$jobfile" << EOFSCRIPT
+if [ \${PIPESTATUS[0]} -ne 0 ]; then
+    echo "ERROR: Train failed. Stopping."
+    exit 1
+fi
+echo ""
+
+# Step 3/3: Run evaluate with best checkpoint
+echo "==> Step 3/3: Running evaluate with checkpoint: $WORKDIR/best.pt"
+if [ ! -f "$WORKDIR/best.pt" ]; then
+    echo "ERROR: Training did not produce best.pt checkpoint. Stopping."
+    exit 1
+fi
+EOFSCRIPT
+        local cmd_evaluate="$DENOISE_CMD evaluate --config $CONFIG_YAML --checkpoint $WORKDIR/best.pt"
+        [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd_evaluate="$cmd_evaluate $EXTRA_DENOISE_ARGS"
+        echo "$srun_prefix $cmd_evaluate 2>&1 | tee $WORKDIR/denoise_evaluate.${PLATFORM}.log" >> "$jobfile"
+        cat >> "$jobfile" << 'EOFSCRIPT'
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    echo "ERROR: Evaluate failed."
+    exit 1
+fi
+echo ""
+echo "==> All actions completed successfully!"
+EOFSCRIPT
     else
-        echo "srun -N ${NNODES} -n ${NTASKS} $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
+        # Single action - original behavior
+        local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
+        [[ "$ACTION" == "train" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
+        [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
+        [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
+        [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
+        [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && cmd="$cmd --tier $TIER_LIST"
+        [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && cmd="$cmd --steps $STEPS_LIST"
+        [[ "$ACTION" == "diagnose" && -n "$METRICS_CSV" ]] && cmd="$cmd --metrics $METRICS_CSV"
+        [[ "$ACTION" == "diagnose" && -n "$OUT_DIR" ]] && cmd="$cmd --out-path $OUT_DIR/per_channel_rmse.png"
+        [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd="$cmd $EXTRA_DENOISE_ARGS"
+
+        echo "$srun_prefix $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
     fi
 }
 
@@ -355,19 +508,72 @@ EOF
 
     echo "" >> "$jobfile"
 
-    # Build command
-    local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
-    [[ "$ACTION" == "train" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
-    [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
-    [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
-    [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
-    [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && cmd="$cmd --tier $TIER_LIST"
-    [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && cmd="$cmd --steps $STEPS_LIST"
-    [[ "$ACTION" == "diagnose" && -n "$METRICS_CSV" ]] && cmd="$cmd --metrics $METRICS_CSV"
-    [[ "$ACTION" == "diagnose" && -n "$OUT_DIR" ]] && cmd="$cmd --out-path $OUT_DIR/per_channel_rmse.png"
-    [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd="$cmd $EXTRA_DENOISE_ARGS"
+    # Build flux run prefix
+    local flux_prefix="flux run --exclusive --nodes=${NNODES} --ntasks ${NTASKS}"
 
-    echo "flux run --exclusive --nodes=${NNODES} --ntasks ${NTASKS} $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
+    # Handle "all" action - run inspect, train, evaluate sequentially in same job
+    if [[ "$ACTION" == "all" ]]; then
+        cat >> "$jobfile" << 'EOFSCRIPT'
+# Step 1/3: Run inspect
+echo "==> Step 1/3: Running inspect"
+EOFSCRIPT
+        local cmd_inspect="$DENOISE_CMD inspect --config $CONFIG_YAML"
+        [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd_inspect="$cmd_inspect $EXTRA_DENOISE_ARGS"
+        echo "$flux_prefix $cmd_inspect 2>&1 | tee $WORKDIR/denoise_inspect.${PLATFORM}.log" >> "$jobfile"
+        cat >> "$jobfile" << 'EOFSCRIPT'
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    echo "ERROR: Inspect failed. Stopping."
+    exit 1
+fi
+echo ""
+
+# Step 2/3: Run train
+echo "==> Step 2/3: Running train"
+EOFSCRIPT
+        local cmd_train="$DENOISE_CMD train --config $CONFIG_YAML"
+        [[ -n "$OUT_DIR" ]] && cmd_train="$cmd_train --out-dir $OUT_DIR"
+        [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd_train="$cmd_train $EXTRA_DENOISE_ARGS"
+        echo "$flux_prefix $cmd_train 2>&1 | tee $WORKDIR/denoise_train.${PLATFORM}.log" >> "$jobfile"
+        cat >> "$jobfile" << EOFSCRIPT
+if [ \${PIPESTATUS[0]} -ne 0 ]; then
+    echo "ERROR: Train failed. Stopping."
+    exit 1
+fi
+echo ""
+
+# Step 3/3: Run evaluate with best checkpoint
+echo "==> Step 3/3: Running evaluate with checkpoint: $WORKDIR/best.pt"
+if [ ! -f "$WORKDIR/best.pt" ]; then
+    echo "ERROR: Training did not produce best.pt checkpoint. Stopping."
+    exit 1
+fi
+EOFSCRIPT
+        local cmd_evaluate="$DENOISE_CMD evaluate --config $CONFIG_YAML --checkpoint $WORKDIR/best.pt"
+        [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd_evaluate="$cmd_evaluate $EXTRA_DENOISE_ARGS"
+        echo "$flux_prefix $cmd_evaluate 2>&1 | tee $WORKDIR/denoise_evaluate.${PLATFORM}.log" >> "$jobfile"
+        cat >> "$jobfile" << 'EOFSCRIPT'
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    echo "ERROR: Evaluate failed."
+    exit 1
+fi
+echo ""
+echo "==> All actions completed successfully!"
+EOFSCRIPT
+    else
+        # Single action - original behavior
+        local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
+        [[ "$ACTION" == "train" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
+        [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
+        [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
+        [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
+        [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && cmd="$cmd --tier $TIER_LIST"
+        [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && cmd="$cmd --steps $STEPS_LIST"
+        [[ "$ACTION" == "diagnose" && -n "$METRICS_CSV" ]] && cmd="$cmd --metrics $METRICS_CSV"
+        [[ "$ACTION" == "diagnose" && -n "$OUT_DIR" ]] && cmd="$cmd --out-path $OUT_DIR/per_channel_rmse.png"
+        [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd="$cmd $EXTRA_DENOISE_ARGS"
+
+        echo "$flux_prefix $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
+    fi
 }
 
 generate_run_script() {
@@ -724,9 +930,9 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-# Make CONFIG_YAML absolute if it's relative
-if [[ -n "$CONFIG_YAML" && "${CONFIG_YAML:0:1}" != "/" ]]; then
-    CONFIG_YAML="$(pwd)/$CONFIG_YAML"
+# Expand CONFIG_YAML (short case name -> full path)
+if [[ -n "$CONFIG_YAML" ]]; then
+    CONFIG_YAML=$(expand_config_path "$CONFIG_YAML")
 fi
 
 # Auto-detect platform
@@ -814,11 +1020,18 @@ info "  Created denoise_${ACTION}.job for batch submission"
 
 # Execute based on mode and action
 if [[ "$ACTION" == "all" ]]; then
-    # Special handling for "all" action
-    if [[ "$MODE" == "batch" || "$MODE" == "b" ]]; then
-        error "Batch mode not supported for 'all' action. Use interactive mode."
-    fi
-    run_all_actions
+    # Special handling for "all" action - run all three steps
+    case "$MODE" in
+        interactive|i)
+            run_all_actions
+            ;;
+        batch|b)
+            run_batch
+            ;;
+        *)
+            error "Unknown mode: $MODE (use 'interactive' or 'batch')"
+            ;;
+    esac
 else
     # Normal single-action execution
     case "$MODE" in
