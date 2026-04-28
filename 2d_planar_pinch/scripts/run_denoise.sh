@@ -10,12 +10,17 @@
 #   inspect                Run particle-denoise inspect
 #   train                  Run particle-denoise train
 #   evaluate               Run particle-denoise evaluate
+#   predict                Run particle-denoise predict (generate triptychs)
+#   diagnose               Run particle-denoise diagnose (RMSE bar charts)
 #
 # Options:
 #   -c, --config=FILE      Configuration YAML file (required)
 #   -m, --mode=MODE        Execution mode: interactive (default) or batch
-#   -o, --out-dir=DIR      Output directory for training (default: runs/<timestamp>)
-#   -k, --checkpoint=FILE  Checkpoint file for evaluation (required for evaluate)
+#   -o, --out-dir=DIR      Output directory for training/predict (default: WORKDIR)
+#   -k, --checkpoint=FILE  Checkpoint file for evaluate/predict (required)
+#   --metrics=FILE         Metrics CSV file for diagnose (required)
+#   --tier=LIST            Comma-separated tier list for predict (default: all)
+#   --steps=LIST           Comma-separated step list for predict (default: 4 evenly-spaced)
 #   -n, --ntasks=N         Override number of MPI tasks (for multi-GPU)
 #   -N, --nnodes=N         Override number of nodes
 #   -q, --queue=NAME       Override queue/partition name
@@ -156,18 +161,29 @@ validate() {
 
     # Validate action
     if [[ -z "$ACTION" ]]; then
-        error "No action specified. Use one of: inspect, train, evaluate"
+        error "No action specified. Use one of: inspect, train, evaluate, predict, diagnose"
     fi
 
     case "$ACTION" in
-        inspect|train|evaluate) ;;
-        *) error "Unknown action: $ACTION (use inspect, train, or evaluate)" ;;
+        inspect|train) ;;
+        evaluate|predict)
+            if [[ -z "$CHECKPOINT" ]]; then
+                error "Checkpoint file required for $ACTION. Use -k/--checkpoint to specify."
+            fi
+            if [[ ! -f "$CHECKPOINT" ]]; then
+                error "Checkpoint file not found: $CHECKPOINT"
+            fi
+            ;;
+        diagnose)
+            if [[ -z "$METRICS_CSV" ]]; then
+                error "Metrics CSV file required for diagnose. Use --metrics to specify."
+            fi
+            if [[ ! -f "$METRICS_CSV" ]]; then
+                error "Metrics CSV file not found: $METRICS_CSV"
+            fi
+            ;;
+        *) error "Unknown action: $ACTION (use inspect, train, evaluate, predict, or diagnose)" ;;
     esac
-
-    # Validate action-specific requirements
-    if [[ "$ACTION" == "evaluate" && -z "$CHECKPOINT" ]]; then
-        error "Checkpoint file required for evaluate action. Use -k/--checkpoint to specify."
-    fi
 }
 
 # =============================================================================
@@ -212,6 +228,12 @@ EOF
     local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
     [[ "$ACTION" == "train" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
     [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
+    [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
+    [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
+    [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && cmd="$cmd --tier $TIER_LIST"
+    [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && cmd="$cmd --steps $STEPS_LIST"
+    [[ "$ACTION" == "diagnose" && -n "$METRICS_CSV" ]] && cmd="$cmd --metrics $METRICS_CSV"
+    [[ "$ACTION" == "diagnose" && -n "$OUT_DIR" ]] && cmd="$cmd --out-path $OUT_DIR/per_channel_rmse.png"
     [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd="$cmd $EXTRA_DENOISE_ARGS"
 
     echo "" >> "$jobfile"
@@ -263,6 +285,12 @@ EOF
     local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
     [[ "$ACTION" == "train" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
     [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
+    [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
+    [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
+    [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && cmd="$cmd --tier $TIER_LIST"
+    [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && cmd="$cmd --steps $STEPS_LIST"
+    [[ "$ACTION" == "diagnose" && -n "$METRICS_CSV" ]] && cmd="$cmd --metrics $METRICS_CSV"
+    [[ "$ACTION" == "diagnose" && -n "$OUT_DIR" ]] && cmd="$cmd --out-path $OUT_DIR/per_channel_rmse.png"
     [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd="$cmd $EXTRA_DENOISE_ARGS"
 
     echo "flux run --exclusive --nodes=${NNODES} --ntasks ${NTASKS} $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
@@ -295,6 +323,12 @@ generate_run_script() {
     local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
     [[ "$ACTION" == "train" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
     [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
+    [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
+    [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
+    [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && cmd="$cmd --tier $TIER_LIST"
+    [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && cmd="$cmd --steps $STEPS_LIST"
+    [[ "$ACTION" == "diagnose" && -n "$METRICS_CSV" ]] && cmd="$cmd --metrics $METRICS_CSV"
+    [[ "$ACTION" == "diagnose" && -n "$OUT_DIR" ]] && cmd="$cmd --out-path $OUT_DIR/per_channel_rmse.png"
     [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd="$cmd $EXTRA_DENOISE_ARGS"
 
     cat > "$runfile" << EOF
@@ -390,20 +424,38 @@ run_interactive() {
     info "  Config:     $CONFIG_YAML"
     info "  Nodes:      $NNODES"
     info "  Tasks:      $NTASKS"
-    if [[ "$ACTION" == "train" ]]; then
-        if [[ -n "$OUT_DIR" ]]; then
-            info "  Output dir: $OUT_DIR"
-        else
-            info "  Output dir: (auto-detected, see particle-denoise output)"
-        fi
-    fi
-    [[ "$ACTION" == "evaluate" ]] && info "  Checkpoint: $CHECKPOINT"
+
+    case "$ACTION" in
+        train)
+            if [[ -n "$OUT_DIR" ]]; then
+                info "  Output dir: $OUT_DIR"
+            else
+                info "  Output dir: (auto-detected, see particle-denoise output)"
+            fi
+            ;;
+        evaluate|predict)
+            info "  Checkpoint: $CHECKPOINT"
+            [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && info "  Output dir: $OUT_DIR"
+            [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && info "  Tiers:      $TIER_LIST"
+            [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && info "  Steps:      $STEPS_LIST"
+            ;;
+        diagnose)
+            info "  Metrics:    $METRICS_CSV"
+            [[ -n "$OUT_DIR" ]] && info "  Output:     $OUT_DIR/per_channel_rmse.png"
+            ;;
+    esac
     echo
 
     # Build command
     local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
     [[ "$ACTION" == "train" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
     [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
+    [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
+    [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
+    [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && cmd="$cmd --tier $TIER_LIST"
+    [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && cmd="$cmd --steps $STEPS_LIST"
+    [[ "$ACTION" == "diagnose" && -n "$METRICS_CSV" ]] && cmd="$cmd --metrics $METRICS_CSV"
+    [[ "$ACTION" == "diagnose" && -n "$OUT_DIR" ]] && cmd="$cmd --out-path $OUT_DIR/per_channel_rmse.png"
     [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd="$cmd $EXTRA_DENOISE_ARGS"
 
     # For interactive mode, use --exclusive to get all resources on allocated node
@@ -480,14 +532,26 @@ run_batch() {
     info "  Tasks:      $NTASKS"
     info "  Queue:      ${QUEUE:-default}"
     info "  Walltime:   $WALLTIME"
-    if [[ "$ACTION" == "train" ]]; then
-        if [[ -n "$OUT_DIR" ]]; then
-            info "  Output dir: $OUT_DIR"
-        else
-            info "  Output dir: (auto-detected, see particle-denoise output)"
-        fi
-    fi
-    [[ "$ACTION" == "evaluate" ]] && info "  Checkpoint: $CHECKPOINT"
+
+    case "$ACTION" in
+        train)
+            if [[ -n "$OUT_DIR" ]]; then
+                info "  Output dir: $OUT_DIR"
+            else
+                info "  Output dir: (auto-detected, see particle-denoise output)"
+            fi
+            ;;
+        evaluate|predict)
+            info "  Checkpoint: $CHECKPOINT"
+            [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && info "  Output dir: $OUT_DIR"
+            [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && info "  Tiers:      $TIER_LIST"
+            [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && info "  Steps:      $STEPS_LIST"
+            ;;
+        diagnose)
+            info "  Metrics:    $METRICS_CSV"
+            [[ -n "$OUT_DIR" ]] && info "  Output:     $OUT_DIR/per_channel_rmse.png"
+            ;;
+    esac
     echo
 
     case "$scheduler" in
@@ -533,6 +597,9 @@ CONFIG_YAML=""
 MODE="interactive"
 OUT_DIR=""
 CHECKPOINT=""
+METRICS_CSV=""
+TIER_LIST=""
+STEPS_LIST=""
 OVERRIDE_NTASKS=""
 OVERRIDE_NNODES=""
 OVERRIDE_QUEUE=""
@@ -552,6 +619,12 @@ while [[ $# -gt 0 ]]; do
             [[ "$1" == -o ]] && { shift; OUT_DIR="$1"; } || OUT_DIR="${1#*=}" ;;
         -k|--checkpoint=*)
             [[ "$1" == -k ]] && { shift; CHECKPOINT="$1"; } || CHECKPOINT="${1#*=}" ;;
+        --metrics=*)
+            METRICS_CSV="${1#*=}" ;;
+        --tier=*)
+            TIER_LIST="${1#*=}" ;;
+        --steps=*)
+            STEPS_LIST="${1#*=}" ;;
         -n|--ntasks=*)
             [[ "$1" == -n ]] && { shift; OVERRIDE_NTASKS="$1"; } || OVERRIDE_NTASKS="${1#*=}" ;;
         -N|--nnodes=*)
@@ -564,7 +637,7 @@ while [[ $# -gt 0 ]]; do
         -v|--verbose)   VERBOSE=1 ;;
         -P|--list-platforms) list_platforms; exit 0 ;;
         -h|--help)      usage ;;
-        inspect|train|evaluate)
+        inspect|train|evaluate|predict|diagnose)
             [[ -n "$ACTION" ]] && error "Multiple actions specified: $ACTION and $1"
             ACTION="$1" ;;
         -*)
@@ -631,9 +704,20 @@ else
     mkdir -p "$WORKDIR"
 fi
 
-# Set default output directory for training if not specified
-if [[ "$ACTION" == "train" && -z "$OUT_DIR" ]]; then
-    OUT_DIR="$WORKDIR"
+# Set default output directory if not specified
+if [[ -z "$OUT_DIR" ]]; then
+    case "$ACTION" in
+        train|predict)
+            OUT_DIR="$WORKDIR"
+            ;;
+        diagnose)
+            # For diagnose, OUT_DIR determines where per_channel_rmse.png goes
+            # Default to metrics CSV directory
+            if [[ -n "$METRICS_CSV" ]]; then
+                OUT_DIR="$(dirname "$METRICS_CSV")"
+            fi
+            ;;
+    esac
 fi
 
 # Generate run.sh and denoise.job scripts in the working directory
