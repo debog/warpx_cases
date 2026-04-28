@@ -7,7 +7,7 @@
 # my_constants.Nppc_x / Nppc_z on the WarpX command line. Physics driver,
 # Delta t, stop_time, grid, solver, boundary conditions are all untouched.
 #
-# Default sweep: 2x2=4,4x4=16, 8x8=64, 16x16=256, 32x32=1024 (factor-4 noise spacing).
+# Default sweep: 2x2=4,4x4=16, 6x6=36, 8x8=64, 12x12=144, 16x16=256, 32x32=1024.
 #
 # Usage:
 #   ./run_ppc_sweep.sh [OPTIONS]
@@ -15,7 +15,7 @@
 # Options:
 #   -c, --case=NAME       Input case name. Default: planar_pinch_2d
 #   -p, --ppc=LIST        Comma-separated list of NXxNZ specs.
-#                         Default: 2x2,4x4,8x8,16x16,32x32
+#                         Default: 2x2,4x4,6x6,8x8,12x12,16x16,32x32
 #                         Example: -p 10x10,20x20,40x40
 #   -m, --mode=MODE       interactive | batch (default: batch)
 #   -n, --ntasks=N        Override MPI tasks
@@ -46,7 +46,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 CONFIG_FILE="$SCRIPT_DIR/platforms.conf"
 INPUTS_DIR="$ROOT_DIR/inputs"
 DEFAULT_CASE="planar_pinch_2d"
-DEFAULT_PPC_LIST="2x2,4x4,8x8,16x16,32x32"
+DEFAULT_PPC_LIST="2x2,4x4,6x6,8x8,12x12,16x16,32x32"
 DIM="2d"
 
 # =============================================================================
