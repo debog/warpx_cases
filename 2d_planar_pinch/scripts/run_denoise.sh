@@ -619,7 +619,7 @@ generate_run_script() {
 
     # Build command
     local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
-    [[ "$ACTION" == "train" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
+    [[ ("$ACTION" == "train" || "$ACTION" == "all") && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
     [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
     [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
     [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
@@ -663,10 +663,73 @@ EOF
 # Run particle-denoise
 EOF
 
-    if [[ -n "$runcmd" ]]; then
-        echo "$runcmd $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$runfile"
+    # Handle "all" action - run inspect, train, evaluate sequentially
+    if [[ "$ACTION" == "all" ]]; then
+        cat >> "$runfile" << 'EOFSCRIPT'
+# Step 1/3: Run inspect
+echo "==> Step 1/3: Running inspect"
+EOFSCRIPT
+        local cmd_inspect="$DENOISE_CMD inspect --config $CONFIG_YAML"
+        [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd_inspect="$cmd_inspect $EXTRA_DENOISE_ARGS"
+        if [[ -n "$runcmd" ]]; then
+            echo "$runcmd $cmd_inspect 2>&1 | tee $WORKDIR/denoise_inspect.${PLATFORM}.log" >> "$runfile"
+        else
+            echo "$cmd_inspect 2>&1 | tee $WORKDIR/denoise_inspect.${PLATFORM}.log" >> "$runfile"
+        fi
+        cat >> "$runfile" << 'EOFSCRIPT'
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    echo "ERROR: Inspect failed. Stopping."
+    exit 1
+fi
+echo ""
+
+# Step 2/3: Run train
+echo "==> Step 2/3: Running train"
+EOFSCRIPT
+        local cmd_train="$DENOISE_CMD train --config $CONFIG_YAML"
+        [[ -n "$OUT_DIR" ]] && cmd_train="$cmd_train --out-dir $OUT_DIR"
+        [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd_train="$cmd_train $EXTRA_DENOISE_ARGS"
+        if [[ -n "$runcmd" ]]; then
+            echo "$runcmd $cmd_train 2>&1 | tee $WORKDIR/denoise_train.${PLATFORM}.log" >> "$runfile"
+        else
+            echo "$cmd_train 2>&1 | tee $WORKDIR/denoise_train.${PLATFORM}.log" >> "$runfile"
+        fi
+        cat >> "$runfile" << EOFSCRIPT
+if [ \${PIPESTATUS[0]} -ne 0 ]; then
+    echo "ERROR: Train failed. Stopping."
+    exit 1
+fi
+echo ""
+
+# Step 3/3: Run evaluate with best checkpoint
+echo "==> Step 3/3: Running evaluate with checkpoint: $WORKDIR/best.pt"
+if [ ! -f "$WORKDIR/best.pt" ]; then
+    echo "ERROR: Training did not produce best.pt checkpoint. Stopping."
+    exit 1
+fi
+EOFSCRIPT
+        local cmd_evaluate="$DENOISE_CMD evaluate --config $CONFIG_YAML --checkpoint $WORKDIR/best.pt"
+        [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd_evaluate="$cmd_evaluate $EXTRA_DENOISE_ARGS"
+        if [[ -n "$runcmd" ]]; then
+            echo "$runcmd $cmd_evaluate 2>&1 | tee $WORKDIR/denoise_evaluate.${PLATFORM}.log" >> "$runfile"
+        else
+            echo "$cmd_evaluate 2>&1 | tee $WORKDIR/denoise_evaluate.${PLATFORM}.log" >> "$runfile"
+        fi
+        cat >> "$runfile" << 'EOFSCRIPT'
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    echo "ERROR: Evaluate failed."
+    exit 1
+fi
+echo ""
+echo "==> All actions completed successfully!"
+EOFSCRIPT
     else
-        echo "$cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$runfile"
+        # Single action
+        if [[ -n "$runcmd" ]]; then
+            echo "$runcmd $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$runfile"
+        else
+            echo "$cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$runfile"
+        fi
     fi
 
     chmod +x "$runfile"
@@ -746,7 +809,7 @@ run_interactive() {
 
     # Build command
     local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
-    [[ "$ACTION" == "train" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
+    [[ ("$ACTION" == "train" || "$ACTION" == "all") && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
     [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
     [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
     [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
