@@ -15,9 +15,12 @@
 #   all                    Run inspect, train, and evaluate in sequence
 #
 # Options:
-#   -c, --config=FILE      Configuration YAML file or short case name (required)
-#                          Example: -c denoise_l2 (short case name)
-#                          Example: -c denoise/planar_pinch_2d_denoise_l2.yaml (full path)
+#   -c, --config=CASES     One or more configuration cases (required)
+#                          Can specify multiple cases or use wildcards
+#                          Example: -c denoise_l2 (single case)
+#                          Example: -c denoise_l2 denoise_l1 (multiple cases)
+#                          Example: -c "denoise_*" (wildcard - all denoise cases)
+#                          Example: -c "denoise_l*" (wildcard - denoise_l1, denoise_l2, etc.)
 #
 #   -l, --list             List available cases and exit
 #                          Example: ./run_denoise.sh -l
@@ -104,6 +107,15 @@
 #
 #   10. Submit batch job to debug queue with verbose output:
 #       ./run_denoise.sh -v -m batch -q debug -c denoise_l2 inspect
+#
+#   11. Train multiple cases sequentially:
+#       ./run_denoise.sh -c denoise_l2 denoise_l1 denoise_charbonnier train
+#
+#   12. Train all denoise cases with wildcard:
+#       ./run_denoise.sh -c "denoise_*" train
+#
+#   13. Run all localdenoise cases in batch mode:
+#       ./run_denoise.sh -m batch -c "localdenoise_*" all
 #
 
 set -e
@@ -879,7 +891,7 @@ if [[ $# -eq 0 ]]; then
 fi
 
 # Parse command line arguments
-CONFIG_YAML=""
+CASES=()
 MODE="interactive"
 OUT_DIR=""
 CHECKPOINT=""
@@ -898,7 +910,46 @@ EXTRA_DENOISE_ARGS=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -c|--config=*)
-            [[ "$1" == -c ]] && { shift; CONFIG_YAML="$1"; } || CONFIG_YAML="${1#*=}" ;;
+            if [[ "$1" == -c ]]; then
+                shift
+                # Collect all non-option arguments as case names (but not key=value pairs or action keywords)
+                while [[ $# -gt 0 && "$1" != -* && "$1" != *"="* ]]; do
+                    # Stop if we hit an action keyword
+                    case "$1" in
+                        inspect|train|evaluate|predict|diagnose|all)
+                            break
+                            ;;
+                    esac
+
+                    # Expand wildcards by checking if pattern matches any yaml files
+                    if [[ "$1" == *"*"* ]] || [[ "$1" == *"?"* ]]; then
+                        # This is a glob pattern - expand it
+                        shopt -s nullglob
+                        _denoise_dir="${ROOT_DIR}/denoise"
+                        _matched_files=("$_denoise_dir"/planar_pinch_2d_${1}.yaml)
+                        shopt -u nullglob
+                        for _matched in "${_matched_files[@]}"; do
+                            if [[ -f "$_matched" ]]; then
+                                _basename=$(basename "$_matched")
+                                # Skip the base file
+                                [[ "$_basename" == *"_base.yaml" ]] && continue
+                                # Extract case name: planar_pinch_2d_<case>.yaml -> <case>
+                                _case_name="${_basename#planar_pinch_2d_}"
+                                _case_name="${_case_name%.yaml}"
+                                CASES+=("$_case_name")
+                            fi
+                        done
+                    else
+                        CASES+=("$1")
+                    fi
+                    shift
+                done
+                # Already shifted, so continue without shift at end
+                continue
+            else
+                CASES+=("${1#*=}")
+            fi
+            ;;
         -m|--mode=*)
             [[ "$1" == -m ]] && { shift; MODE="$1"; } || MODE="${1#*=}" ;;
         -o|--out-dir=*)
@@ -936,30 +987,9 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-# Expand CONFIG_YAML (short case name -> full path)
-if [[ -n "$CONFIG_YAML" ]]; then
-    CONFIG_YAML=$(expand_config_path "$CONFIG_YAML")
-fi
-
-# Extract case name from config file (needed to determine which executable to use)
-# Expected format: planar_pinch_2d_<case>.yaml
-if [[ -n "$CONFIG_YAML" ]]; then
-    CONFIG_BASENAME=$(basename "$CONFIG_YAML")
-    if [[ "$CONFIG_BASENAME" =~ planar_pinch_2d_(.+)\.yaml ]]; then
-        CASE_NAME="${BASH_REMATCH[1]}"
-    else
-        # Fallback: use full basename without extension
-        CASE_NAME="${CONFIG_BASENAME%.yaml}"
-    fi
-
-    # Select the appropriate denoise executable based on case name
-    # localdenoise_* cases use local-particle-denoise
-    # denoise_* cases use particle-denoise
-    if [[ "$CASE_NAME" == localdenoise_* ]]; then
-        DENOISE_EXEC="local-particle-denoise"
-    else
-        DENOISE_EXEC="particle-denoise"
-    fi
+# Set default case if none specified
+if [[ ${#CASES[@]} -eq 0 ]]; then
+    error "No case specified. Use -c to specify one or more cases."
 fi
 
 # Auto-detect platform
@@ -984,6 +1014,38 @@ else
     else
         info "Auto-detected LC platform: $PLATFORM (from hostname $HOSTNAME_SHORT)"
     fi
+fi
+
+# Process each case
+for CASE in "${CASES[@]}"; do
+    if [[ ${#CASES[@]} -gt 1 ]]; then
+        info ""
+        info "=========================================="
+        info "Processing case: $CASE"
+        info "=========================================="
+        info ""
+    fi
+
+# Expand case name to full config path
+CONFIG_YAML=$(expand_config_path "$CASE")
+
+# Extract case name from config file (needed to determine which executable to use)
+# Expected format: planar_pinch_2d_<case>.yaml
+CONFIG_BASENAME=$(basename "$CONFIG_YAML")
+if [[ "$CONFIG_BASENAME" =~ planar_pinch_2d_(.+)\.yaml ]]; then
+    CASE_NAME="${BASH_REMATCH[1]}"
+else
+    # Fallback: use full basename without extension
+    CASE_NAME="${CONFIG_BASENAME%.yaml}"
+fi
+
+# Select the appropriate denoise executable based on case name
+# localdenoise_* cases use local-particle-denoise
+# denoise_* cases use particle-denoise
+if [[ "$CASE_NAME" == localdenoise_* ]]; then
+    DENOISE_EXEC="local-particle-denoise"
+else
+    DENOISE_EXEC="particle-denoise"
 fi
 
 # Validate inputs and environment
@@ -1036,20 +1098,24 @@ case "$ACTION" in
 esac
 
 # Set default output directory if not specified
-if [[ -z "$OUT_DIR" ]]; then
+# Reset OUT_DIR for each case unless explicitly set by user
+CASE_OUT_DIR="$OUT_DIR"
+if [[ -z "$CASE_OUT_DIR" ]]; then
     case "$ACTION" in
         train|predict)
-            OUT_DIR="$WORKDIR"
+            CASE_OUT_DIR="$WORKDIR"
             ;;
         diagnose)
             # For diagnose, OUT_DIR determines where per_channel_rmse.png goes
             # Default to metrics CSV directory
             if [[ -n "$METRICS_CSV" ]]; then
-                OUT_DIR="$(dirname "$METRICS_CSV")"
+                CASE_OUT_DIR="$(dirname "$METRICS_CSV")"
             fi
             ;;
     esac
 fi
+# Use CASE_OUT_DIR for this case
+OUT_DIR="$CASE_OUT_DIR"
 
 # Generate run.sh and denoise.job scripts in the working directory
 info "Generating run scripts in $WORKDIR"
@@ -1086,5 +1152,7 @@ else
             ;;
     esac
 fi
+
+done  # End of case loop
 
 info "Done."
