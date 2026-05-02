@@ -314,8 +314,9 @@ run_all_actions() {
     info "Running all actions in sequence: inspect -> train -> evaluate"
     echo
 
-    # Save original ACTION
+    # Save original ACTION and OUT_DIR
     local saved_action="$ACTION"
+    local saved_out_dir="$OUT_DIR"
 
     # Run inspect
     ACTION="inspect"
@@ -329,6 +330,10 @@ run_all_actions() {
 
     # Run train
     ACTION="train"
+    # Set OUT_DIR for training if not already set
+    if [[ -z "$OUT_DIR" ]]; then
+        OUT_DIR="$WORKDIR"
+    fi
     info "Step 2/3: Running train"
     run_interactive
     local train_status=$?
@@ -352,8 +357,9 @@ run_all_actions() {
         error "Evaluate failed with exit code $eval_status."
     fi
 
-    # Restore original ACTION
+    # Restore original ACTION and OUT_DIR
     ACTION="$saved_action"
+    OUT_DIR="$saved_out_dir"
 
     if [[ -z "$DRY_RUN" ]]; then
         info "All actions completed successfully!"
@@ -1000,12 +1006,34 @@ debug "Using $DENOISE_EXEC for case: $CASE_NAME"
 
 # Create working directory for logs and job scripts
 WORKDIR="$ROOT_DIR/.run_pdn_${CASE_NAME}.${PLATFORM}"
-if [[ -d "$WORKDIR" ]]; then
-    info "Removing existing directory: $WORKDIR"
-    rm -rf "$WORKDIR"
-fi
-info "Creating working directory: $WORKDIR"
-mkdir -p "$WORKDIR"
+
+# Only delete existing directory for actions that create fresh output
+# Actions like evaluate, diagnose, predict need existing files (checkpoints, metrics)
+case "$ACTION" in
+    train|inspect|all)
+        if [[ -d "$WORKDIR" ]]; then
+            info "Removing existing directory: $WORKDIR"
+            rm -rf "$WORKDIR"
+        fi
+        info "Creating working directory: $WORKDIR"
+        mkdir -p "$WORKDIR"
+        ;;
+    evaluate|diagnose|predict)
+        if [[ -d "$WORKDIR" ]]; then
+            info "Using existing directory: $WORKDIR"
+        else
+            info "Creating working directory: $WORKDIR"
+            mkdir -p "$WORKDIR"
+        fi
+        ;;
+    *)
+        # Default: create if doesn't exist
+        if [[ ! -d "$WORKDIR" ]]; then
+            info "Creating working directory: $WORKDIR"
+            mkdir -p "$WORKDIR"
+        fi
+        ;;
+esac
 
 # Set default output directory if not specified
 if [[ -z "$OUT_DIR" ]]; then
