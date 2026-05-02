@@ -1102,7 +1102,8 @@ esac
 CASE_OUT_DIR="$OUT_DIR"
 if [[ -z "$CASE_OUT_DIR" ]]; then
     case "$ACTION" in
-        train|predict)
+        train|predict|all)
+            # For train, predict, and all (which includes train), default to WORKDIR
             CASE_OUT_DIR="$WORKDIR"
             ;;
         diagnose)
