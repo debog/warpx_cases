@@ -83,3 +83,8 @@ train:
   lr: 1.0e-3
   amp: true
   early_stop_patience: 10
+  # The local denoiser sees ~10^5 steps per epoch (one per cell, per
+  # low-ppc tier, per pair group), so the framework default of 50
+  # would emit thousands of step-progress lines per epoch. 5000 keeps
+  # it to a few dozen lines per epoch on the dense ppc sweep.
+  log_interval_steps: 5000
