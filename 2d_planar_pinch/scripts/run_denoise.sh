@@ -119,6 +119,7 @@
 #
 
 set -e
+set -o pipefail   # so `cmd | tee log` propagates cmd's exit status
 
 # =============================================================================
 # Configuration
@@ -267,9 +268,12 @@ validate() {
        Please ensure particle-denoise is installed."
     fi
 
-    # If particle-denoise command exists, use it; otherwise use python -m
+    # If the case-appropriate denoise command is on PATH, use it;
+    # otherwise fall back to the matching Python module.
     if command -v "$DENOISE_EXEC" &>/dev/null; then
         DENOISE_CMD="$DENOISE_EXEC"
+    elif [[ "$DENOISE_EXEC" == "local-particle-denoise" ]]; then
+        DENOISE_CMD="python -m localParticleDenoiser"
     else
         DENOISE_CMD="python -m particleDenoiser"
     fi
@@ -610,7 +614,7 @@ generate_run_script() {
             ;;
         flux)
             local debug_queue=$(get_config "$PLATFORM" "debug_queue" "pdebug")
-            runcmd="flux run --exclusive --nodes=$NNODES --ntasks=$NTASKS --verbose --setopt=mpibind=verbose:1 -q=$debug_queue"
+            runcmd="flux run --exclusive --nodes=$NNODES --ntasks=$NTASKS --verbose --setopt=mpibind=verbose:1 --queue=$debug_queue"
             ;;
         direct)
             runcmd=""
@@ -841,7 +845,7 @@ run_interactive() {
             local full_cmd="$runcmd $cmd"
             ;;
         flux)
-            local runcmd="flux run --exclusive --nodes=$NNODES --ntasks=$NTASKS --verbose --setopt=mpibind=verbose:1 -q=$debug_queue"
+            local runcmd="flux run --exclusive --nodes=$NNODES --ntasks=$NTASKS --verbose --setopt=mpibind=verbose:1 --queue=$debug_queue"
             local full_cmd="$runcmd $cmd"
             ;;
         direct)
@@ -972,67 +976,93 @@ EXTRA_DENOISE_ARGS=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -c|--config=*)
-            if [[ "$1" == -c ]]; then
-                shift
-                # Collect all non-option arguments as case names (but not key=value pairs or action keywords)
-                while [[ $# -gt 0 && "$1" != -* && "$1" != *"="* ]]; do
-                    # Stop if we hit an action keyword
-                    case "$1" in
-                        inspect|train|evaluate|predict|diagnose|all)
-                            break
-                            ;;
-                    esac
-
-                    # Expand wildcards by checking if pattern matches any yaml files
-                    if [[ "$1" == *"*"* ]] || [[ "$1" == *"?"* ]]; then
-                        # This is a glob pattern - expand it
-                        shopt -s nullglob
-                        _denoise_dir="${ROOT_DIR}/denoise"
-                        _matched_files=("$_denoise_dir"/planar_pinch_2d_${1}.yaml)
-                        shopt -u nullglob
-                        for _matched in "${_matched_files[@]}"; do
-                            if [[ -f "$_matched" ]]; then
-                                _basename=$(basename "$_matched")
-                                # Skip the base file
-                                [[ "$_basename" == *"_base.yaml" ]] && continue
-                                # Extract case name: planar_pinch_2d_<case>.yaml -> <case>
-                                _case_name="${_basename#planar_pinch_2d_}"
-                                _case_name="${_case_name%.yaml}"
-                                CASES+=("$_case_name")
-                            fi
-                        done
-                    else
-                        CASES+=("$1")
-                    fi
-                    shift
-                done
-                # Already shifted, so continue without shift at end
-                continue
-            else
-                CASES+=("${1#*=}")
+        -c|--config|--config=*)
+            # Normalise --config=value -> --config value so the slurp
+            # loop below handles all three input forms uniformly.
+            if [[ "$1" == --config=* ]]; then
+                set -- "--config" "${1#*=}" "${@:2}"
             fi
+            shift   # consume the -c / --config flag itself
+            # Collect non-option args as case names until we hit a flag,
+            # a key=value override, or an action keyword.
+            while [[ $# -gt 0 && "$1" != -* && "$1" != *"="* ]]; do
+                case "$1" in
+                    inspect|train|evaluate|predict|diagnose|all)
+                        break
+                        ;;
+                esac
+
+                if [[ "$1" == *"*"* || "$1" == *"?"* ]]; then
+                    # Wildcard - expand against the denoise dir.
+                    shopt -s nullglob
+                    _denoise_dir="${ROOT_DIR}/denoise"
+                    _matched_files=("$_denoise_dir"/planar_pinch_2d_${1}.yaml)
+                    shopt -u nullglob
+                    for _matched in "${_matched_files[@]}"; do
+                        [[ -f "$_matched" ]] || continue
+                        _basename=$(basename "$_matched")
+                        [[ "$_basename" == *"_base.yaml" ]] && continue
+                        _case_name="${_basename#planar_pinch_2d_}"
+                        _case_name="${_case_name%.yaml}"
+                        CASES+=("$_case_name")
+                    done
+                else
+                    CASES+=("$1")
+                fi
+                shift
+            done
+            continue   # inner loop already consumed the value(s)
             ;;
-        -m|--mode=*)
-            [[ "$1" == -m ]] && { shift; MODE="$1"; } || MODE="${1#*=}" ;;
-        -o|--out-dir=*)
-            [[ "$1" == -o ]] && { shift; OUT_DIR="$1"; } || OUT_DIR="${1#*=}" ;;
-        -k|--checkpoint=*)
-            [[ "$1" == -k ]] && { shift; CHECKPOINT="$1"; } || CHECKPOINT="${1#*=}" ;;
-        --metrics=*)
-            METRICS_CSV="${1#*=}" ;;
-        --tier=*)
-            TIER_LIST="${1#*=}" ;;
-        --steps=*)
-            STEPS_LIST="${1#*=}" ;;
-        -n|--ntasks=*)
-            [[ "$1" == -n ]] && { shift; OVERRIDE_NTASKS="$1"; } || OVERRIDE_NTASKS="${1#*=}" ;;
-        -N|--nnodes=*)
-            [[ "$1" == -N ]] && { shift; OVERRIDE_NNODES="$1"; } || OVERRIDE_NNODES="${1#*=}" ;;
-        -q|--queue=*)
-            [[ "$1" == -q ]] && { shift; OVERRIDE_QUEUE="$1"; } || OVERRIDE_QUEUE="${1#*=}" ;;
-        -t|--walltime=*)
-            [[ "$1" == -t ]] && { shift; OVERRIDE_WALLTIME="$1"; } || OVERRIDE_WALLTIME="${1#*=}" ;;
+        -m|--mode|--mode=*)
+            case "$1" in
+                --mode=*) MODE="${1#*=}" ;;
+                *)        shift; MODE="$1" ;;
+            esac ;;
+        -o|--out-dir|--out-dir=*)
+            case "$1" in
+                --out-dir=*) OUT_DIR="${1#*=}" ;;
+                *)           shift; OUT_DIR="$1" ;;
+            esac ;;
+        -k|--checkpoint|--checkpoint=*)
+            case "$1" in
+                --checkpoint=*) CHECKPOINT="${1#*=}" ;;
+                *)              shift; CHECKPOINT="$1" ;;
+            esac ;;
+        --metrics|--metrics=*)
+            case "$1" in
+                --metrics=*) METRICS_CSV="${1#*=}" ;;
+                *)           shift; METRICS_CSV="$1" ;;
+            esac ;;
+        --tier|--tier=*)
+            case "$1" in
+                --tier=*) TIER_LIST="${1#*=}" ;;
+                *)        shift; TIER_LIST="$1" ;;
+            esac ;;
+        --steps|--steps=*)
+            case "$1" in
+                --steps=*) STEPS_LIST="${1#*=}" ;;
+                *)         shift; STEPS_LIST="$1" ;;
+            esac ;;
+        -n|--ntasks|--ntasks=*)
+            case "$1" in
+                --ntasks=*) OVERRIDE_NTASKS="${1#*=}" ;;
+                *)          shift; OVERRIDE_NTASKS="$1" ;;
+            esac ;;
+        -N|--nnodes|--nnodes=*)
+            case "$1" in
+                --nnodes=*) OVERRIDE_NNODES="${1#*=}" ;;
+                *)          shift; OVERRIDE_NNODES="$1" ;;
+            esac ;;
+        -q|--queue|--queue=*)
+            case "$1" in
+                --queue=*) OVERRIDE_QUEUE="${1#*=}" ;;
+                *)         shift; OVERRIDE_QUEUE="$1" ;;
+            esac ;;
+        -t|--walltime|--walltime=*)
+            case "$1" in
+                --walltime=*) OVERRIDE_WALLTIME="${1#*=}" ;;
+                *)            shift; OVERRIDE_WALLTIME="$1" ;;
+            esac ;;
         -d|--dry-run)   DRY_RUN=1 ;;
         -v|--verbose)   VERBOSE=1 ;;
         -l|--list)      list_cases; exit 0 ;;
@@ -1079,8 +1109,17 @@ else
     fi
 fi
 
+# Snapshot the user-supplied OUT_DIR / CHECKPOINT so each case
+# starts from the original CLI state instead of inheriting the
+# previous case's WORKDIR-derived defaults.
+USER_OUT_DIR="$OUT_DIR"
+USER_CHECKPOINT="$CHECKPOINT"
+
 # Process each case
 for CASE in "${CASES[@]}"; do
+    OUT_DIR="$USER_OUT_DIR"
+    CHECKPOINT="$USER_CHECKPOINT"
+
     if [[ ${#CASES[@]} -gt 1 ]]; then
         info ""
         info "=========================================="
@@ -1160,26 +1199,23 @@ case "$ACTION" in
         ;;
 esac
 
-# Set default output directory if not specified
-# Reset OUT_DIR for each case unless explicitly set by user
-CASE_OUT_DIR="$OUT_DIR"
-if [[ -z "$CASE_OUT_DIR" ]]; then
+# Set default output directory if not specified by the user.
+# OUT_DIR was reset to $USER_OUT_DIR at the top of this loop, so
+# this only fills in a per-case default when the user did not pass -o.
+if [[ -z "$OUT_DIR" ]]; then
     case "$ACTION" in
         train|predict|all)
-            # For train, predict, and all (which includes train), default to WORKDIR
-            CASE_OUT_DIR="$WORKDIR"
+            OUT_DIR="$WORKDIR"
             ;;
         diagnose)
-            # For diagnose, OUT_DIR determines where per_channel_rmse.png goes
-            # Default to metrics CSV directory
+            # OUT_DIR controls where per_channel_rmse.png is written;
+            # default to the metrics CSV's directory.
             if [[ -n "$METRICS_CSV" ]]; then
-                CASE_OUT_DIR="$(dirname "$METRICS_CSV")"
+                OUT_DIR="$(dirname "$METRICS_CSV")"
             fi
             ;;
     esac
 fi
-# Use CASE_OUT_DIR for this case
-OUT_DIR="$CASE_OUT_DIR"
 
 # Generate run.sh and denoise.job scripts in the working directory
 info "Generating run scripts in $WORKDIR"
