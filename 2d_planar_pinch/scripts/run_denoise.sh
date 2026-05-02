@@ -401,6 +401,10 @@ EOF
 
     [[ -n "$ACCOUNT" ]] && echo "#SBATCH -A ${ACCOUNT}" >> "$jobfile"
     [[ -n "$QUEUE" ]] && echo "#SBATCH -p ${QUEUE}" >> "$jobfile"
+    # --cpus-per-task drives the per-task cgroup memory under SLURM's
+    # MaxMemPerCPU enforcement; without it tasks default to ~1 CPU
+    # of memory and can be OOM-killed long before the node is full.
+    [[ -n "$CPUS_PER_TASK" ]] && echo "#SBATCH --cpus-per-task=${CPUS_PER_TASK}" >> "$jobfile"
 
     cat >> "$jobfile" << EOF
 
@@ -422,11 +426,13 @@ EOF
 
     # Build srun prefix command with GPU support if needed
     local srun_prefix=""
+    local cpu_arg=""
+    [[ -n "$CPUS_PER_TASK" ]] && cpu_arg=" -c ${CPUS_PER_TASK}"
     if [[ "$GPU_SUPPORT" == "true" ]]; then
         local total_gpus=$((NTASKS * GPUS_PER_TASK))
-        srun_prefix="srun --exclusive -N ${NNODES} -G ${total_gpus} -n ${NTASKS}"
+        srun_prefix="srun --exclusive -N ${NNODES} -G ${total_gpus} -n ${NTASKS}${cpu_arg}"
     else
-        srun_prefix="srun -N ${NNODES} -n ${NTASKS}"
+        srun_prefix="srun -N ${NNODES} -n ${NTASKS}${cpu_arg}"
     fi
 
     echo "" >> "$jobfile"
@@ -531,7 +537,9 @@ EOF
     echo "" >> "$jobfile"
 
     # Build flux run prefix
-    local flux_prefix="flux run --exclusive --nodes=${NNODES} --ntasks ${NTASKS}"
+    local cpu_arg=""
+    [[ -n "$CPUS_PER_TASK" ]] && cpu_arg=" --cores-per-task=${CPUS_PER_TASK}"
+    local flux_prefix="flux run --exclusive --nodes=${NNODES} --ntasks ${NTASKS}${cpu_arg}"
 
     # Handle "all" action - run inspect, train, evaluate sequentially in same job
     if [[ "$ACTION" == "all" ]]; then
@@ -607,6 +615,7 @@ generate_run_script() {
         slurm)
             local debug_queue=$(get_config "$PLATFORM" "debug_queue" "pdebug")
             runcmd="srun --exclusive -N $NNODES -n $NTASKS -p $debug_queue --export=ALL"
+            [[ -n "$CPUS_PER_TASK" ]] && runcmd="$runcmd -c $CPUS_PER_TASK"
             if [[ "$GPU_SUPPORT" == "true" ]]; then
                 local total_gpus=$((NTASKS * GPUS_PER_TASK))
                 runcmd="$runcmd -G ${total_gpus}"
@@ -615,6 +624,7 @@ generate_run_script() {
         flux)
             local debug_queue=$(get_config "$PLATFORM" "debug_queue" "pdebug")
             runcmd="flux run --exclusive --nodes=$NNODES --ntasks=$NTASKS --verbose --setopt=mpibind=verbose:1 --queue=$debug_queue"
+            [[ -n "$CPUS_PER_TASK" ]] && runcmd="$runcmd --cores-per-task=$CPUS_PER_TASK"
             ;;
         direct)
             runcmd=""
@@ -838,6 +848,7 @@ run_interactive() {
     case "$scheduler" in
         slurm)
             local runcmd="srun --exclusive -N $NNODES -n $NTASKS -p $debug_queue --export=ALL"
+            [[ -n "$CPUS_PER_TASK" ]] && runcmd="$runcmd -c $CPUS_PER_TASK"
             if [[ "$GPU_SUPPORT" == "true" ]]; then
                 local total_gpus=$((NTASKS * GPUS_PER_TASK))
                 runcmd="$runcmd -G ${total_gpus}"
@@ -846,6 +857,7 @@ run_interactive() {
             ;;
         flux)
             local runcmd="flux run --exclusive --nodes=$NNODES --ntasks=$NTASKS --verbose --setopt=mpibind=verbose:1 --queue=$debug_queue"
+            [[ -n "$CPUS_PER_TASK" ]] && runcmd="$runcmd --cores-per-task=$CPUS_PER_TASK"
             local full_cmd="$runcmd $cmd"
             ;;
         direct)
@@ -1161,6 +1173,7 @@ QUEUE="${OVERRIDE_QUEUE:-$(get_config "$PLATFORM" "queue")}"
 WALLTIME="${OVERRIDE_WALLTIME:-$(get_config "$PLATFORM" "walltime" "4:00:00")}"
 GPU_SUPPORT=$(get_config "$PLATFORM" "gpu_support" "false")
 GPUS_PER_TASK=$(get_config "$PLATFORM" "gpus_per_task" "1")
+CPUS_PER_TASK=$(get_config "$PLATFORM" "cpus_per_task" "")
 ACCOUNT=$(get_config "$PLATFORM" "account")
 
 debug "Platform config loaded:"
