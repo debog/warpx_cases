@@ -76,9 +76,11 @@ loss:
   gradient_kind: l2
 
 train:
-  # The patch dataset yields ~8 000 examples per snapshot, so
-  # batches can be much larger and epochs need only a few passes.
-  batch_size: 64
+  # The patch dataset yields ~8 000 examples per snapshot and the
+  # localCNN has only ~0.4 M parameters on 7x7x27 inputs, so the GPU
+  # is heavily underutilised at small batches. Bump batch_size by an
+  # order of magnitude to amortise per-step Python / DDP overhead.
+  batch_size: 1024
   epochs: 50
   lr: 1.0e-3
   amp: true
