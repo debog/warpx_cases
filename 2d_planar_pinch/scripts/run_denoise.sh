@@ -61,6 +61,14 @@
 #                          Example: -t 4:00:00 (4 hours)
 #                          Example: -t 0:30:00 (30 minutes)
 #
+#   -r, --resume[=PATH]    Resume training from a checkpoint instead of
+#                          starting fresh. Bare flag uses
+#                          <WORKDIR>/last.pt; with =PATH, that ckpt.
+#                          Implies the WORKDIR is preserved (not deleted)
+#                          for train/all actions.
+#                          Example: -r                    (resume from last.pt)
+#                          Example: --resume=/path/last.pt
+#
 #   -d, --dry-run          Show what would be executed without running
 #                          Example: ./run_denoise.sh -d -c config.yaml train
 #
@@ -438,6 +446,15 @@ EOF
     echo "" >> "$jobfile"
 
     # Handle "all" action - run inspect, train, evaluate sequentially in same job
+    # Translate the script-level RESUME into a flag we can append to
+    # the denoise CLI for the train (and 'all') subcommand.
+    local resume_flag=""
+    case "$RESUME" in
+        "")    resume_flag="" ;;
+        auto)  resume_flag=" --resume" ;;
+        *)     resume_flag=" --resume=${RESUME}" ;;
+    esac
+
     if [[ "$ACTION" == "all" ]]; then
         cat >> "$jobfile" << 'EOFSCRIPT'
 # Step 1/3: Run inspect
@@ -458,6 +475,7 @@ echo "==> Step 2/3: Running train"
 EOFSCRIPT
         local cmd_train="$DENOISE_CMD train --config $CONFIG_YAML"
         [[ -n "$OUT_DIR" ]] && cmd_train="$cmd_train --out-dir $OUT_DIR"
+        cmd_train="$cmd_train$resume_flag"
         [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd_train="$cmd_train $EXTRA_DENOISE_ARGS"
         echo "$srun_prefix $cmd_train 2>&1 | tee $WORKDIR/denoise_train.${PLATFORM}.log" >> "$jobfile"
         cat >> "$jobfile" << EOFSCRIPT
@@ -489,6 +507,7 @@ EOFSCRIPT
         # Single action - original behavior
         local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
         [[ "$ACTION" == "train" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
+        [[ "$ACTION" == "train" ]] && cmd="$cmd$resume_flag"
         [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
         [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
         [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
@@ -541,6 +560,14 @@ EOF
     [[ -n "$CPUS_PER_TASK" ]] && cpu_arg=" --cores-per-task=${CPUS_PER_TASK}"
     local flux_prefix="flux run --exclusive --nodes=${NNODES} --ntasks ${NTASKS}${cpu_arg}"
 
+    # See generate_slurm_batch for resume_flag rationale.
+    local resume_flag=""
+    case "$RESUME" in
+        "")    resume_flag="" ;;
+        auto)  resume_flag=" --resume" ;;
+        *)     resume_flag=" --resume=${RESUME}" ;;
+    esac
+
     # Handle "all" action - run inspect, train, evaluate sequentially in same job
     if [[ "$ACTION" == "all" ]]; then
         cat >> "$jobfile" << 'EOFSCRIPT'
@@ -562,6 +589,7 @@ echo "==> Step 2/3: Running train"
 EOFSCRIPT
         local cmd_train="$DENOISE_CMD train --config $CONFIG_YAML"
         [[ -n "$OUT_DIR" ]] && cmd_train="$cmd_train --out-dir $OUT_DIR"
+        cmd_train="$cmd_train$resume_flag"
         [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd_train="$cmd_train $EXTRA_DENOISE_ARGS"
         echo "$flux_prefix $cmd_train 2>&1 | tee $WORKDIR/denoise_train.${PLATFORM}.log" >> "$jobfile"
         cat >> "$jobfile" << EOFSCRIPT
@@ -593,6 +621,7 @@ EOFSCRIPT
         # Single action - original behavior
         local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
         [[ "$ACTION" == "train" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
+        [[ "$ACTION" == "train" ]] && cmd="$cmd$resume_flag"
         [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
         [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
         [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
@@ -631,9 +660,18 @@ generate_run_script() {
             ;;
     esac
 
+    # See generate_slurm_batch for resume_flag rationale.
+    local resume_flag=""
+    case "$RESUME" in
+        "")    resume_flag="" ;;
+        auto)  resume_flag=" --resume" ;;
+        *)     resume_flag=" --resume=${RESUME}" ;;
+    esac
+
     # Build command
     local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
     [[ ("$ACTION" == "train" || "$ACTION" == "all") && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
+    [[ "$ACTION" == "train" ]] && cmd="$cmd$resume_flag"
     [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
     [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
     [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
@@ -702,6 +740,7 @@ echo "==> Step 2/3: Running train"
 EOFSCRIPT
         local cmd_train="$DENOISE_CMD train --config $CONFIG_YAML"
         [[ -n "$OUT_DIR" ]] && cmd_train="$cmd_train --out-dir $OUT_DIR"
+        cmd_train="$cmd_train$resume_flag"
         [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd_train="$cmd_train $EXTRA_DENOISE_ARGS"
         if [[ -n "$runcmd" ]]; then
             echo "$runcmd $cmd_train 2>&1 | tee $WORKDIR/denoise_train.${PLATFORM}.log" >> "$runfile"
@@ -821,9 +860,18 @@ run_interactive() {
     esac
     echo
 
+    # See generate_slurm_batch for resume_flag rationale.
+    local resume_flag=""
+    case "$RESUME" in
+        "")    resume_flag="" ;;
+        auto)  resume_flag=" --resume" ;;
+        *)     resume_flag=" --resume=${RESUME}" ;;
+    esac
+
     # Build command
     local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
     [[ ("$ACTION" == "train" || "$ACTION" == "all") && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
+    [[ "$ACTION" == "train" ]] && cmd="$cmd$resume_flag"
     [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
     [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
     [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
@@ -985,6 +1033,7 @@ DRY_RUN=""
 VERBOSE=""
 ACTION=""
 EXTRA_DENOISE_ARGS=""
+RESUME=""        # "" = no resume; "auto" = use <WORKDIR>/last.pt; PATH = use that file
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -1074,6 +1123,11 @@ while [[ $# -gt 0 ]]; do
             case "$1" in
                 --walltime=*) OVERRIDE_WALLTIME="${1#*=}" ;;
                 *)            shift; OVERRIDE_WALLTIME="$1" ;;
+            esac ;;
+        -r|--resume|--resume=*)
+            case "$1" in
+                --resume=*) RESUME="${1#*=}" ;;
+                *)          RESUME="auto" ;;
             esac ;;
         -d|--dry-run)   DRY_RUN=1 ;;
         -v|--verbose)   VERBOSE=1 ;;
@@ -1184,15 +1238,21 @@ debug "Using $DENOISE_EXEC for case: $CASE_NAME"
 # Create working directory for logs and job scripts
 WORKDIR="$ROOT_DIR/.run_pdn_${CASE_NAME}.${PLATFORM}"
 
-# Only delete existing directory for actions that create fresh output
-# Actions like evaluate, diagnose, predict need existing files (checkpoints, metrics)
+# Only delete existing directory for actions that create fresh output.
+# Actions like evaluate, diagnose, predict need existing files (checkpoints,
+# metrics), and --resume is exactly the same situation: we must keep the
+# previous training artefacts (last.pt, metrics.csv, ...) intact.
 case "$ACTION" in
     train|inspect|all)
-        if [[ -d "$WORKDIR" ]]; then
+        if [[ -d "$WORKDIR" && -z "$RESUME" ]]; then
             info "Removing existing directory: $WORKDIR"
             rm -rf "$WORKDIR"
         fi
-        info "Creating working directory: $WORKDIR"
+        if [[ -n "$RESUME" && -d "$WORKDIR" ]]; then
+            info "Resuming in existing directory: $WORKDIR"
+        else
+            info "Creating working directory: $WORKDIR"
+        fi
         mkdir -p "$WORKDIR"
         ;;
     evaluate|diagnose|predict)
