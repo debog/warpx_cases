@@ -81,10 +81,10 @@ train:
   # is heavily underutilised at small batches. Bump batch_size by an
   # order of magnitude to amortise per-step Python / DDP overhead.
   batch_size: 1024
-  epochs: 50
+  epochs: 200
   lr: 1.0e-3
   amp: true
-  early_stop_patience: 10
+  early_stop_patience: 30
   # The local denoiser sees ~10^5 steps per epoch (one per cell, per
   # low-ppc tier, per pair group), so the framework default of 50
   # would emit thousands of step-progress lines per epoch. 5000 keeps
