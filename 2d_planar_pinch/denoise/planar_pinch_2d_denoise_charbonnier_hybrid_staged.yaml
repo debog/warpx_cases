@@ -1,0 +1,25 @@
+# Hybrid local + global-context residual model, staged-pretraining
+# variant. Round 3 follow-up: the joint-trained hybrid (sibling YAML
+# `planar_pinch_2d_denoise_charbonnier_hybrid.yaml`) plateaued at the
+# global U-Net's loss, the local branch never specialised. Suspected
+# cause is optimisation symmetry: with both branches starting random,
+# the gradient on the head can be reduced by either branch, and the
+# global U-Net is the easier path.
+#
+# Staged variant: seed the hybrid's global branch from a standalone
+# Charbonnier U-Net checkpoint (`denoise_charbonnier`), freeze it, and
+# train only the local branch + 1x1 head. The head must now use the
+# local branch to push below the global U-Net floor; symmetry broken
+# by construction.
+#
+# Architecture and dataset settings are inherited from the joint-
+# trained hybrid YAML; only the two model fields differ.
+
+base: planar_pinch_2d_denoise_charbonnier_hybrid.yaml
+
+model:
+  # Frozen global-branch checkpoint. Path is resolved relative to the
+  # working directory at run time (the run_denoise.sh launcher cds
+  # into the case root before invoking the CLI).
+  global_branch_pretrained: .run_pdn_denoise_charbonnier.matrix/best.pt
+  freeze_global_branch: true
