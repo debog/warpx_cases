@@ -1,0 +1,24 @@
+# Local-physics denoiser, Charbonnier reconstruction, with dilated
+# (atrous) convolutions. Round 3 architectural experiment (2 of 4):
+# tests whether multiplicatively expanding the receptive field with
+# the same parameter count moves the local-denoiser ceiling.
+#
+# Dilation rates per layer = [1, 2, 4] (depth=3, base dilation=2).
+# Receptive field = 1 + 2*(1 + 2 + 4) = 15 cells, same as the
+# depth=5/patch=11 variant but with 3 layers instead of 5 (faster
+# forward / backward, fewer parameters).
+#
+# Patch size requirement: 1 + 2*sum(rates) = 15. Boundary handling
+# pads the snapshot by patch_size//2 = 7 cells on each side.
+
+base: planar_pinch_2d_localdenoise_base.yaml
+
+model:
+  patch_size: 15
+  depth:      3
+  dilation:   2
+  base_channels: 64
+
+loss:
+  recon_kind: charbonnier
+  recon_eps: 1.0e-3

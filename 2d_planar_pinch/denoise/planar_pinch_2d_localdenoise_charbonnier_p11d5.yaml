@@ -1,0 +1,25 @@
+# Local-physics denoiser, Charbonnier reconstruction, with bigger
+# patch and deeper trunk. Round 3 architectural experiment (1 of 4):
+# tests whether the local denoiser ceiling at mean RMSE 0.30 is
+# receptive-field-limited.
+#
+# Receptive-field math: valid 3x3 convs shrink by 2 per layer, so
+# patch_size = 2*depth + 1 lands the trunk at 1x1 at the centre.
+# Going from (patch=7, depth=3) to (patch=11, depth=5) bumps the
+# receptive field from 7 cells to 11 cells (roughly +57 % linear,
+# +144 % area).
+#
+# base_channels reduced from 64 to 32 to keep the parameter count
+# in a comparable range (LocalCNN doubles the channel width per
+# layer, so a depth bump otherwise multiplies parameters by 8x).
+
+base: planar_pinch_2d_localdenoise_base.yaml
+
+model:
+  patch_size: 11
+  depth:      5
+  base_channels: 32
+
+loss:
+  recon_kind: charbonnier
+  recon_eps: 1.0e-3
