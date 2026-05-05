@@ -1,0 +1,36 @@
+# Hybrid local + global-context residual model. Round 3 architectural
+# experiment (3 of 4): tests whether per-cell prediction with both a
+# bounded-receptive-field local branch and a coarse global U-Net
+# beats either alone.
+#
+# Architecture (LocalGlobalUNet):
+#   * Local branch: depth-3 valid 3x3 convs at base_channels=32,
+#     pre-padded with PEC (x-axis) / periodic (z-axis) so the
+#     boundary behaviour matches the planar pinch.
+#     Receptive field 7 cells per axis.
+#   * Global branch: small U-Net, depth_global=3, base_channels=32.
+#     Encoder/decoder bottleneck reaches all of (256, 32) cells.
+#   * 1x1 head on the concatenation; zero-init residual.
+#
+# Snapshot-level training, dataset_type=paired (same as the global
+# U-Net in §3.1; one whole-snapshot sample per pair). Compatible
+# with `particle-denoise` CLI; do not run via `local-particle-denoise`.
+#
+# `data.boundary_spec` exists but is normally only used by the local
+# patch dataset; here we set it because LocalGlobalUNet's local
+# branch reads it for BC-aware pre-padding.
+
+base: planar_pinch_2d_denoise_base.yaml
+
+data:
+  boundary_spec: ["pec", "periodic"]
+
+model:
+  name: localGlobalUNet
+  base_channels: 32
+  depth: 3                # global-branch depth
+  patch_size: 7           # local-branch receptive field (cells per axis)
+
+loss:
+  recon_kind: charbonnier
+  recon_eps: 1.0e-3
