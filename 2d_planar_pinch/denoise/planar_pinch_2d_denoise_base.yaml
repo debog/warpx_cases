@@ -34,8 +34,8 @@ loss:
   # recon_eps) and the gradient-of-error term are loss-recipe-specific
   # and are set in each variant YAML.
   recon: 1.0
-  # Per-channel recon weights. Upweight the four production-critical
-  # channels that the first training run left at or above the
+  # Per-channel recon weights. Upweight the four particle-deposited
+  # variables that the first training run left at or above the
   # constant-mean baseline (RMSE >= 1 in channel-stddev units): rho,
   # jx, jy, and the electron transverse momenta. Downweight the
   # deuterium energy channels, which are already at RMSE ~ 1e-3

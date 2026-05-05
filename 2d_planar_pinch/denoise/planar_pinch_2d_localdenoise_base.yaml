@@ -55,7 +55,7 @@ model:
 loss:
   recon: 1.0
   # Same per-channel weights as the global case YAML: upweight the
-  # production-critical channels, downweight the deuterium energies.
+  # particle-deposited variables, downweight the deuterium energies.
   recon_weights:
     rho:             3.0
     jx:              3.0
