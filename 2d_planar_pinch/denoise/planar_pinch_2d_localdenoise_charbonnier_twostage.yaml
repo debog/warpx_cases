@@ -1,0 +1,31 @@
+# Local-physics denoiser, Charbonnier reconstruction, trained on the
+# residual a frozen global U-Net leaves behind. Round 3 architectural
+# experiment (4 of 4): tests whether the local denoiser's per-cell
+# capacity is best spent learning a small correction on top of a
+# decent first-cut prediction, rather than the full mapping from
+# scratch.
+#
+# Stage 1 (already done): the production global U-Net, e.g.
+# `denoise_charbonnier`. Path is set in `data.global_pretrained`.
+# Stage 2 (this case): the local denoiser sees the same noisy patch
+# input but is trained on (GT − global_pred). Inference adds the
+# global prediction back; both checkpoints are needed at predict
+# time.
+#
+# Caveat: training-time validation loss and per-channel RMSE are
+# computed on the residual target, not the full GT. They are
+# comparable across two-stage variants but not directly comparable
+# against single-stage local-denoiser numbers in §4.3.2. The
+# predict-time triptychs use the full prediction.
+
+base: planar_pinch_2d_localdenoise_base.yaml
+
+data:
+  # Frozen global U-Net checkpoint. Path is resolved relative to the
+  # working directory at run time (the run_denoise.sh launcher cds
+  # into the case root before invoking the CLI).
+  global_pretrained: .run_pdn_denoise_charbonnier.matrix/best.pt
+
+loss:
+  recon_kind: charbonnier
+  recon_eps: 1.0e-3
