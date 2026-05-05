@@ -12,11 +12,16 @@
 # global prediction back; both checkpoints are needed at predict
 # time.
 #
-# Caveat: training-time validation loss and per-channel RMSE are
-# computed on the residual target, not the full GT. They are
-# comparable across two-stage variants but not directly comparable
-# against single-stage local-denoiser numbers in §4.3.2. The
-# predict-time triptychs use the full prediction.
+# Note on the residual training: the per-cell error
+# (pred_local − target_residual) is mathematically identical to the
+# full-prediction per-cell error
+# ((pred_local + global_pred) − GT), since the global_pred adds out.
+# So loss, per_channel_rmse, per_channel_l1, and per_channel_linf in
+# metrics.csv are directly comparable to single-stage local-denoiser
+# numbers in §4.3.2. What differs is the target distribution the
+# model is learning (zero-centred small residual vs noisy GT-magnitude
+# value), which changes what is easy to learn but not how error is
+# measured.
 
 base: planar_pinch_2d_localdenoise_base.yaml
 
