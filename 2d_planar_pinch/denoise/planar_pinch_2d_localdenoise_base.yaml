@@ -1,16 +1,17 @@
 # Shared base for the 2D Cartesian planar-pinch local-physics
 # denoiser cases on Tuolumne. Loaded by every variant via `base:`.
 #
+# Phase-1 / Round-4 channel set: same SNR-restricted set as the
+# global denoiser base (planar_pinch_2d_denoise_base.yaml). Inputs
+# drop the equipartition-only field components; outputs drop rho
+# and the bulk-velocity moments. Per-channel weights re-set by
+# load-bearing role (J components weight 5; num_α weight 1; ene
+# channels weight 0.3). See the global base for the full rationale.
+#
 # This file is not meant to be passed directly to
 # `local-particle-denoise train`; pick a variant
-# (e.g., planar_pinch_2d_localdenoise_charbonnier.yaml) so the run
+# (e.g. planar_pinch_2d_localdenoise_charbonnier.yaml) so the run
 # selects an explicit loss recipe.
-#
-# Same dataset as the global U-Net case
-# (planar_pinch_2d_denoise_base.yaml), but configures a patch-based
-# dataset and a local-physics model. The two case trees are
-# intentionally independent so each can pin its own training
-# settings without coupling.
 
 data:
   reader: warpxPlotfile
@@ -37,8 +38,38 @@ data:
   boundary_spec: ["pec", "periodic"]
   # Append signed-distance-to-PEC channels to each patch. With one
   # entry per spatial axis these add 2 channels on top of the
-  # canonical 25 input channels.
+  # input channels.
   boundary_channels: true
+
+  channels:
+    fields:
+      - Ex
+      - By
+      - jx
+      - jy
+      - jz
+      - rho
+      - part_per_cell
+    species:
+      - num
+      - ux
+      - uy
+      - uz
+      - enex
+      - eney
+      - enez
+    species_names:
+      - electrons
+      - deuterium
+    output_fields:
+      - jx
+      - jy
+      - jz
+    output_species_moments:
+      - num
+      - enex
+      - eney
+      - enez
 
 model:
   name: localCNN
@@ -54,22 +85,22 @@ model:
 
 loss:
   recon: 1.0
-  # Same per-channel weights as the global case YAML: upweight the
-  # particle-deposited variables, downweight the deuterium energies.
   recon_weights:
-    rho:             3.0
-    jx:              3.0
-    jy:              3.0
-    uy_electrons:    3.0
-    uz_electrons:    3.0
+    jx:              5.0
+    jy:              5.0
+    jz:              5.0
+    num_electrons:   1.0
+    num_deuterium:   1.0
+    enex_electrons:  0.3
+    eney_electrons:  0.3
+    enez_electrons:  0.3
     enex_deuterium:  0.3
     eney_deuterium:  0.3
     enez_deuterium:  0.3
   # The conservation, spectral, and gradient terms are spatial; for
   # per-cell predictions they reduce to zero or fail to apply, so
   # they are disabled here. A snapshot-level conservation term is
-  # planned (see the working doc to-do list) and would re-enable
-  # `conservation` once that is in.
+  # planned in Phase 2 of the working-doc plan.
   conservation: 0.0
   spectral: 0.0
   gradient: 0.0

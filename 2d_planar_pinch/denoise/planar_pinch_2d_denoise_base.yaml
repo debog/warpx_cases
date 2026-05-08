@@ -1,9 +1,32 @@
-# Shared base for the 2D Cartesian planar-pinch denoiser cases on Tuolumne.
-# Variants under this directory layer their loss recipe on top of this.
+# Shared base for the 2D Cartesian planar-pinch global U-Net denoiser
+# cases on Tuolumne. Variants under this directory layer their loss
+# recipe on top of this.
 #
-# This file is itself a valid case config, but is not meant to be passed
-# directly to `particle-denoise train`. Use a variant file (e.g.,
-# planar_pinch_2d_denoise_l2.yaml) so the run picks an explicit loss recipe.
+# Phase-1 / Round-4 channel set, restricted by the signal-to-noise
+# audit driven by the Angus et al. 2022 equipartition analysis
+# (Eqn 24) and §3.1.4 of the working doc:
+#
+#   * Inputs (fields): Ex (sheath drive), By (Z-pinch dominant
+#     component), all three components of J (load-bearing), rho,
+#     part_per_cell. Dropped Ey, Ez, Bx, Bz — these carry only
+#     equipartition-fluctuation field energy in this 2D Cartesian
+#     geometry, no physical signal.
+#   * Inputs (species): all 7 moments × 2 species kept (signal floor
+#     varies but every channel carries some signal at compression).
+#   * Outputs: J = (jx, jy, jz) — the only deposited grid quantities
+#     the implicit field solver consumes (§3.1.4) — plus the
+#     signal-dominated species moments num_α and ene{x,y,z}_α. Dropped
+#     rho (diagnostic-only; quasi-neutral plasma → noise-dominated)
+#     and the bulk-velocity moments u{x,y,z}_α (shot-noise dominated;
+#     not load-bearing).
+#   * Per-channel weights set by load-bearing role rather than
+#     RMSE-at-baseline: J components weight 5 (consumed every Newton
+#     iteration), num_α weight 1, ene channels weight 0.3.
+#
+# This file is itself a valid case config, but is not meant to be
+# passed directly to `particle-denoise train`. Use a variant file
+# (e.g. planar_pinch_2d_denoise_charbonnier.yaml) so the run picks
+# an explicit loss recipe.
 
 data:
   reader: warpxPlotfile
@@ -23,6 +46,36 @@ data:
 
   val_fraction: 0.15
 
+  channels:
+    fields:
+      - Ex
+      - By
+      - jx
+      - jy
+      - jz
+      - rho
+      - part_per_cell
+    species:
+      - num
+      - ux
+      - uy
+      - uz
+      - enex
+      - eney
+      - enez
+    species_names:
+      - electrons
+      - deuterium
+    output_fields:
+      - jx
+      - jy
+      - jz
+    output_species_moments:
+      - num
+      - enex
+      - eney
+      - enez
+
 model:
   name: unet
   base_channels: 32
@@ -34,18 +87,15 @@ loss:
   # recon_eps) and the gradient-of-error term are loss-recipe-specific
   # and are set in each variant YAML.
   recon: 1.0
-  # Per-channel recon weights. Upweight the four particle-deposited
-  # variables that the first training run left at or above the
-  # constant-mean baseline (RMSE >= 1 in channel-stddev units): rho,
-  # jx, jy, and the electron transverse momenta. Downweight the
-  # deuterium energy channels, which are already at RMSE ~ 1e-3
-  # (heavy ions, smooth moments). Channels not listed default to 1.0.
   recon_weights:
-    rho:             3.0
-    jx:              3.0
-    jy:              3.0
-    uy_electrons:    3.0
-    uz_electrons:    3.0
+    jx:              5.0
+    jy:              5.0
+    jz:              5.0
+    num_electrons:   1.0
+    num_deuterium:   1.0
+    enex_electrons:  0.3
+    eney_electrons:  0.3
+    enez_electrons:  0.3
     enex_deuterium:  0.3
     eney_deuterium:  0.3
     enez_deuterium:  0.3
@@ -57,7 +107,4 @@ train:
   epochs: 200
   lr: 1.0e-3
   amp: true
-  # Cap training once validation loss has plateaued. The first run hit
-  # its best val at epoch ~170 (Matrix) / ~116 (Dane); patience=30 cuts
-  # the wasted epochs without affecting best.pt.
   early_stop_patience: 30
