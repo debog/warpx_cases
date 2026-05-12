@@ -27,7 +27,7 @@
 
 data:
   reader: warpxPlotfile
-  warpx_input: /home/ghosh/Runs/warpx/2d_planar_pinch/inputs/planar_pinch_2d.in
+  warpx_input: inputs/planar_pinch_2d.in
 
   ppc_tiers:
     - {name: ppc0036, ppc: 36,
