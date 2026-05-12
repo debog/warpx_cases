@@ -13,6 +13,14 @@ from pathlib import Path
 import numpy as np
 import torch
 
+# Module-level imports from denoiseCore (path injected before running).
+import sys
+sys.path.insert(0, "/home/ghosh/Codes/particle-denoise")
+from denoiseCore.data.dataset import (
+    _augmentSnapshotWithMomentum,
+    _rawMomentsToLoad,
+)
+
 
 # Phase steps and tiers documented in §4.1 of the working doc.
 PHASES   = ["011025", "054900", "076950", "105300"]
@@ -30,6 +38,52 @@ OUT_CHANNELS = [
 
 # Conversion constant: 1 eV in Joules. Temperature reports in eV.
 EV_PER_JOULE = 1.0 / 1.602176634e-19
+
+_LOG_CHANNELS = {"num", "part_per_cell"}
+
+
+def fitPerSpeciesStats(reader, groups, channels, gt_name, warpx_input):
+    """Per-(species, moment) z-score / log-z-score stats from GT
+    snapshots. Returns {(species, moment): (mean, std, kind)}.
+
+    The denoiseCore Normalizer pools species under one channel-name
+    key, so for two-species cases with very different per-species
+    scales (electrons / deuterium in this planar pinch) the pooled
+    statistics are dominated by one species and the inverse on the
+    other species is offset by orders of magnitude. This helper fits
+    the per-species stats needed for an interim post-hoc rescale of
+    the model's predictions; a proper fix is per-(species, moment)
+    stats in the dataset itself plus retraining.
+    """
+    full_mom = sorted(set(channels.species) | {"num", "ux", "uy", "uz",
+                                                "enex", "eney", "enez"})
+    accum: dict[tuple[str, str], list[np.ndarray]] = {}
+    raw_mom = sorted(set(full_mom) - {"px", "py", "pz"})
+    for g in groups:
+        info = g.tier_infos[gt_name]
+        snap = reader.load(info, channels.fields, raw_mom, channels.species_names)
+        _augmentSnapshotWithMomentum(snap, channels.species,
+                                     channels.species_names, warpx_input)
+        for sp in channels.species_names:
+            for mom in channels.species:
+                accum.setdefault((sp, mom), []).append(
+                    np.asarray(snap.species[sp][mom]).ravel())
+    out: dict[tuple[str, str], tuple[float, float, str]] = {}
+    for (sp, mom), parts in accum.items():
+        x = np.concatenate(parts)
+        kind = "log_zscore" if mom in _LOG_CHANNELS else "zscore"
+        if kind == "log_zscore":
+            x = np.log10(np.maximum(x, 1.0))
+        out[(sp, mom)] = (float(x.mean()), float(x.std() or 1.0), kind)
+    return out
+
+
+def perSpeciesInvert(arr, mean: float, std: float, kind: str) -> np.ndarray:
+    """Invert a normalized prediction using per-(species, moment) stats."""
+    x = arr * std + mean
+    if kind == "log_zscore":
+        x = np.power(10.0, x)
+    return x
 
 
 def deriveQuantities(snap, warpx_input):
@@ -68,6 +122,7 @@ def deriveQuantities(snap, warpx_input):
             u_i = p_i * vcell / mass                  # Σ w v_i, m/s × particles
             ene_i = np.asarray(sd[f"ene{i}"], dtype=np.float64)
             out[sp][f"p{i}"] = p_i
+            out[sp][f"e{i}"] = ene_i                  # raw WarpX deposit (≈ ½ v_i² Σw)
             with np.errstate(invalid="ignore", divide="ignore"):
                 meanV   = np.where(num > 0.0, u_i / num, 0.0)
                 meanVsq = np.where(num > 0.0, 2.0 * ene_i / num, 0.0)
@@ -91,9 +146,7 @@ def main() -> int:
     from denoiseCore.data.pairing      import enumeratePairs
     from denoiseCore.data.dataset      import (snapshotToInputTensor,
                                                outputChannelNames,
-                                               outputChannelIndices,
-                                               _rawMomentsToLoad,
-                                               _augmentSnapshotWithMomentum)
+                                               outputChannelIndices)
     from denoiseCore.device            import getDevice, ampContext
     from denoiseCore.plotting          import plotPredictionTriptych
     from denoiseCore.warpxInput        import load as loadWarpXInput
@@ -117,8 +170,13 @@ def main() -> int:
                                       cfg.data.channels,
                                       cfg.data.normalization,
                                       warpx_input=wxi)
-
+    # Interim: per-species stats fit on the GT tier for post-hoc rescale
+    # of the model's species-side predictions. The denoiseCore Normalizer
+    # pools species, which for this 2-species case (m_e ≪ m_D) makes the
+    # absolute-units inverse meaningless for the smaller-scale species.
     gt_name = next(t.name for t in cfg.data.ppc_tiers if t.ground_truth)
+    ps_stats = fitPerSpeciesStats(reader, groups, cfg.data.channels,
+                                  gt_name, wxi)
     probe = reader.load(groups[0].tier_infos[gt_name],
                         cfg.data.channels.fields,
                         raw_mom, cfg.data.channels.species_names)
@@ -187,8 +245,8 @@ def main() -> int:
             pred_snap = deepcopy(lo_snap)
             n_field = len(cfg.data.channels.output_fields)
             for k, ch in enumerate(out_names):
-                arr = norm.invert(out_norm_keys[k], pred_arr[k])
                 if k < n_field:
+                    arr = norm.invert(out_norm_keys[k], pred_arr[k])
                     pred_snap.fields[cfg.data.channels.output_fields[k]] = arr
                 else:
                     j = k - n_field
@@ -196,7 +254,15 @@ def main() -> int:
                     sp_idx, mom_idx = divmod(j, n_mom)
                     sp = cfg.data.channels.species_names[sp_idx]
                     mom = cfg.data.channels.output_species_moments[mom_idx]
-                    pred_snap.species[sp][mom] = arr
+                    # Interim per-species denormalization: take the model's
+                    # output in normalized (pooled) space and apply per-
+                    # species (mean, std) stats fit on the GT tier. The
+                    # pooled inverse used by `norm.invert` puts a smaller-
+                    # scale species at the dominant species' scale, which
+                    # is the source of the wildly-off pressure/temperature.
+                    mean_sp, std_sp, kind_sp = ps_stats[(sp, mom)]
+                    pred_snap.species[sp][mom] = perSpeciesInvert(
+                        pred_arr[k], mean_sp, std_sp, kind_sp)
 
             # Derived quantities from raw moments + (for pred) the
             # network's predicted px/py/pz overwriting the input's
@@ -213,7 +279,8 @@ def main() -> int:
             # through case-insensitive filesystems (rsync to macOS etc.).
             FILE_NAME = {
                 "n":  "ndensity",
-                "px": "mom_x", "py": "mom_y", "pz": "mom_z",
+                "px": "mom_x",   "py": "mom_y",   "pz": "mom_z",
+                "ex": "ene_x",   "ey": "ene_y",   "ez": "ene_z",
                 "Px": "press_x", "Py": "press_y", "Pz": "press_z",
                 "Tx": "temp_x",  "Ty": "temp_y",  "Tz": "temp_z",
             }
