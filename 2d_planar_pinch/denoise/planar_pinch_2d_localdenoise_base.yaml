@@ -122,18 +122,20 @@ loss:
     enex_deuterium:  0.3
     eney_deuterium:  0.3
     enez_deuterium:  0.3
-  # The conservation, spectral, gradient, charge-continuity, and
-  # closure-consistency terms are spatial / multi-cell; for per-cell
-  # predictions they reduce to zero or fail to apply, so they are
-  # disabled here. A snapshot-level conservation term is planned in
-  # the next-steps plan.
+  # The conservation, spectral, gradient, and charge-continuity terms
+  # are spatial / multi-cell; for per-cell predictions they reduce to
+  # zero or fail to apply, so they are disabled here. The closure-
+  # consistency term is per-cell (no spatial derivative) and applies
+  # to the local denoiser directly: it enforces that the network's
+  # predicted (num, p, ene) satisfy the same pressure-closure as GT
+  # at every output cell.
   conservation: 0.0
   spectral: 0.0
   gradient: 0.0
   gradient_kind: l2
   charge_continuity:        0.0
   charge_continuity_cutoff: null
-  closure_consistency:      0.0
+  closure_consistency:      1.0
 
 train:
   # The patch dataset yields ~8 000 examples per snapshot and the
