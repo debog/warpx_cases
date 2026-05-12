@@ -8,31 +8,41 @@
 # momentum-density components (p_α = m_α · u_α / V_cell):
 #
 #   * Inputs (fields): By (Z-pinch dominant component), all three
-#     components of J (load-bearing), part_per_cell. Dropped Ex (PIC
-#     deposition noise dominates the sheath drive at the resolved ppc),
-#     Ey/Ez/Bx/Bz (equipartition-only in this 2D x-z geometry), and
-#     rho (quasi-neutral and statistically noisy in this 2D Cartesian
-#     plasma — drops out of both input and output).
+#     components of J, part_per_cell. Ex / Ey / Ez / Bx / Bz / rho
+#     excluded by the SNR audit (equipartition or quasi-neutral
+#     cancellation puts them below the deposition floor).
 #   * Inputs (species): per-species number, three momentum-density
-#     components (px, py, pz) and three kinetic-energy components.
-#     Momentum p_α replaces the bare velocity moments u_α so the
-#     ∂ρ_α/∂t + ∇·J_α charge-continuity discussion has a natural
-#     symmetric expression in input and output.
-#   * Outputs: J = (jx, jy, jz) (consumed by the implicit field solver),
-#     plus per-species num_α, p{x,y,z}_α, and ene{x,y,z}_α. Dropping rho
-#     follows from its near-zero quasi-neutral mean: it is dominated by
-#     statistical (deposition / Monte-Carlo) noise and not load-bearing.
-#   * Per-channel reconstruction weights: jz weight 5 (the dominant
-#     load-bearing current in this geometry), jx/jy weight 1
-#     (their physical mean is ~0; the model already collapses to that
-#     correct constant prediction). num_α and p_x_α weight 1; the
-#     out-of-plane / weakly-structured p_y_α, p_z_α and the
-#     ene{x,y,z}_α moments weight 0.3.
-#   * Charge-continuity term enabled at weight 1.0: enforces
-#     ∇·J_pred ≈ ∇·J_GT in physical units. Villasenor charge-conserving
-#     deposition makes the WarpX-deposited (ρ, J) satisfy
-#     ∂ρ/∂t + ∇·J = 0 exactly, so this is also the discrete residual of
-#     the continuity equation when ρ is held to GT.
+#     components (px, py, pz), three kinetic-energy moments (enex,
+#     eney, enez), and the closure-of-the-moment-hierarchy derived
+#     pressure-tensor diagonal (Pxx, Pyy, Pzz) and per-direction
+#     temperature (Tx, Ty, Tz in eV). The P/T channels are computed in
+#     the data loader from (num, ux, ene_i) with a num-floor of 1.0 to
+#     regularize the 1/num singularity; they give the network direct
+#     access to the closure relation rather than requiring it to learn
+#     the division.
+#   * Outputs: J = (jx, jy, jz) consumed by the implicit field solver,
+#     plus per-species num_α, p{x,y,z}_α, ene{x,y,z}_α. P / T are
+#     input-only; the closure relation is enforced via a closure-
+#     consistency loss on the predicted (num, p, ene) instead of being
+#     emitted as separate output channels.
+#   * Reconstruction weights: jz=5 (dominant in-plane current), jx=jy=1
+#     (zero physical mean by symmetry — the constant-zero prediction is
+#     correct), num_α=p_x_α=1, the weakly-structured / out-of-plane
+#     p_{y,z}_α and ene_α=0.3.
+#   * Per-(species, moment) normalization in the dataset; the
+#     pooled-by-bare-moment-name normalizer was replaced after the
+#     pooled inverse on smaller-scale species (m_e ≪ m_D) was found
+#     to render P and T physically meaningless.
+#   * Charge-continuity term: ||∇·J_pred - ∇·J_GT||² with a Nyquist-
+#     fraction lowpass on the divergence-residual field. The lowpass
+#     restricts the constraint to scales where the GT has signal,
+#     avoiding the high-k deposition-noise floor that drove train/val
+#     overfitting on the cell-by-cell residual in earlier runs.
+#   * Closure-consistency term: ||P_pred - P_GT||²/σ²(P_GT) summed
+#     per species, where P is the pressure derived from (num, p, ene)
+#     via the moment-closure formula. Enforces that the network's
+#     predicted moments mutually satisfy the closure relation rather
+#     than independently fitting each output channel.
 #
 # This file is itself a valid case config, but is not meant to be
 # passed directly to `particle-denoise train`. Use a variant file
@@ -72,6 +82,12 @@ data:
       - enex
       - eney
       - enez
+      - Pxx
+      - Pyy
+      - Pzz
+      - Tx
+      - Ty
+      - Tz
     species_names:
       - electrons
       - deuterium
@@ -119,7 +135,16 @@ loss:
     enez_deuterium:  0.3
   conservation: 0.1
   spectral: 0.05
-  charge_continuity: 1.0
+  # Charge-continuity ||∇·J_pred - ∇·J_GT||² with a lowpass on the
+  # divergence residual: cutoff 0.5 keeps modes |k|/k_nyq ≤ 0.5 along
+  # each spatial axis (the long-wavelength half of the spectrum, where
+  # the GT current has signal above the deposition-noise floor).
+  charge_continuity:        1.0
+  charge_continuity_cutoff: 0.5
+  # Closure-consistency on per-species pressure derived from
+  # (num, p, ene). Self-normalized per batch (σ(P_GT)) so the term
+  # is dimensionless and roughly O(1).
+  closure_consistency:      1.0
 
 train:
   batch_size: 4

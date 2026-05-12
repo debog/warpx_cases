@@ -68,6 +68,12 @@ data:
       - enex
       - eney
       - enez
+      - Pxx
+      - Pyy
+      - Pzz
+      - Tx
+      - Ty
+      - Tz
     species_names:
       - electrons
       - deuterium
@@ -116,15 +122,18 @@ loss:
     enex_deuterium:  0.3
     eney_deuterium:  0.3
     enez_deuterium:  0.3
-  # The conservation, spectral, gradient, and charge-continuity
-  # terms are spatial; for per-cell predictions they reduce to zero
-  # or fail to apply, so they are disabled here. A snapshot-level
-  # conservation term is planned in Phase 2 of the working-doc plan.
+  # The conservation, spectral, gradient, charge-continuity, and
+  # closure-consistency terms are spatial / multi-cell; for per-cell
+  # predictions they reduce to zero or fail to apply, so they are
+  # disabled here. A snapshot-level conservation term is planned in
+  # the next-steps plan.
   conservation: 0.0
   spectral: 0.0
   gradient: 0.0
   gradient_kind: l2
-  charge_continuity: 0.0
+  charge_continuity:        0.0
+  charge_continuity_cutoff: null
+  closure_consistency:      0.0
 
 train:
   # The patch dataset yields ~8 000 examples per snapshot and the
