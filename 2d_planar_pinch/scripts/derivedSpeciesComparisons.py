@@ -28,12 +28,32 @@ OUT_CHANNELS = [
 ]
 
 
-def deriveQuantities(snap, warpx_input):
-    """Compute n_alpha, p_alpha_i, T_alpha_i, P_alpha_i per cell.
+# Conversion constant: 1 eV in Joules. Temperature reports in eV.
+EV_PER_JOULE = 1.0 / 1.602176634e-19
 
-    `snap` is a Snapshot with snap.species[sp] containing the raw
-    deposited moments num (Σw), ux/uy/uz (Σ w v_i), enex/y/z (Σ w m v_i²/2),
-    OR the dataset-derived px/py/pz = m·u_i/V_cell.
+
+def deriveQuantities(snap, warpx_input):
+    """Compute n_alpha, p_alpha_i, T_alpha_i, P_alpha_i per cell from
+    snap.species[sp] keyed on (num, px/py/pz, enex/y/z).
+
+    WarpX `particle_fields` deposit conventions for this case (see
+    inputs/planar_pinch_2d.in):
+      num      = Σ w                                   (particles)
+      ux/y/z   = Σ w (γ v_i)                           (m/s, ≈ v_i non-relat.)
+      enex/y/z = Σ w (½ v_i² × γ-factor)               (m²/s², NO m factor)
+
+    The kinetic temperature uses
+      ⟨v_i²⟩  = 2 ene_i / num
+      ⟨v_i⟩  = u_i / num             (u_i = p_i · V_cell / m)
+      kT_i    = m × (⟨v_i²⟩ − ⟨v_i⟩²)
+    Reported in eV. Pressure P_i = n × kT_i in Pa (J/m³).
+
+    Always reads momentum density p_i, never the raw u_i: a prediction
+    snapshot has the model's p_i but the dataset-augmented u_i is a
+    leftover from the low-ppc input. Reading u_i directly would mix
+    input-noise u_i with prediction-smooth num and yield T/P that
+    look like noise hallucinations. For lo/gt snapshots p_i = m·u_i/V
+    carries identical information; only the pred path is affected.
     """
     vcell = warpx_input.cell_volume()
     out: dict[str, dict[str, np.ndarray]] = {sp: {} for sp in SPECIES}
@@ -41,28 +61,21 @@ def deriveQuantities(snap, warpx_input):
         mass = warpx_input.species_mass(sp)
         sd = snap.species[sp]
         num = np.asarray(sd["num"], dtype=np.float64)
-        n_density = num / vcell                      # m^{-d}
+        n_density = num / vcell
         out[sp]["n"] = n_density
-        # Sum-of-weights × v_i; reconstruct from either source.
         for i in COMPS:
-            if f"u{i}" in sd:
-                u_i = np.asarray(sd[f"u{i}"], dtype=np.float64)
-            else:
-                # p_i = m·u_i/V_cell => u_i = p_i·V_cell/m
-                p_i = np.asarray(sd[f"p{i}"], dtype=np.float64)
-                u_i = p_i * vcell / mass
+            p_i = np.asarray(sd[f"p{i}"], dtype=np.float64)
+            u_i = p_i * vcell / mass                  # Σ w v_i, m/s × particles
             ene_i = np.asarray(sd[f"ene{i}"], dtype=np.float64)
-            # p_density = m·u_i/V_cell
-            out[sp][f"p{i}"] = mass * u_i / vcell
-            # kT_i = (2 ene_i / num) - m (u_i / num)^2  [per particle, with finite-num guard]
+            out[sp][f"p{i}"] = p_i
             with np.errstate(invalid="ignore", divide="ignore"):
                 meanV   = np.where(num > 0.0, u_i / num, 0.0)
-                meanVsq = np.where(num > 0.0, 2.0 * ene_i / (mass * num), 0.0)
+                meanVsq = np.where(num > 0.0, 2.0 * ene_i / num, 0.0)
                 varV = meanVsq - meanV * meanV
                 varV = np.where(varV > 0.0, varV, 0.0)
-                kT = mass * varV                        # J
-            out[sp][f"T{i}"] = kT
-            out[sp][f"P{i}"] = n_density * kT             # Pa (in 3D); Pa·m in 2D etc.
+                kT_J = mass * varV
+            out[sp][f"T{i}"] = kT_J * EV_PER_JOULE        # eV
+            out[sp][f"P{i}"] = n_density * kT_J           # Pa
     return out
 
 
