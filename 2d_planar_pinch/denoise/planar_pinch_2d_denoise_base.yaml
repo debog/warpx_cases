@@ -2,26 +2,37 @@
 # cases on Tuolumne. Variants under this directory layer their loss
 # recipe on top of this.
 #
-# Phase-1 / Round-4 channel set, restricted by the signal-to-noise
-# audit driven by the Angus et al. 2022 equipartition analysis
-# (Eqn 24) and §3.1.4 of the working doc:
+# Channel set restricted by the signal-to-noise audit driven by the
+# Angus et al. 2022 equipartition analysis (Eqn 24) and §3.1.4 of the
+# working doc, with bulk-velocity moments replaced by per-species
+# momentum-density components (p_α = m_α · u_α / V_cell):
 #
-#   * Inputs (fields): Ex (sheath drive), By (Z-pinch dominant
-#     component), all three components of J (load-bearing), rho,
-#     part_per_cell. Dropped Ey, Ez, Bx, Bz — these carry only
-#     equipartition-fluctuation field energy in this 2D Cartesian
-#     geometry, no physical signal.
-#   * Inputs (species): all 7 moments × 2 species kept (signal floor
-#     varies but every channel carries some signal at compression).
-#   * Outputs: J = (jx, jy, jz) — the only deposited grid quantities
-#     the implicit field solver consumes (§3.1.4) — plus the
-#     signal-dominated species moments num_α and ene{x,y,z}_α. Dropped
-#     rho (diagnostic-only; quasi-neutral plasma → noise-dominated)
-#     and the bulk-velocity moments u{x,y,z}_α (shot-noise dominated;
-#     not load-bearing).
-#   * Per-channel weights set by load-bearing role rather than
-#     RMSE-at-baseline: J components weight 5 (consumed every Newton
-#     iteration), num_α weight 1, ene channels weight 0.3.
+#   * Inputs (fields): By (Z-pinch dominant component), all three
+#     components of J (load-bearing), part_per_cell. Dropped Ex (PIC
+#     deposition noise dominates the sheath drive at the resolved ppc),
+#     Ey/Ez/Bx/Bz (equipartition-only in this 2D x-z geometry), and
+#     rho (quasi-neutral and statistically noisy in this 2D Cartesian
+#     plasma — drops out of both input and output).
+#   * Inputs (species): per-species number, three momentum-density
+#     components (px, py, pz) and three kinetic-energy components.
+#     Momentum p_α replaces the bare velocity moments u_α so the
+#     ∂ρ_α/∂t + ∇·J_α charge-continuity discussion has a natural
+#     symmetric expression in input and output.
+#   * Outputs: J = (jx, jy, jz) (consumed by the implicit field solver),
+#     plus per-species num_α, p{x,y,z}_α, and ene{x,y,z}_α. Dropping rho
+#     follows from its near-zero quasi-neutral mean: it is dominated by
+#     statistical (deposition / Monte-Carlo) noise and not load-bearing.
+#   * Per-channel reconstruction weights: jz weight 5 (the dominant
+#     load-bearing current in this geometry), jx/jy weight 1
+#     (their physical mean is ~0; the model already collapses to that
+#     correct constant prediction). num_α and p_x_α weight 1; the
+#     out-of-plane / weakly-structured p_y_α, p_z_α and the
+#     ene{x,y,z}_α moments weight 0.3.
+#   * Charge-continuity term enabled at weight 1.0: enforces
+#     ∇·J_pred ≈ ∇·J_GT in physical units. Villasenor charge-conserving
+#     deposition makes the WarpX-deposited (ρ, J) satisfy
+#     ∂ρ/∂t + ∇·J = 0 exactly, so this is also the discrete residual of
+#     the continuity equation when ρ is held to GT.
 #
 # This file is itself a valid case config, but is not meant to be
 # passed directly to `particle-denoise train`. Use a variant file
@@ -48,18 +59,16 @@ data:
 
   channels:
     fields:
-      - Ex
       - By
       - jx
       - jy
       - jz
-      - rho
       - part_per_cell
     species:
       - num
-      - ux
-      - uy
-      - uz
+      - px
+      - py
+      - pz
       - enex
       - eney
       - enez
@@ -72,6 +81,9 @@ data:
       - jz
     output_species_moments:
       - num
+      - px
+      - py
+      - pz
       - enex
       - eney
       - enez
@@ -88,11 +100,17 @@ loss:
   # and are set in each variant YAML.
   recon: 1.0
   recon_weights:
-    jx:              5.0
-    jy:              5.0
+    jx:              1.0
+    jy:              1.0
     jz:              5.0
     num_electrons:   1.0
     num_deuterium:   1.0
+    px_electrons:    1.0
+    px_deuterium:    1.0
+    py_electrons:    0.3
+    py_deuterium:    0.3
+    pz_electrons:    0.3
+    pz_deuterium:    0.3
     enex_electrons:  0.3
     eney_electrons:  0.3
     enez_electrons:  0.3
@@ -101,6 +119,7 @@ loss:
     enez_deuterium:  0.3
   conservation: 0.1
   spectral: 0.05
+  charge_continuity: 1.0
 
 train:
   batch_size: 4

@@ -1,12 +1,24 @@
 # Shared base for the 2D Cartesian planar-pinch local-physics
 # denoiser cases on Tuolumne. Loaded by every variant via `base:`.
 #
-# Phase-1 / Round-4 channel set: same SNR-restricted set as the
-# global denoiser base (planar_pinch_2d_denoise_base.yaml). Inputs
-# drop the equipartition-only field components; outputs drop rho
-# and the bulk-velocity moments. Per-channel weights re-set by
-# load-bearing role (J components weight 5; num_α weight 1; ene
-# channels weight 0.3). See the global base for the full rationale.
+# Channel set mirrors the global denoiser base
+# (planar_pinch_2d_denoise_base.yaml): inputs drop the equipartition-
+# only field components, Ex (PIC-noise dominated), and rho
+# (quasi-neutral, statistically noisy). Outputs use per-species
+# momentum-density components (p_α = m_α · u_α / V_cell) instead of
+# the bare velocity moments, so the channel set is symmetric in input
+# and output. See the global base for the full SNR rationale.
+#
+# Per-channel reconstruction weights match the global base: jz=5
+# (the dominant in-plane current), jx=jy=1 (zero physical mean in
+# this geometry), num_α=1, p_x_α=1, the out-of-plane / weakly-
+# structured p_y_α / p_z_α and the ene{x,y,z}_α moments at 0.3.
+#
+# Charge-continuity weight is 0 here: the local-physics denoiser
+# predicts a single cell per sample, so a divergence operator is not
+# meaningful at the per-prediction level. The term is reported as
+# zero and the column is kept in the metrics CSV for consistency
+# with the global base.
 #
 # This file is not meant to be passed directly to
 # `local-particle-denoise train`; pick a variant
@@ -43,18 +55,16 @@ data:
 
   channels:
     fields:
-      - Ex
       - By
       - jx
       - jy
       - jz
-      - rho
       - part_per_cell
     species:
       - num
-      - ux
-      - uy
-      - uz
+      - px
+      - py
+      - pz
       - enex
       - eney
       - enez
@@ -67,6 +77,9 @@ data:
       - jz
     output_species_moments:
       - num
+      - px
+      - py
+      - pz
       - enex
       - eney
       - enez
@@ -86,25 +99,32 @@ model:
 loss:
   recon: 1.0
   recon_weights:
-    jx:              5.0
-    jy:              5.0
+    jx:              1.0
+    jy:              1.0
     jz:              5.0
     num_electrons:   1.0
     num_deuterium:   1.0
+    px_electrons:    1.0
+    px_deuterium:    1.0
+    py_electrons:    0.3
+    py_deuterium:    0.3
+    pz_electrons:    0.3
+    pz_deuterium:    0.3
     enex_electrons:  0.3
     eney_electrons:  0.3
     enez_electrons:  0.3
     enex_deuterium:  0.3
     eney_deuterium:  0.3
     enez_deuterium:  0.3
-  # The conservation, spectral, and gradient terms are spatial; for
-  # per-cell predictions they reduce to zero or fail to apply, so
-  # they are disabled here. A snapshot-level conservation term is
-  # planned in Phase 2 of the working-doc plan.
+  # The conservation, spectral, gradient, and charge-continuity
+  # terms are spatial; for per-cell predictions they reduce to zero
+  # or fail to apply, so they are disabled here. A snapshot-level
+  # conservation term is planned in Phase 2 of the working-doc plan.
   conservation: 0.0
   spectral: 0.0
   gradient: 0.0
   gradient_kind: l2
+  charge_continuity: 0.0
 
 train:
   # The patch dataset yields ~8 000 examples per snapshot and the
