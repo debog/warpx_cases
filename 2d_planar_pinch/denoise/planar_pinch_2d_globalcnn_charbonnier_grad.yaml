@@ -10,7 +10,7 @@
 # isolation variants (l2_grad, charbonnier alone, l2 alone) are
 # baselines that let us attribute any improvement to the right cause.
 
-base: planar_pinch_2d_unet_base.yaml
+base: planar_pinch_2d_globalcnn_base.yaml
 
 loss:
   recon_kind: charbonnier
