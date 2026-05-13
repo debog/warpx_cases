@@ -134,7 +134,17 @@ loss:
     eney_deuterium:  0.3
     enez_deuterium:  0.3
   conservation: 0.1
-  spectral: 0.05
+  # Spectral L2 with the same 0.5-Nyquist lowpass as the cc term:
+  # restricts the spectral match to modes where GT has signal above
+  # the deposition-noise floor. The raw value drops from ~1.4 (no
+  # cutoff) by roughly the fraction of high-k variance excluded;
+  # the weight is bumped from 0.05 -> 0.15 as a starting guess so
+  # the weighted contribution stays in the ~0.07-0.10 range. After
+  # the first run with these settings, retune by measuring the
+  # post-cutoff raw spectral value and adjusting the weight to
+  # match the prior weighted contribution.
+  spectral:        0.15
+  spectral_cutoff: 0.5
   # Charge-continuity ||∇·J_pred - ∇·J_GT||² with a lowpass on the
   # divergence residual: cutoff 0.5 keeps modes |k|/k_nyq ≤ 0.5 along
   # each spatial axis (the long-wavelength half of the spectrum, where
