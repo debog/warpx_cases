@@ -11,7 +11,7 @@
 # Patch size requirement: 1 + 2*sum(rates) = 15. Boundary handling
 # pads the snapshot by patch_size//2 = 7 cells on each side.
 
-base: planar_pinch_2d_localdenoise_base.yaml
+base: planar_pinch_2d_localcnn_base.yaml
 
 model:
   patch_size: 15

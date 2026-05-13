@@ -12,7 +12,7 @@
 # enough that most non-trivial residuals fall in the L1 region; this
 # is the regime where Huber differs most from L2.
 
-base: planar_pinch_2d_denoise_base.yaml
+base: planar_pinch_2d_unet_base.yaml
 
 loss:
   recon_kind: huber

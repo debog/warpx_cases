@@ -13,7 +13,7 @@
 #
 # Initial gradient weight = 0.1 (note's recommended starting point).
 
-base: planar_pinch_2d_denoise_base.yaml
+base: planar_pinch_2d_unet_base.yaml
 
 loss:
   recon_kind: l2

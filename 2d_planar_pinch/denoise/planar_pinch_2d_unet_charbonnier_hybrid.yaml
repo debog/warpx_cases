@@ -20,7 +20,7 @@
 # patch dataset; here we set it because LocalGlobalUNet's local
 # branch reads it for BC-aware pre-padding.
 
-base: planar_pinch_2d_denoise_base.yaml
+base: planar_pinch_2d_unet_base.yaml
 
 data:
   boundary_spec: ["pec", "periodic"]

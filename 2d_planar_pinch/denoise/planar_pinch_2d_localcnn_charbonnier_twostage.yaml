@@ -23,7 +23,7 @@
 # value), which changes what is easy to learn but not how error is
 # measured.
 
-base: planar_pinch_2d_localdenoise_base.yaml
+base: planar_pinch_2d_localcnn_base.yaml
 
 data:
   # Frozen global U-Net checkpoint. Path is resolved relative to the

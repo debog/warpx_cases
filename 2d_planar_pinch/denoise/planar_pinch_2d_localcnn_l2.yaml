@@ -2,7 +2,7 @@
 # Baseline against which the robust kinds (Charbonnier, Huber, L1)
 # are compared.
 
-base: planar_pinch_2d_localdenoise_base.yaml
+base: planar_pinch_2d_localcnn_base.yaml
 
 loss:
   recon_kind: l2

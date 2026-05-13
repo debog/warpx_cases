@@ -10,7 +10,7 @@
 # transition between L2-like and L1-like behavior at eps = 1e-3 puts
 # the L1 regime over essentially all non-trivial residuals.
 
-base: planar_pinch_2d_denoise_base.yaml
+base: planar_pinch_2d_unet_base.yaml
 
 loss:
   recon_kind: charbonnier

@@ -7,7 +7,7 @@
 # usually preferred over pure L1; this variant is here primarily as a
 # baseline at the asymptotic limit of Charbonnier (eps -> 0).
 
-base: planar_pinch_2d_denoise_base.yaml
+base: planar_pinch_2d_unet_base.yaml
 
 loss:
   recon_kind: l1

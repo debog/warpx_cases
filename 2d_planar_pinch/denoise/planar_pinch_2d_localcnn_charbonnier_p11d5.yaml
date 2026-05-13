@@ -13,7 +13,7 @@
 # in a comparable range (LocalCNN doubles the channel width per
 # layer, so a depth bump otherwise multiplies parameters by 8x).
 
-base: planar_pinch_2d_localdenoise_base.yaml
+base: planar_pinch_2d_localcnn_base.yaml
 
 model:
   patch_size: 11

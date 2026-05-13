@@ -19,7 +19,7 @@
 # (initialised to ones); the optimizer can shape these to attenuate
 # cells far from the centre of each readout.
 
-base: planar_pinch_2d_localdenoise_base.yaml
+base: planar_pinch_2d_localcnn_base.yaml
 
 model:
   name: localHierarchicalCNN

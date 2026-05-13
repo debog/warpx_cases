@@ -17,10 +17,10 @@
 # Options:
 #   -c, --config=CASES     One or more configuration cases (required)
 #                          Can specify multiple cases or use wildcards
-#                          Example: -c denoise_l2 (single case)
-#                          Example: -c denoise_l2 denoise_l1 (multiple cases)
-#                          Example: -c "denoise_*" (wildcard - all denoise cases)
-#                          Example: -c "denoise_l*" (wildcard - denoise_l1, denoise_l2, etc.)
+#                          Example: -c unet_l2 (single case)
+#                          Example: -c unet_l2 unet_l1 (multiple cases)
+#                          Example: -c "unet_*" (wildcard - all U-Net cases)
+#                          Example: -c "unet_l*" (wildcard - unet_l1, unet_l2, etc.)
 #
 #   -l, --list             List available cases and exit
 #                          Example: ./run_denoise.sh -l
@@ -33,11 +33,11 @@
 #                          Example: -o /path/to/custom/output
 #
 #   -k, --checkpoint=FILE  Checkpoint file for evaluate/predict (required for these actions)
-#                          Example: -k .run_pdn_denoise_l2.matrix/best.pt
+#                          Example: -k .run_pdn_unet_l2.matrix/best.pt
 #                          Example: -k /path/to/checkpoint.pt
 #
 #   --metrics=FILE         Metrics CSV file for diagnose action (required for diagnose)
-#                          Example: --metrics=.run_pdn_denoise_l2.matrix/metrics.csv
+#                          Example: --metrics=.run_pdn_unet_l2.matrix/metrics.csv
 #
 #   --tier=LIST            Comma-separated tier list for predict (default: all)
 #                          Example: --tier=0,1,2
@@ -90,40 +90,40 @@
 #      ./run_denoise.sh -l
 #
 #   2. Run all steps (inspect, train, evaluate) in interactive mode:
-#      ./run_denoise.sh -c denoise_l2 all
+#      ./run_denoise.sh -c unet_l2 all
 #
 #   3. Submit batch job to run all steps:
-#      ./run_denoise.sh -m batch -c denoise_l2 all
+#      ./run_denoise.sh -m batch -c unet_l2 all
 #
 #   4. Train with custom learning rate (interactive):
-#      ./run_denoise.sh -c denoise_l2 train train.lr=1e-4
+#      ./run_denoise.sh -c unet_l2 train train.lr=1e-4
 #
 #   5. Train in batch mode with 8 GPUs and 2-hour walltime:
-#      ./run_denoise.sh -m batch -n 8 -t 2:00:00 -c localdenoise_kpcn train
+#      ./run_denoise.sh -m batch -n 8 -t 2:00:00 -c localcnn_kpcn train
 #
 #   6. Evaluate with specific checkpoint:
-#      ./run_denoise.sh -c denoise_l2 -k .run_pdn_denoise_l2.matrix/best.pt evaluate
+#      ./run_denoise.sh -c unet_l2 -k .run_pdn_unet_l2.matrix/best.pt evaluate
 #
 #   7. Generate prediction triptychs for specific tiers and steps:
-#      ./run_denoise.sh -c denoise_l2 -k best.pt --tier=0,1 --steps=50,100,150 predict
+#      ./run_denoise.sh -c unet_l2 -k best.pt --tier=0,1 --steps=50,100,150 predict
 #
 #   8. Run diagnose with metrics file:
-#      ./run_denoise.sh -c denoise_l2 --metrics=metrics.csv diagnose
+#      ./run_denoise.sh -c unet_l2 --metrics=metrics.csv diagnose
 #
 #   9. Dry-run to see commands without executing:
-#      ./run_denoise.sh -d -c denoise_charbonnier train
+#      ./run_denoise.sh -d -c unet_charbonnier train
 #
 #   10. Submit batch job to debug queue with verbose output:
-#       ./run_denoise.sh -v -m batch -q debug -c denoise_l2 inspect
+#       ./run_denoise.sh -v -m batch -q debug -c unet_l2 inspect
 #
 #   11. Train multiple cases sequentially:
-#       ./run_denoise.sh -c denoise_l2 denoise_l1 denoise_charbonnier train
+#       ./run_denoise.sh -c unet_l2 unet_l1 unet_charbonnier train
 #
-#   12. Train all denoise cases with wildcard:
-#       ./run_denoise.sh -c "denoise_*" train
+#   12. Train all U-Net cases with wildcard:
+#       ./run_denoise.sh -c "unet_*" train
 #
-#   13. Run all localdenoise cases in batch mode:
-#       ./run_denoise.sh -m batch -c "localdenoise_*" all
+#   13. Run all local-CNN cases in batch mode:
+#       ./run_denoise.sh -m batch -c "localcnn_*" all
 #
 
 set -e
@@ -1214,11 +1214,15 @@ else
     CASE_NAME="${CONFIG_BASENAME%.yaml}"
 fi
 
-# Select the appropriate denoise executable based on case name
-# localdenoise_* cases use local-particle-denoise
-# denoise_* cases use particle-denoise
-if [[ "$CASE_NAME" == localdenoise_* ]]; then
+# Select the appropriate denoise executable based on case name.
+# Architecture prefix in the YAML name picks the CLI:
+#   localcnn_*   -> local-particle-denoise   (LocalCNN / LocalKPCN / LocalHierarchicalCNN)
+#   unet_*       -> particle-denoise         (global U-Net)
+#   flowunet_*   -> flow-particle-denoise    (flow-matching denoiser; see task #90)
+if [[ "$CASE_NAME" == localcnn_* ]]; then
     DENOISE_EXEC="local-particle-denoise"
+elif [[ "$CASE_NAME" == flowunet_* ]]; then
+    DENOISE_EXEC="flow-particle-denoise"
 else
     DENOISE_EXEC="particle-denoise"
 fi

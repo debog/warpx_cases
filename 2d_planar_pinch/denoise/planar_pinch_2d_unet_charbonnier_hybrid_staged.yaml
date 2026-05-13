@@ -15,7 +15,7 @@
 # Architecture and dataset settings are inherited from the joint-
 # trained hybrid YAML; only the two model fields differ.
 
-base: planar_pinch_2d_denoise_charbonnier_hybrid.yaml
+base: planar_pinch_2d_unet_charbonnier_hybrid.yaml
 
 model:
   # Frozen global-branch checkpoint. Path is resolved relative to the
