@@ -1,0 +1,44 @@
+# Local-physics denoiser with the hierarchical multi-scale readout
+# architecture. Shares the channel set, normalization, and ppc tiers
+# with the local base; the difference is the model and the loss term
+# enabled by it.
+#
+# Architecture: a 7x7 input patch goes through a stem + 3 valid-padded
+# 3x3 convs (the same shrinkage sequence as the LocalCNN), with four
+# readout heads tapping the intermediate feature maps. Inference uses
+# only the 1x1 head (same overlap-tiling deployment path as the
+# LocalCNN); training uses the multi-scale readouts to put spatial-
+# derivative loss terms back into play on the local denoiser:
+#
+#     1x1  ->  reconstruction, closure-consistency
+#     3x3  ->  charge continuity, short-wavelength gradient-of-error
+#     5x5  ->  longer-wavelength gradient-of-error
+#     7x7  ->  spectral loss within the patch
+#
+# Each non-1x1 readout owns learnable per-axis damping curves
+# (initialised to ones); the optimizer can shape these to attenuate
+# cells far from the centre of each readout.
+
+base: planar_pinch_2d_localdenoise_base.yaml
+
+model:
+  name: localHierarchicalCNN
+  base_channels: 64
+  depth: 3
+  kernel: 3
+  activation: gelu
+  patch_size: 7
+
+loss:
+  recon_kind: charbonnier
+  recon_eps: 1.0e-3
+  # Spatial-derivative terms are off in the local base because a 1x1
+  # readout cannot evaluate them. The hierarchical model's larger
+  # readouts can; turn them back on at the base global-denoiser
+  # weights.
+  spectral:                 0.15
+  spectral_cutoff:          0.5
+  gradient:                 0.1
+  gradient_kind:            l2
+  charge_continuity:        1.0
+  charge_continuity_cutoff: 0.5
