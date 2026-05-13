@@ -6,4 +6,4 @@ wtime*
 runs
 eval
 __pycache__
-
+slurm*
