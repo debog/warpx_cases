@@ -1,0 +1,4 @@
+# Flow-matching denoiser, linear interpolant + Euler sampler at 5 steps.
+# Simplest baseline; everything tracks the base.
+
+base: planar_pinch_2d_flowunet_base.yaml

@@ -1,0 +1,61 @@
+# Flow-matching denoiser base configuration. Generative-style denoiser
+# that learns a velocity field v_θ(x_t, t); inference integrates the
+# resulting ODE from the noisy low-ppc snapshot (x_0) to a cleaned
+# ppc-1024-quality snapshot (x_1).
+#
+# Inherits the dataset, channel set, and per-channel recon weights
+# from the global U-Net base. The model and loss differ:
+#
+#   - model.name = flowMatchingUNet  (same backbone shape as
+#     SmallUNet, augmented with sinusoidal time-step embedding fed
+#     through FiLM modulation at every conv block).
+#   - All cross-channel loss terms (cc, closure, spectral, gradient,
+#     conservation) are set to zero in the v1 (choice A: pure flow
+#     matching, no auxiliary losses on the integrated x_1). The
+#     flow-matching MSE between predicted velocity and the linear-
+#     interpolant velocity (x_1 - x_0) is reported in the `recon`
+#     slot so the existing CSV / chart pipeline works unchanged.
+#
+# Inference: integrate the ODE from t = 0 (noisy input) to t = 1
+# (cleaned output) using the configured sampler and step count.
+# Default Euler with 5 steps.
+#
+# Not meant to be passed directly; pick a variant
+# (e.g. planar_pinch_2d_flowunet_linear.yaml).
+
+base: planar_pinch_2d_globalcnn_base.yaml
+
+model:
+  name: flowMatchingUNet
+  base_channels: 32
+  depth: 3
+  kernel: 3
+  activation: gelu
+  patch_size: 1                # ignored by flowMatchingUNet
+  time_embed_dim: 128
+  sampler_kind:  euler         # euler | heun
+  sampler_steps: 5
+
+loss:
+  # Choice A — pure flow matching. The flow-matching loss is reported
+  # under `recon`; everything else is zero. To enable an auxiliary-at-
+  # t=1 variant later (option B), turn one or more of the others on
+  # and extend the training-step dispatch to integrate the ODE during
+  # training.
+  #
+  # `recon_kind` / `recon_eps` are required by the loss config schema
+  # but ignored on the flow-matching path — the flow-matching dispatch
+  # in `_forwardAndLoss` computes its own MSE and writes it into the
+  # `recon` slot of `parts`.
+  recon: 1.0
+  recon_kind: l2
+  recon_eps: 1.0e-3
+  conservation: 0.0
+  spectral: 0.0
+  spectral_cutoff: null
+  gradient: 0.0
+  gradient_kind: l2
+  charge_continuity:        0.0
+  charge_continuity_cutoff: null
+  closure_consistency:      0.0
+  energy_conservation:      0.0
