@@ -17,7 +17,7 @@ import torch
 import sys
 sys.path.insert(0, "/home/ghosh/Codes/particle-denoise")
 from denoiseCore.data.dataset import (
-    _augmentSnapshotWithMomentum,
+    _augmentSnapshotDerived,
     _rawMomentsToLoad,
 )
 
@@ -55,14 +55,16 @@ def fitPerSpeciesStats(reader, groups, channels, gt_name, warpx_input):
     the model's predictions; a proper fix is per-(species, moment)
     stats in the dataset itself plus retraining.
     """
-    full_mom = sorted(set(channels.species) | {"num", "ux", "uy", "uz",
-                                                "enex", "eney", "enez"})
     accum: dict[tuple[str, str], list[np.ndarray]] = {}
-    raw_mom = sorted(set(full_mom) - {"px", "py", "pz"})
+    # Raw moments the reader has on disk are everything in channels.species
+    # minus the derived names (px/py/pz, Pxx/Pyy/Pzz, Tx/Ty/Tz), plus
+    # whatever raw deposits those derived names depend on.
+    raw_mom = sorted(set(_rawMomentsToLoad(channels.species))
+                     | {"num", "ux", "uy", "uz", "enex", "eney", "enez"})
     for g in groups:
         info = g.tier_infos[gt_name]
         snap = reader.load(info, channels.fields, raw_mom, channels.species_names)
-        _augmentSnapshotWithMomentum(snap, channels.species,
+        _augmentSnapshotDerived(snap, channels.species,
                                      channels.species_names, warpx_input)
         for sp in channels.species_names:
             for mom in channels.species:
@@ -180,7 +182,7 @@ def main() -> int:
     probe = reader.load(groups[0].tier_infos[gt_name],
                         cfg.data.channels.fields,
                         raw_mom, cfg.data.channels.species_names)
-    _augmentSnapshotWithMomentum(probe, cfg.data.channels.species,
+    _augmentSnapshotDerived(probe, cfg.data.channels.species,
                                  cfg.data.channels.species_names, wxi)
     probe_x = snapshotToInputTensor(probe, cfg.data.channels, norm)
     in_channels  = probe_x.shape[0]
@@ -222,13 +224,13 @@ def main() -> int:
             lo_info = g.tier_infos[tier]
             lo_snap = reader.load(lo_info, cfg.data.channels.fields,
                                   full_mom, cfg.data.channels.species_names)
-            _augmentSnapshotWithMomentum(lo_snap, cfg.data.channels.species,
+            _augmentSnapshotDerived(lo_snap, cfg.data.channels.species,
                                          cfg.data.channels.species_names, wxi)
             # Ground truth (full moment set for derived computations).
             gt_info = g.tier_infos[gt_name]
             gt_snap = reader.load(gt_info, cfg.data.channels.fields,
                                   full_mom, cfg.data.channels.species_names)
-            _augmentSnapshotWithMomentum(gt_snap, cfg.data.channels.species,
+            _augmentSnapshotDerived(gt_snap, cfg.data.channels.species,
                                          cfg.data.channels.species_names, wxi)
 
             # Build the input tensor from the channel set the network expects.
