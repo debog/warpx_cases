@@ -3,3 +3,7 @@
 .tmp*
 wtime*
 *.eps
+runs
+eval
+__pycache__
+
