@@ -37,17 +37,15 @@ model:
   sampler_steps: 5
 
 loss:
-  # Choice A — pure flow matching. The flow-matching loss is reported
-  # under `recon`; everything else is zero. To enable an auxiliary-at-
-  # t=1 variant later (option B), turn one or more of the others on
-  # and extend the training-step dispatch to integrate the ODE during
-  # training.
+  # Choice A — pure flow matching. The flow-matching loss has its own
+  # column (`flow_matching`); every other term is zero on this branch.
+  # To enable an auxiliary-at-t=1 variant later (option B), turn one
+  # or more of the others on and extend the training-step dispatch to
+  # integrate the ODE during training.
   #
   # `recon_kind` / `recon_eps` are required by the loss config schema
-  # but ignored on the flow-matching path — the flow-matching dispatch
-  # in `_forwardAndLoss` computes its own MSE and writes it into the
-  # `recon` slot of `parts`.
-  recon: 1.0
+  # but unused on the flow-matching path.
+  recon: 0.0
   recon_kind: l2
   recon_eps: 1.0e-3
   conservation: 0.0
@@ -59,3 +57,4 @@ loss:
   charge_continuity_cutoff: null
   closure_consistency:      0.0
   energy_conservation:      0.0
+  flow_matching:            1.0
