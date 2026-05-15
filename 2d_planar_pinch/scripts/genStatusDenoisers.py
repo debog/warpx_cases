@@ -1,4 +1,4 @@
-"""Generate status_phase1.html from per-run metrics.csv + figures."""
+"""Generate status_denoisers.html from per-run metrics.csv + figures."""
 from __future__ import annotations
 
 import csv
@@ -6,7 +6,7 @@ from pathlib import Path
 
 RUNS_DIR  = Path("~/Runs/remote/WarpX/2d_planar_pinch").expanduser()
 DOCS_DIR  = Path("~/Documents/Work_Docs/2026_04_ML_ImplicitPIC").expanduser()
-FIG_DIR   = "figures/phase1"
+FIG_DIR   = "figures/denoisers"
 
 CHANNELS = [
     "jx", "jy", "jz",
@@ -419,7 +419,7 @@ def main() -> None:
 <body>
 <div class="layout">
 
-<aside class="sidebar" data-page="status_phase1"></aside>
+<aside class="sidebar" data-page="status_denoisers"></aside>
 
 <main class="content">
 
@@ -490,7 +490,7 @@ under §4.3.3 once that run lands.</p>
 </body>
 </html>
 """)
-    out_path = DOCS_DIR / "status_phase1.html"
+    out_path = DOCS_DIR / "status_denoisers.html"
     out_path.write_text("".join(parts))
     print(f"wrote {out_path}  ({sum(len(p) for p in parts)} chars)")
 
