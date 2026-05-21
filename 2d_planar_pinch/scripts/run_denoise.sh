@@ -1248,8 +1248,10 @@ debug "  scheduler=$SCHEDULER ntasks=$NTASKS nnodes=$NNODES"
 debug "  queue=$QUEUE walltime=$WALLTIME gpu=$GPU_SUPPORT"
 debug "Using $DENOISE_EXEC for case: $CASE_NAME"
 
-# Create working directory for logs and job scripts
-WORKDIR="$ROOT_DIR/.run_pdn_${CASE_NAME}.${PLATFORM}"
+# Create working directory for logs and job scripts. Run directories
+# live under models/ so they do not clutter the case working directory
+# (training_data/ holds the inputs, models/ holds the outputs).
+WORKDIR="$ROOT_DIR/models/.run_pdn_${CASE_NAME}.${PLATFORM}"
 
 # Only delete existing directory for actions that create fresh output.
 # Actions like evaluate, diagnose, predict need existing files (checkpoints,
