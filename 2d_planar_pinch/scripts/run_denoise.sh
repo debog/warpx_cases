@@ -9,9 +9,8 @@
 # Actions (mutually exclusive):
 #   inspect                Run particle-denoise inspect
 #   train                  Run particle-denoise train
-#   evaluate               Run particle-denoise evaluate
-#   predict                Run particle-denoise predict (generate triptychs)
-#   diagnose               Run particle-denoise diagnose (RMSE bar charts)
+#   evaluate               Run particle-denoise evaluate (per-(tier-pair,
+#                          channel) RMSE table for the (N,f) heatmap)
 #   all                    Run inspect, train, and evaluate in sequence
 #
 # Options:
@@ -29,23 +28,12 @@
 #                          Example: -m batch (submit SLURM/Flux job)
 #                          Example: -m interactive (run directly)
 #
-#   -o, --out-dir=DIR      Output directory for training/predict (default: WORKDIR)
+#   -o, --out-dir=DIR      Output directory for training (default: WORKDIR)
 #                          Example: -o /path/to/custom/output
 #
-#   -k, --checkpoint=FILE  Checkpoint file for evaluate/predict (required for these actions)
-#                          Example: -k .run_pdn_globalcnn_l2.matrix/best.pt
+#   -k, --checkpoint=FILE  Checkpoint file for evaluate (required for that action)
+#                          Example: -k models/.run_pdn_unet.matrix/best.pt
 #                          Example: -k /path/to/checkpoint.pt
-#
-#   --metrics=FILE         Metrics CSV file for diagnose action (required for diagnose)
-#                          Example: --metrics=.run_pdn_globalcnn_l2.matrix/metrics.csv
-#
-#   --tier=LIST            Comma-separated tier list for predict (default: all)
-#                          Example: --tier=0,1,2
-#                          Example: --tier=1
-#
-#   --steps=LIST           Comma-separated step list for predict (default: 4 evenly-spaced)
-#                          Example: --steps=0,100,200,300
-#                          Example: --steps=50,150,250
 #
 #   -n, --ntasks=N         Override number of MPI tasks (for multi-GPU)
 #                          Example: -n 8 (use 8 GPUs)
@@ -90,40 +78,25 @@
 #      ./run_denoise.sh -l
 #
 #   2. Run all steps (inspect, train, evaluate) in interactive mode:
-#      ./run_denoise.sh -c globalcnn_l2 all
+#      ./run_denoise.sh -c unet all
 #
 #   3. Submit batch job to run all steps:
-#      ./run_denoise.sh -m batch -c globalcnn_l2 all
+#      ./run_denoise.sh -m batch -c unet all
 #
 #   4. Train with custom learning rate (interactive):
-#      ./run_denoise.sh -c globalcnn_l2 train train.lr=1e-4
+#      ./run_denoise.sh -c unet train train.lr=1e-4
 #
 #   5. Train in batch mode with 8 GPUs and 2-hour walltime:
-#      ./run_denoise.sh -m batch -n 8 -t 2:00:00 -c localcnn_kpcn train
+#      ./run_denoise.sh -m batch -n 8 -t 2:00:00 -c unet train
 #
 #   6. Evaluate with specific checkpoint:
-#      ./run_denoise.sh -c globalcnn_l2 -k .run_pdn_globalcnn_l2.matrix/best.pt evaluate
+#      ./run_denoise.sh -c unet -k models/.run_pdn_unet.matrix/best.pt evaluate
 #
-#   7. Generate prediction triptychs for specific tiers and steps:
-#      ./run_denoise.sh -c globalcnn_l2 -k best.pt --tier=0,1 --steps=50,100,150 predict
+#   7. Dry-run to see commands without executing:
+#      ./run_denoise.sh -d -c unet train
 #
-#   8. Run diagnose with metrics file:
-#      ./run_denoise.sh -c globalcnn_l2 --metrics=metrics.csv diagnose
-#
-#   9. Dry-run to see commands without executing:
-#      ./run_denoise.sh -d -c globalcnn_charbonnier train
-#
-#   10. Submit batch job to debug queue with verbose output:
-#       ./run_denoise.sh -v -m batch -q debug -c globalcnn_l2 inspect
-#
-#   11. Train multiple cases sequentially:
-#       ./run_denoise.sh -c globalcnn_l2 globalcnn_l1 globalcnn_charbonnier train
-#
-#   12. Train all U-Net cases with wildcard:
-#       ./run_denoise.sh -c "globalcnn_*" train
-#
-#   13. Run all local-CNN cases in batch mode:
-#       ./run_denoise.sh -m batch -c "localcnn_*" all
+#   8. Submit batch job to debug queue with verbose output:
+#      ./run_denoise.sh -v -m batch -q debug -c unet inspect
 #
 
 set -e
@@ -308,12 +281,12 @@ validate() {
 
     # Validate action
     if [[ -z "$ACTION" ]]; then
-        error "No action specified. Use one of: inspect, train, evaluate, predict, diagnose, all"
+        error "No action specified. Use one of: inspect, train, evaluate, all"
     fi
 
     case "$ACTION" in
         inspect|train|all) ;;
-        evaluate|predict)
+        evaluate)
             if [[ -z "$CHECKPOINT" ]]; then
                 error "Checkpoint file required for $ACTION. Use -k/--checkpoint to specify."
             fi
@@ -321,15 +294,7 @@ validate() {
                 error "Checkpoint file not found: $CHECKPOINT"
             fi
             ;;
-        diagnose)
-            if [[ -z "$METRICS_CSV" ]]; then
-                error "Metrics CSV file required for diagnose. Use --metrics to specify."
-            fi
-            if [[ ! -f "$METRICS_CSV" ]]; then
-                error "Metrics CSV file not found: $METRICS_CSV"
-            fi
-            ;;
-        *) error "Unknown action: $ACTION (use inspect, train, evaluate, predict, diagnose, or all)" ;;
+        *) error "Unknown action: $ACTION (use inspect, train, evaluate, or all)" ;;
     esac
 }
 
@@ -499,7 +464,7 @@ if [ ! -f "$WORKDIR/best.pt" ]; then
     exit 1
 fi
 EOFSCRIPT
-        local cmd_evaluate="$DENOISE_CMD evaluate --config $CONFIG_YAML --checkpoint $WORKDIR/best.pt"
+        local cmd_evaluate="$DENOISE_CMD evaluate --config $CONFIG_YAML --checkpoint $WORKDIR/best.pt --out-path $WORKDIR/evaluate_rmse.json"
         [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd_evaluate="$cmd_evaluate $EXTRA_DENOISE_ARGS"
         echo "$srun_prefix $cmd_evaluate 2>&1 | tee $WORKDIR/denoise_evaluate.${PLATFORM}.log" >> "$jobfile"
         cat >> "$jobfile" << 'EOFSCRIPT'
@@ -515,13 +480,7 @@ EOFSCRIPT
         local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
         [[ "$ACTION" == "train" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
         [[ "$ACTION" == "train" ]] && cmd="$cmd$resume_flag"
-        [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
-        [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
-        [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
-        [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && cmd="$cmd --tier $TIER_LIST"
-        [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && cmd="$cmd --steps $STEPS_LIST"
-        [[ "$ACTION" == "diagnose" && -n "$METRICS_CSV" ]] && cmd="$cmd --metrics $METRICS_CSV"
-        [[ "$ACTION" == "diagnose" && -n "$OUT_DIR" ]] && cmd="$cmd --out-path $OUT_DIR/per_channel_rmse.png"
+        [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT --out-path $WORKDIR/evaluate_rmse.json"
         [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd="$cmd $EXTRA_DENOISE_ARGS"
 
         echo "$srun_prefix $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
@@ -613,7 +572,7 @@ if [ ! -f "$WORKDIR/best.pt" ]; then
     exit 1
 fi
 EOFSCRIPT
-        local cmd_evaluate="$DENOISE_CMD evaluate --config $CONFIG_YAML --checkpoint $WORKDIR/best.pt"
+        local cmd_evaluate="$DENOISE_CMD evaluate --config $CONFIG_YAML --checkpoint $WORKDIR/best.pt --out-path $WORKDIR/evaluate_rmse.json"
         [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd_evaluate="$cmd_evaluate $EXTRA_DENOISE_ARGS"
         echo "$flux_prefix $cmd_evaluate 2>&1 | tee $WORKDIR/denoise_evaluate.${PLATFORM}.log" >> "$jobfile"
         cat >> "$jobfile" << 'EOFSCRIPT'
@@ -629,13 +588,7 @@ EOFSCRIPT
         local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
         [[ "$ACTION" == "train" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
         [[ "$ACTION" == "train" ]] && cmd="$cmd$resume_flag"
-        [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
-        [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
-        [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
-        [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && cmd="$cmd --tier $TIER_LIST"
-        [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && cmd="$cmd --steps $STEPS_LIST"
-        [[ "$ACTION" == "diagnose" && -n "$METRICS_CSV" ]] && cmd="$cmd --metrics $METRICS_CSV"
-        [[ "$ACTION" == "diagnose" && -n "$OUT_DIR" ]] && cmd="$cmd --out-path $OUT_DIR/per_channel_rmse.png"
+        [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT --out-path $WORKDIR/evaluate_rmse.json"
         [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd="$cmd $EXTRA_DENOISE_ARGS"
 
         echo "$flux_prefix $cmd 2>&1 | tee $WORKDIR/denoise_${ACTION}.${PLATFORM}.log" >> "$jobfile"
@@ -679,13 +632,7 @@ generate_run_script() {
     local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
     [[ ("$ACTION" == "train" || "$ACTION" == "all") && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
     [[ "$ACTION" == "train" ]] && cmd="$cmd$resume_flag"
-    [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
-    [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
-    [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
-    [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && cmd="$cmd --tier $TIER_LIST"
-    [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && cmd="$cmd --steps $STEPS_LIST"
-    [[ "$ACTION" == "diagnose" && -n "$METRICS_CSV" ]] && cmd="$cmd --metrics $METRICS_CSV"
-    [[ "$ACTION" == "diagnose" && -n "$OUT_DIR" ]] && cmd="$cmd --out-path $OUT_DIR/per_channel_rmse.png"
+    [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT --out-path $WORKDIR/evaluate_rmse.json"
     [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd="$cmd $EXTRA_DENOISE_ARGS"
 
     cat > "$runfile" << EOF
@@ -768,7 +715,7 @@ if [ ! -f "$WORKDIR/best.pt" ]; then
     exit 1
 fi
 EOFSCRIPT
-        local cmd_evaluate="$DENOISE_CMD evaluate --config $CONFIG_YAML --checkpoint $WORKDIR/best.pt"
+        local cmd_evaluate="$DENOISE_CMD evaluate --config $CONFIG_YAML --checkpoint $WORKDIR/best.pt --out-path $WORKDIR/evaluate_rmse.json"
         [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd_evaluate="$cmd_evaluate $EXTRA_DENOISE_ARGS"
         if [[ -n "$runcmd" ]]; then
             echo "$runcmd $cmd_evaluate 2>&1 | tee $WORKDIR/denoise_evaluate.${PLATFORM}.log" >> "$runfile"
@@ -854,15 +801,8 @@ run_interactive() {
                 info "  Output dir: (auto-detected, see particle-denoise output)"
             fi
             ;;
-        evaluate|predict)
+        evaluate)
             info "  Checkpoint: $CHECKPOINT"
-            [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && info "  Output dir: $OUT_DIR"
-            [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && info "  Tiers:      $TIER_LIST"
-            [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && info "  Steps:      $STEPS_LIST"
-            ;;
-        diagnose)
-            info "  Metrics:    $METRICS_CSV"
-            [[ -n "$OUT_DIR" ]] && info "  Output:     $OUT_DIR/per_channel_rmse.png"
             ;;
     esac
     echo
@@ -879,13 +819,7 @@ run_interactive() {
     local cmd="$DENOISE_CMD $ACTION --config $CONFIG_YAML"
     [[ ("$ACTION" == "train" || "$ACTION" == "all") && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
     [[ "$ACTION" == "train" ]] && cmd="$cmd$resume_flag"
-    [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
-    [[ "$ACTION" == "predict" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT"
-    [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && cmd="$cmd --out-dir $OUT_DIR"
-    [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && cmd="$cmd --tier $TIER_LIST"
-    [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && cmd="$cmd --steps $STEPS_LIST"
-    [[ "$ACTION" == "diagnose" && -n "$METRICS_CSV" ]] && cmd="$cmd --metrics $METRICS_CSV"
-    [[ "$ACTION" == "diagnose" && -n "$OUT_DIR" ]] && cmd="$cmd --out-path $OUT_DIR/per_channel_rmse.png"
+    [[ "$ACTION" == "evaluate" && -n "$CHECKPOINT" ]] && cmd="$cmd --checkpoint $CHECKPOINT --out-path $WORKDIR/evaluate_rmse.json"
     [[ -n "$EXTRA_DENOISE_ARGS" ]] && cmd="$cmd $EXTRA_DENOISE_ARGS"
 
     # For interactive mode, use --exclusive to get all resources on allocated node
@@ -973,15 +907,8 @@ run_batch() {
                 info "  Output dir: (auto-detected, see particle-denoise output)"
             fi
             ;;
-        evaluate|predict)
+        evaluate)
             info "  Checkpoint: $CHECKPOINT"
-            [[ "$ACTION" == "predict" && -n "$OUT_DIR" ]] && info "  Output dir: $OUT_DIR"
-            [[ "$ACTION" == "predict" && -n "$TIER_LIST" ]] && info "  Tiers:      $TIER_LIST"
-            [[ "$ACTION" == "predict" && -n "$STEPS_LIST" ]] && info "  Steps:      $STEPS_LIST"
-            ;;
-        diagnose)
-            info "  Metrics:    $METRICS_CSV"
-            [[ -n "$OUT_DIR" ]] && info "  Output:     $OUT_DIR/per_channel_rmse.png"
             ;;
     esac
     echo
@@ -1029,9 +956,6 @@ CASES=()
 MODE="interactive"
 OUT_DIR=""
 CHECKPOINT=""
-METRICS_CSV=""
-TIER_LIST=""
-STEPS_LIST=""
 OVERRIDE_NTASKS=""
 OVERRIDE_NNODES=""
 OVERRIDE_QUEUE=""
@@ -1055,7 +979,7 @@ while [[ $# -gt 0 ]]; do
             # a key=value override, or an action keyword.
             while [[ $# -gt 0 && "$1" != -* && "$1" != *"="* ]]; do
                 case "$1" in
-                    inspect|train|evaluate|predict|diagnose|all)
+                    inspect|train|evaluate|all)
                         break
                         ;;
                 esac
@@ -1096,21 +1020,6 @@ while [[ $# -gt 0 ]]; do
                 --checkpoint=*) CHECKPOINT="${1#*=}" ;;
                 *)              shift; CHECKPOINT="$1" ;;
             esac ;;
-        --metrics|--metrics=*)
-            case "$1" in
-                --metrics=*) METRICS_CSV="${1#*=}" ;;
-                *)           shift; METRICS_CSV="$1" ;;
-            esac ;;
-        --tier|--tier=*)
-            case "$1" in
-                --tier=*) TIER_LIST="${1#*=}" ;;
-                *)        shift; TIER_LIST="$1" ;;
-            esac ;;
-        --steps|--steps=*)
-            case "$1" in
-                --steps=*) STEPS_LIST="${1#*=}" ;;
-                *)         shift; STEPS_LIST="$1" ;;
-            esac ;;
         -n|--ntasks|--ntasks=*)
             case "$1" in
                 --ntasks=*) OVERRIDE_NTASKS="${1#*=}" ;;
@@ -1141,7 +1050,7 @@ while [[ $# -gt 0 ]]; do
         -l|--list)      list_cases; exit 0 ;;
         -P|--list-platforms) list_platforms; exit 0 ;;
         -h|--help)      usage ;;
-        inspect|train|evaluate|predict|diagnose|all)
+        inspect|train|evaluate|all)
             [[ -n "$ACTION" ]] && error "Multiple actions specified: $ACTION and $1"
             ACTION="$1" ;;
         -*)
@@ -1254,9 +1163,9 @@ debug "Using $DENOISE_EXEC for case: $CASE_NAME"
 WORKDIR="$ROOT_DIR/models/.run_pdn_${CASE_NAME}.${PLATFORM}"
 
 # Only delete existing directory for actions that create fresh output.
-# Actions like evaluate, diagnose, predict need existing files (checkpoints,
-# metrics), and --resume is exactly the same situation: we must keep the
-# previous training artefacts (last.pt, metrics.csv, ...) intact.
+# evaluate needs existing files (the checkpoint), and --resume is the
+# same situation: we must keep the previous training artefacts
+# (last.pt, metrics.csv, ...) intact.
 case "$ACTION" in
     train|inspect|all)
         if [[ -d "$WORKDIR" && -z "$RESUME" ]]; then
@@ -1270,7 +1179,7 @@ case "$ACTION" in
         fi
         mkdir -p "$WORKDIR"
         ;;
-    evaluate|diagnose|predict)
+    evaluate)
         if [[ -d "$WORKDIR" ]]; then
             info "Using existing directory: $WORKDIR"
         else
@@ -1292,15 +1201,8 @@ esac
 # this only fills in a per-case default when the user did not pass -o.
 if [[ -z "$OUT_DIR" ]]; then
     case "$ACTION" in
-        train|predict|all)
+        train|all)
             OUT_DIR="$WORKDIR"
-            ;;
-        diagnose)
-            # OUT_DIR controls where per_channel_rmse.png is written;
-            # default to the metrics CSV's directory.
-            if [[ -n "$METRICS_CSV" ]]; then
-                OUT_DIR="$(dirname "$METRICS_CSV")"
-            fi
             ;;
     esac
 fi
