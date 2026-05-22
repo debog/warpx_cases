@@ -162,8 +162,13 @@ check_run() {
     # On restart WarpX renames an existing plotfile dir to
     # <name>.old.<timestamp>. Those inflate the file-count check and
     # waste disk; remove them unless --dry-run is set.
+    #
+    # -maxdepth 2: plotfile leftovers all live at depth 2
+    # (mesh_data/<...>.old.<ts>, diags/<diag>_<...>.old.<ts>).
+    # Descending into Level_0/ would stat every Cell_D file and is
+    # painfully slow on a parallel filesystem.
     local -a olds
-    mapfile -t olds < <(find "$dir" -maxdepth 3 -name '*.old.*' 2>/dev/null)
+    mapfile -t olds < <(find "$dir" -maxdepth 2 -name '*.old.*' 2>/dev/null)
     if (( ${#olds[@]} > 0 )); then
         if (( DRY_RUN )); then
             info "would remove ${#olds[@]} .old.* entry/ies (re-run without -n to delete)"
