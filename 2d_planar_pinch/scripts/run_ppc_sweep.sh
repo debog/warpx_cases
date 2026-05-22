@@ -43,7 +43,7 @@ set -e
 # =============================================================================
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-CONFIG_FILE="$SCRIPT_DIR/platforms.conf"
+CONFIG_FILE="$SCRIPT_DIR/platforms_warpx.conf"
 INPUTS_DIR="$ROOT_DIR/inputs"
 DEFAULT_CASE="planar_pinch_2d"
 DEFAULT_PPC_LIST="2x2,4x4,6x6,8x8,12x12,16x16,32x32"
