@@ -34,7 +34,9 @@
 #   cd <dir with .run_* subdirectories>
 #   /path/to/checkRuns.sh [-n|--dry-run] [run_dir ...]
 #
-set -u
+# Note: `set -u` is intentionally off. Older bash (< 4.4, as on
+# Tuolumne) treats an empty array reference as "unbound", which trips
+# the arg-parsing and the "no run dirs found" branches.
 
 # --------------------------------------------------------------------
 # Presentation helpers
