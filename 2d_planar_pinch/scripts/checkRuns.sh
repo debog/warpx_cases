@@ -25,11 +25,14 @@
 # out.*.log and the scheduler captures warpx_<case>-<jobid>.out /
 # slurm*.out); all are located, the most recent is scanned.
 #
-# Read-only: the script never writes into the run directories.
+# Side effect: WarpX renames pre-existing plotfile directories to
+# <name>.old.<timestamp> when a restart would otherwise overwrite them.
+# Those leftovers are removed by default (they confuse the file-count
+# check and consume disk). Pass -n / --dry-run to skip the removal.
 #
 # Usage:
 #   cd <dir with .run_* subdirectories>
-#   /path/to/checkRuns.sh [run_dir ...]
+#   /path/to/checkRuns.sh [-n|--dry-run] [run_dir ...]
 #
 set -u
 
@@ -95,11 +98,12 @@ validate_plotfile() {
 
 # Validate the first, the last two, and up to 8 evenly-spaced
 # plotfiles for a given prefix. Echoes a one-line summary; returns
-# non-zero if any sampled plotfile is bad.
+# non-zero if any sampled plotfile is bad. WarpX restart leftovers
+# (<name>.old.<timestamp>) are excluded.
 validate_plotfile_set() {
     local prefix="$1" label="$2"
     local -a all
-    mapfile -t all < <(ls -d ${prefix}[0-9]* 2>/dev/null | sort)
+    mapfile -t all < <(ls -d ${prefix}[0-9]* 2>/dev/null | grep -v '\.old\.' | sort)
     local n=${#all[@]}
     if (( n == 0 )); then echo "MISSING"; return 1; fi
     local -a idx=(0 $((n-1)) $((n-2)))
@@ -151,6 +155,21 @@ check_run() {
         return
     fi
     info "case=$case  platform=$plat  ppc(dir)=$ppc_dir  nproc=$nproc"
+
+    # ---- prune WarpX restart leftovers -----------------------------
+    # On restart WarpX renames an existing plotfile dir to
+    # <name>.old.<timestamp>. Those inflate the file-count check and
+    # waste disk; remove them unless --dry-run is set.
+    local -a olds
+    mapfile -t olds < <(find "$dir" -maxdepth 3 -name '*.old.*' 2>/dev/null)
+    if (( ${#olds[@]} > 0 )); then
+        if (( DRY_RUN )); then
+            info "would remove ${#olds[@]} .old.* entry/ies (re-run without -n to delete)"
+        else
+            rm -rf -- "${olds[@]}"
+            info "removed ${#olds[@]} .old.* entry/ies (WarpX restart leftovers)"
+        fi
+    fi
 
     # ---- locate screen logs ----------------------------------------
     local -a logs
@@ -294,7 +313,8 @@ check_run() {
         [[ -z "$interval" || "$interval" -le 0 ]] && continue
 
         local actual
-        actual=$(ls -d "$dir/${prefix}"[0-9]* 2>/dev/null | wc -l)
+        actual=$(ls -d "$dir/${prefix}"[0-9]* 2>/dev/null \
+                 | grep -vc '\.old\.')
 
         if (( actual == 0 )); then
             if [[ "$prefix" == diags/* ]]; then
@@ -430,9 +450,22 @@ check_run() {
 # --------------------------------------------------------------------
 # Main
 # --------------------------------------------------------------------
+DRY_RUN=0
+declare -a positional
+while (( $# > 0 )); do
+    case "$1" in
+        -n|--dry-run) DRY_RUN=1; shift ;;
+        -h|--help)
+            sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0 ;;
+        --)           shift; positional+=("$@"); break ;;
+        -*)           echo "unknown option: $1" >&2; exit 2 ;;
+        *)            positional+=("$1"); shift ;;
+    esac
+done
 declare -a targets
-if (( $# > 0 )); then
-    targets=("$@")
+if (( ${#positional[@]} > 0 )); then
+    targets=("${positional[@]}")
 else
     mapfile -t targets < <(ls -d .run_*.ppc*.nproc* 2>/dev/null | sort)
 fi
