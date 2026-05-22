@@ -198,13 +198,11 @@ list_cases() {
         return
     fi
 
-    for yaml in "$denoise_dir"/planar_pinch_2d_*.yaml; do
+    for yaml in "$denoise_dir"/cfg_*.yaml; do
         [[ ! -f "$yaml" ]] && continue
         local basename=$(basename "$yaml")
-        # Skip the base file
-        [[ "$basename" == *"_base.yaml" ]] && continue
-        # Extract case name: planar_pinch_2d_<case>.yaml -> <case>
-        local case_name="${basename#planar_pinch_2d_}"
+        # Extract case name: cfg_<case>.yaml -> <case>
+        local case_name="${basename#cfg_}"
         case_name="${case_name%.yaml}"
         echo "  $case_name"
     done
@@ -229,9 +227,9 @@ expand_config_path() {
     fi
 
     # Otherwise, treat it as a short case name
-    # Try to find planar_pinch_2d_<case>.yaml in denoise directory
+    # Try to find cfg_<case>.yaml in the denoise directory
     local denoise_dir="${ROOT_DIR}/denoise"
-    local full_path="${denoise_dir}/planar_pinch_2d_${input}.yaml"
+    local full_path="${denoise_dir}/cfg_${input}.yaml"
 
     if [[ -f "$full_path" ]]; then
         echo "$full_path"
@@ -249,12 +247,10 @@ validate() {
        Please ensure particle-denoise is installed."
     fi
 
-    # If the case-appropriate denoise command is on PATH, use it;
-    # otherwise fall back to the matching Python module.
+    # Use the particle-denoise console script if on PATH, else the
+    # equivalent Python module entry point.
     if command -v "$DENOISE_EXEC" &>/dev/null; then
         DENOISE_CMD="$DENOISE_EXEC"
-    elif [[ "$DENOISE_EXEC" == "local-particle-denoise" ]]; then
-        DENOISE_CMD="python -m localParticleDenoiser"
     else
         DENOISE_CMD="python -m particleDenoiser"
     fi
@@ -988,13 +984,12 @@ while [[ $# -gt 0 ]]; do
                     # Wildcard - expand against the denoise dir.
                     shopt -s nullglob
                     _denoise_dir="${ROOT_DIR}/denoise"
-                    _matched_files=("$_denoise_dir"/planar_pinch_2d_${1}.yaml)
+                    _matched_files=("$_denoise_dir"/cfg_${1}.yaml)
                     shopt -u nullglob
                     for _matched in "${_matched_files[@]}"; do
                         [[ -f "$_matched" ]] || continue
                         _basename=$(basename "$_matched")
-                        [[ "$_basename" == *"_base.yaml" ]] && continue
-                        _case_name="${_basename#planar_pinch_2d_}"
+                        _case_name="${_basename#cfg_}"
                         _case_name="${_case_name%.yaml}"
                         CASES+=("$_case_name")
                     done
@@ -1113,30 +1108,17 @@ for CASE in "${CASES[@]}"; do
 # Expand case name to full config path
 CONFIG_YAML=$(expand_config_path "$CASE")
 
-# Extract case name from config file (needed to determine which executable to use)
-# Expected format: planar_pinch_2d_<case>.yaml
+# Extract the case name from the config file. Expected layout:
+# denoise/cfg_<case>.yaml.
 CONFIG_BASENAME=$(basename "$CONFIG_YAML")
-if [[ "$CONFIG_BASENAME" =~ planar_pinch_2d_(.+)\.yaml ]]; then
+if [[ "$CONFIG_BASENAME" =~ ^cfg_(.+)\.yaml$ ]]; then
     CASE_NAME="${BASH_REMATCH[1]}"
 else
-    # Fallback: use full basename without extension
+    # Fallback: use the basename without extension.
     CASE_NAME="${CONFIG_BASENAME%.yaml}"
 fi
 
-# Select the appropriate denoise executable based on case name.
-# Architecture prefix in the YAML name picks the CLI:
-#   localcnn_*    -> local-particle-denoise   (LocalCNN / LocalKPCN)
-#   hlocalcnn_*   -> local-particle-denoise   (LocalHierarchicalCNN)
-#   globalcnn_*   -> particle-denoise         (global U-Net)
-#   flowunet_*    -> flow-particle-denoise    (flow-matching denoiser; task #90)
-if [[ "$CASE_NAME" == localcnn_*    \
-   || "$CASE_NAME" == hlocalcnn_*   ]]; then
-    DENOISE_EXEC="local-particle-denoise"
-elif [[ "$CASE_NAME" == flowunet_* ]]; then
-    DENOISE_EXEC="flow-particle-denoise"
-else
-    DENOISE_EXEC="particle-denoise"
-fi
+DENOISE_EXEC="particle-denoise"
 
 # Validate inputs and environment
 validate

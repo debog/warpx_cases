@@ -1,44 +1,39 @@
 #!/usr/bin/env python3
-"""Generate 4x4 comparison-grid figures for a trained denoiser.
+"""Visual comparison panels for the factor-conditioned denoiser.
 
-Layout: one figure per (variant, ppc tier, output/derived channel).
-Each figure is a 4-row x 4-column grid:
+For each (input tier N, target tier M) pair and a set of simulation
+steps, runs the trained denoiser and writes one PNG per channel:
 
-    row r   = canonical phase snapshot r in time
-    col 0   = low-ppc input
-    col 1   = model prediction
-    col 2   = ppc1024 ground truth
-    col 3   = relative error  =  (pred - GT) / RMS(GT)
+    row r   = simulation step r
+    col 0   = input snapshot at ppc N
+    col 1   = denoiser prediction
+    col 2   = target snapshot at ppc M   (M = f^2 * N)
+    col 3   = relative error  =  (pred - target) / RMS(target)
 
-The first three columns share a per-row (vmin, vmax) so input /
-prediction / GT can be compared at a glance. The error column uses
-a symmetric +/-rmax scale (RdBu_r) so blue/red intensity is read as
-the per-cell error in units of one RMS(GT).
+The first three columns share a per-row color scale so input /
+prediction / target read at a glance; the error column uses a
+symmetric +/- RdBu_r scale in units of one RMS(target).
 
-Channel set per (variant, tier):
-
-    raw   (17)  : jx, jy, jz,
-                  num/<p|ene><x|y|z>_<species>
-    derived (12) : Pxx/Pyy/Pzz/Tx/Ty/Tz per species (computed from
-                   predicted moments via the moment-closure formula)
-
-Inference dispatch:
-
-    --cli global   particleDenoiser.models.buildModel + model(x)
-    --cli local    localParticleDenoiser models + patch-tile inference
-    --cli flow     flowParticleDenoiser FlowMatchingUNet + ODE sampler
+Channels:
+    raw      the output channels the network emits (jx, jy, jz and the
+             per-species num / p / ene moments);
+    derived  Pxx/Pyy/Pzz and Tx/Ty/Tz per species, computed from the
+             (num, p, ene) moments via the moment-closure formula.
+             Temperature is reported in eV.
 
 Output filenames are flat under <out-dir>:
 
-    comparison_<variant>_<tier>_<channel>.png
+    comparison_ppc<N>_to_ppc<M>_<channel>.png
 
-Save once, regenerate by re-running with new --checkpoint values.
+Usage:
+    generateComparisons.py --config denoise/cfg_charbonnier.yaml \\
+        --checkpoint models/.run_pdn_charbonnier.<plat>/best.pt \\
+        --out-dir comparisons
 """
 from __future__ import annotations
 
 import argparse
 import sys
-from copy import deepcopy
 from pathlib import Path
 from typing import Dict
 
@@ -46,162 +41,45 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-# Path injection: local repo, not the installed package.
+# Path injection: the local repo, not any installed package.
 sys.path.insert(0, "/home/ghosh/Codes/particle-denoise")
-
-
-# Canonical phases / tiers for the planar pinch case (see §4.1 of the
-# working doc).
-PHASES = [
-    ("011025", "Ramp-up"),
-    ("054900", "Peak compression"),
-    ("076950", "Post-peak"),
-    ("105300", "Rebound"),
-]
-TIERS_DEFAULT = ["ppc0036", "ppc0064", "ppc0144", "ppc0256"]
-
-# Derived-channel names used in the output PNG filenames.
-DERIVED_CHANNELS = [
-    "Pxx_electrons", "Pyy_electrons", "Pzz_electrons",
-    "Tx_electrons",  "Ty_electrons",  "Tz_electrons",
-    "Pxx_deuterium", "Pyy_deuterium", "Pzz_deuterium",
-    "Tx_deuterium",  "Ty_deuterium",  "Tz_deuterium",
-]
 
 EV_PER_JOULE = 1.0 / 1.602176634e-19
 
 
 # ---------------------------------------------------------------------
-# Inference dispatch
+# Derived pressure / temperature
 # ---------------------------------------------------------------------
 
-def buildModelAndForwarder(cli_kind: str, cfg, ckpt, dev,
-                           in_channels: int, out_channels: int,
-                           out_indices, dim: int, patch_dataset=None):
-    """Build the right model and return `(model, forward_fn)` where
-    `forward_fn(x_norm_full_tensor) -> pred_norm_full_tensor` runs
-    one inference pass on a whole snapshot. For local denoisers the
-    patch-tile loop is hidden inside `forward_fn`."""
-    from denoiseCore.device import ampContext
-
-    if cli_kind == "global":
-        from particleDenoiser.models import buildModel as buildGlobal
-        model = buildGlobal(
-            cfg.model,
-            in_channels=in_channels, out_channels=out_channels,
-            out_indices=out_indices, dim=dim,
-            boundary_spec=cfg.data.boundary_spec,
-        ).to(dev.device)
-        model.load_state_dict(ckpt["model"])
-        model.eval()
-
-        def fwd(x):  # x: (C_in, ...)
-            xb = x.unsqueeze(0).to(dev.device)
-            with torch.no_grad(), ampContext(dev, cfg.train.amp,
-                                             cfg.train.amp_dtype):
-                p = model(xb)
-            return p.squeeze(0).float().cpu()
-
-        return model, fwd
-
-    if cli_kind == "local":
-        from localParticleDenoiser.models import buildModel as buildLocal
-        from localParticleDenoiser.cli import _denoiseSnapshotByPatches
-        model = buildLocal(
-            cfg.model,
-            in_channels=in_channels, out_channels=out_channels,
-            out_indices=out_indices, dim=dim,
-        ).to(dev.device)
-        model.load_state_dict(ckpt["model"])
-        model.eval()
-
-        assert patch_dataset is not None
-        boundary_aux = (
-            (lambda coords: patch_dataset._boundaryAuxChannels(
-                coords, dtype=torch.float32, device=dev.device))
-            if cfg.data.boundary_channels else None
-        )
-
-        def fwd(x):
-            padded = patch_dataset._padInput(x)
-            return _denoiseSnapshotByPatches(
-                model, padded, x,
-                patch_size=cfg.model.patch_size,
-                dev=dev, amp_enabled=cfg.train.amp,
-                amp_dtype=cfg.train.amp_dtype,
-                boundary_aux=boundary_aux,
-            )
-
-        return model, fwd
-
-    if cli_kind == "flow":
-        from flowParticleDenoiser.models import FlowMatchingUNet
-        from flowParticleDenoiser.sampler import eulerSample, heunSample
-        model = FlowMatchingUNet(
-            in_channels=in_channels, out_channels=out_channels,
-            out_indices=out_indices,
-            base_channels=cfg.model.base_channels,
-            depth=cfg.model.depth, kernel=cfg.model.kernel,
-            activation=cfg.model.activation,
-            time_embed_dim=cfg.model.time_embed_dim, dim=dim,
-        ).to(dev.device)
-        model.load_state_dict(ckpt["model"])
-        model.eval()
-        sampler = (eulerSample if cfg.model.sampler_kind == "euler"
-                   else heunSample)
-        steps = cfg.model.sampler_steps
-
-        def fwd(x):
-            xb = x.unsqueeze(0).to(dev.device)
-            with torch.no_grad(), ampContext(dev, cfg.train.amp,
-                                             cfg.train.amp_dtype):
-                p_full = sampler(model, xb, steps=steps)
-            # Subset to output channels.
-            return (p_full[0].index_select(0, model.out_indices)
-                              .float().cpu())
-
-        return model, fwd
-
-    raise ValueError(f"unknown --cli kind {cli_kind!r}; "
-                     f"expected one of: global, local, flow")
-
-
-# ---------------------------------------------------------------------
-# Derived quantities (P, T) per cell, per species
-# ---------------------------------------------------------------------
-
-def deriveSpeciesPandT(snap, warpx_input) -> Dict[str, Dict[str, np.ndarray]]:
-    """Return {species: {Pxx, Pyy, Pzz, Tx, Ty, Tz}} from a snapshot
-    whose .species[sp] dict already carries the raw moments
-    (num, px, py, pz, enex, eney, enez) in physical units.
+def deriveSpeciesPandT(moments: Dict[str, np.ndarray],
+                       species_names: list[str],
+                       warpx_input) -> Dict[str, Dict[str, np.ndarray]]:
+    """Return {species: {Pxx, Pyy, Pzz, Tx, Ty, Tz}} from a flat dict
+    of physical-unit moment arrays keyed `<moment>_<species>`
+    (num, px, py, pz, enex, eney, enez).
 
     Pressure tensor diagonal: P_ii = (m/V) * num * (<v_i^2> - <v_i>^2)
-    where <v_i>   = p_i / (m * num)
-          <v_i^2> = 2 * ene_i / (m * num)
-    Temperature : T_i = P_i * V / num   (then converted to eV)
+    with <v_i>   = p_i / (m * num),  <v_i^2> = 2 * ene_i / (m * num).
+    Temperature : T_i = P_i * V / num, converted to eV.
     """
     vcell = float(warpx_input.cell_volume())
     out: Dict[str, Dict[str, np.ndarray]] = {}
-    for sp in snap.species:
+    for sp in species_names:
         mass = float(warpx_input.species_mass(sp))
-        d = snap.species[sp]
-        num  = np.asarray(d["num"], dtype=np.float64)
-        # `num` may briefly be 0 in sparse cells; floor to keep
-        # divisions sane and let the resulting tiny weights die on
-        # their own.
+        num = np.asarray(moments[f"num_{sp}"], dtype=np.float64)
+        # `num` may briefly be 0 in sparse cells; floor the divisor.
         num_safe = np.where(num > 0.0, num, 1.0)
-        P = {}
-        T = {}
+        P, T = {}, {}
         for ax in ("x", "y", "z"):
-            p_i   = np.asarray(d[f"p{ax}"],  dtype=np.float64)
-            ene_i = np.asarray(d[f"ene{ax}"], dtype=np.float64)
-            mean_v   = p_i / (mass * num_safe)
-            mean_v2  = 2.0 * ene_i / (mass * num_safe)
+            p_i = np.asarray(moments[f"p{ax}_{sp}"], dtype=np.float64)
+            ene_i = np.asarray(moments[f"ene{ax}_{sp}"], dtype=np.float64)
+            mean_v = p_i / (mass * num_safe)
+            mean_v2 = 2.0 * ene_i / (mass * num_safe)
             var = np.clip(mean_v2 - mean_v * mean_v, 0.0, None)
             P_ii = (mass / vcell) * num * var
-            T_ii = (P_ii * vcell / np.where(num > 0.0, num, np.nan))
-            T_ii_eV = T_ii * EV_PER_JOULE
-            T_ii_eV = np.where(np.isfinite(T_ii_eV), T_ii_eV, 0.0)
+            T_ii = P_ii * vcell / np.where(num > 0.0, num, np.nan)
+            T_ii_eV = np.where(np.isfinite(T_ii * EV_PER_JOULE),
+                               T_ii * EV_PER_JOULE, 0.0)
             P[ax] = P_ii
             T[ax] = T_ii_eV
         out[sp] = {
@@ -212,44 +90,39 @@ def deriveSpeciesPandT(snap, warpx_input) -> Dict[str, Dict[str, np.ndarray]]:
 
 
 # ---------------------------------------------------------------------
-# 4x4 grid plot
+# Grid plot
 # ---------------------------------------------------------------------
 
 def plotComparisonGrid(out_path: Path,
                        channel_name: str,
                        rows: list,
-                       phase_labels: list[str],
+                       row_labels: list[str],
+                       ppc_in: int,
+                       ppc_out: int,
                        units: str = "",
                        percentile: float = 2.0) -> None:
-    """One PNG: 4 rows (phase snapshots) x 4 columns (input, pred, GT,
-    relative error).
+    """One PNG: N rows (one per step) x 4 columns (input, prediction,
+    target, relative error).
 
-    `rows` is a list of 4 dicts, each with keys 'input', 'pred', 'gt'
-    holding the per-snapshot 2-D arrays (or 1-D arrays for the 1-D
-    case). Relative error is computed per-row as
-    `(pred - gt) / max(RMS(gt), eps)`.
-
-    First three columns share a per-row [percentile, 100-percentile]
-    color scale. The error column uses a symmetric +/-rmax computed
-    over the relative-error array for that row.
+    `rows` is a list of dicts with keys 'input', 'pred', 'target'
+    holding the per-step 2-D arrays. Relative error is computed per row
+    as `(pred - target) / max(RMS(target), eps)`.
     """
     n_rows = len(rows)
     fig, axes = plt.subplots(n_rows, 4, figsize=(10.0, 2.2 * n_rows),
                              squeeze=False)
 
-    col_titles = ("low-ppc input", "prediction",
-                  "ground truth", "error / RMS(GT)")
+    col_titles = (f"input  (ppc {ppc_in})", "prediction",
+                  f"target  (ppc {ppc_out})", "error / RMS(target)")
     for ax, title in zip(axes[0], col_titles):
         ax.set_title(title, fontsize=10)
 
     for ridx, row in enumerate(rows):
         inp = np.asarray(row["input"])
         prd = np.asarray(row["pred"])
-        gt  = np.asarray(row["gt"])
+        tgt = np.asarray(row["target"])
 
-        # Common [percentile, 100-percentile] scale across the three
-        # value panels.
-        stacked = np.concatenate([a.ravel() for a in (inp, prd, gt)])
+        stacked = np.concatenate([a.ravel() for a in (inp, prd, tgt)])
         stacked = stacked[np.isfinite(stacked)]
         if stacked.size:
             lo = float(np.percentile(stacked, percentile))
@@ -261,14 +134,13 @@ def plotComparisonGrid(out_path: Path,
         if lo == hi:
             lo, hi = lo - 1.0, hi + 1.0
 
-        # Per-row RMS(GT); floor to avoid 0/0.
-        gt_finite = gt.ravel()[np.isfinite(gt.ravel())]
-        gt_rms = (float(np.sqrt(np.mean(gt_finite ** 2)))
-                  if gt_finite.size else 1.0)
-        eps = 1.0e-30 * (float(np.abs(gt_finite).max())
-                         if gt_finite.size else 1.0)
-        scale = max(gt_rms, eps)
-        rel_err = (prd - gt) / scale
+        tgt_finite = tgt.ravel()[np.isfinite(tgt.ravel())]
+        tgt_rms = (float(np.sqrt(np.mean(tgt_finite ** 2)))
+                   if tgt_finite.size else 1.0)
+        eps = 1.0e-30 * (float(np.abs(tgt_finite).max())
+                         if tgt_finite.size else 1.0)
+        scale = max(tgt_rms, eps)
+        rel_err = (prd - tgt) / scale
 
         re_finite = rel_err.ravel()[np.isfinite(rel_err.ravel())]
         if re_finite.size:
@@ -282,7 +154,7 @@ def plotComparisonGrid(out_path: Path,
         for cidx, (arr, vmin, vmax, cmap) in enumerate([
             (inp,     lo,    hi,   "viridis"),
             (prd,     lo,    hi,   "viridis"),
-            (gt,      lo,    hi,   "viridis"),
+            (tgt,     lo,    hi,   "viridis"),
             (rel_err, -rmax, rmax, "RdBu_r"),
         ]):
             ax = axes[ridx][cidx]
@@ -292,10 +164,11 @@ def plotComparisonGrid(out_path: Path,
             ax.set_xticks([]); ax.set_yticks([])
             plt.colorbar(im, ax=ax, fraction=0.046, pad=0.02)
             if cidx == 0:
-                ax.set_ylabel(phase_labels[ridx], fontsize=9)
+                ax.set_ylabel(row_labels[ridx], fontsize=9)
 
     suffix = f"  [{units}]" if units else ""
-    fig.suptitle(f"{channel_name}{suffix}", fontsize=12)
+    fig.suptitle(f"{channel_name}{suffix}   "
+                 f"ppc {ppc_in} -> {ppc_out}", fontsize=12)
     fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.97))
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(str(out_path), dpi=80,
@@ -304,223 +177,172 @@ def plotComparisonGrid(out_path: Path,
 
 
 # ---------------------------------------------------------------------
-# Main
+# Inference
 # ---------------------------------------------------------------------
 
+def denormChannels(tensor: torch.Tensor, names: list[str],
+                   norm) -> Dict[str, np.ndarray]:
+    """Invert normalization for a (C, ...) tensor of output channels,
+    returning a flat {canonical_name: physical-unit array} dict."""
+    arr = tensor.detach().float().cpu().numpy()
+    return {name: norm.invert(name, arr[c])
+            for c, name in enumerate(names)}
+
+
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--config",     required=True)
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--config", required=True)
     ap.add_argument("--checkpoint", required=True)
-    ap.add_argument("--variant-id", required=True,
-                    help="short name used in output filenames")
-    ap.add_argument("--cli", required=True,
-                    choices=("global", "local", "flow"),
-                    help="which model factory to use (matches the "
-                         "trained denoiser variant)")
-    ap.add_argument("--out-dir",    required=True)
-    ap.add_argument("--tiers",  default=",".join(TIERS_DEFAULT))
-    ap.add_argument("--steps",  default=",".join(s for s, _ in PHASES))
+    ap.add_argument("--out-dir", default="comparisons")
+    ap.add_argument("--pairs", default=None,
+                    help="comma-separated ppc_in:ppc_out pairs to render; "
+                         "default = every tier denoised to the top tier")
+    ap.add_argument("--steps", default=None,
+                    help="comma-separated step list; default = up to "
+                         "--max-steps evenly spaced across the pair")
+    ap.add_argument("--max-steps", type=int, default=4)
     args = ap.parse_args()
 
-    from denoiseCore.config       import load as loadConfig
-    from denoiseCore.data.dataset import (
-        outputChannelNames, outputChannelIndices,
-        snapshotToInputTensor,
-        _rawMomentsToLoad, _augmentSnapshotDerived,
-    )
+    from denoiseCore.config import load as loadConfig
+    from denoiseCore.data.pairing import enumerateFactorPairs
     from denoiseCore.data.readers import getReader
-    from denoiseCore.data.pairing import enumeratePairs
-    from denoiseCore.device       import getDevice
-    from denoiseCore.warpxInput   import load as loadWarpXInput
+    from denoiseCore.data.dataset import (FactorPairDataset,
+                                          outputChannelNames,
+                                          outputChannelIndices)
+    from denoiseCore.device import getDevice
+    from particleDenoiser.models import buildModel
+    from particleDenoiser.training import fitNormalizer
 
     cfg = loadConfig(args.config)
     dev = getDevice()
     ckpt = torch.load(args.checkpoint, map_location=dev.device,
                       weights_only=False)
     reader = getReader(cfg.data.reader)
-    groups = enumeratePairs(reader, cfg.data.ppc_tiers, cfg.data.steps)
-    wxi = loadWarpXInput(cfg.data.warpx_input) if cfg.data.warpx_input else None
-    raw_mom_required = _rawMomentsToLoad(cfg.data.channels.species)
-    # Load enough on-disk moments to compute the derived (P, T) per
-    # species. Raw on-disk moment names are `ux/uy/uz` (not px/py/pz);
-    # the snapshot becomes px/py/pz after `_augmentSnapshotDerived`.
-    full_mom = sorted(set(raw_mom_required) | {
-        "num", "ux", "uy", "uz", "enex", "eney", "enez"})
+    tiers = cfg.data.ppc_tiers
+    if len(tiers) < 2:
+        raise RuntimeError("comparisons need >= 2 ppc tiers")
 
-    # Need the existing training-side helper to fit the normalizer
-    # (paths diverge by variant; use the global one which has no
-    # patch-specific extras).
-    if args.cli == "global":
-        from particleDenoiser.training import fitNormalizerFromGroups
-    elif args.cli == "local":
-        from denoiseCore.trainingLoop import fitNormalizerFromGroups
-    else:  # flow
-        from flowParticleDenoiser.training import fitNormalizerFromGroups
-    norm = fitNormalizerFromGroups(reader, groups,
-                                   cfg.data.channels,
-                                   cfg.data.normalization,
-                                   warpx_input=wxi)
+    warpx_input = None
+    if cfg.data.warpx_input is not None:
+        from denoiseCore.warpxInput import load as loadWarpXInput
+        warpx_input = loadWarpXInput(cfg.data.warpx_input)
 
-    gt_name = next(t.name for t in cfg.data.ppc_tiers if t.ground_truth)
-    tiers_wanted = [t.strip() for t in args.tiers.split(",") if t.strip()]
-    steps_wanted = [int(s) for s in args.steps.split(",")]
+    all_pairs = enumerateFactorPairs(reader, tiers, cfg.data.steps)
+    norm = fitNormalizer(reader, all_pairs, cfg.data.channels,
+                         cfg.data.normalization, warpx_input)
 
-    # Probe to size the model.
-    probe_info = groups[0].tier_infos[gt_name]
-    probe_snap = reader.load(probe_info, cfg.data.channels.fields,
-                             raw_mom_required,
-                             cfg.data.channels.species_names)
-    _augmentSnapshotDerived(probe_snap, cfg.data.channels.species,
-                            cfg.data.channels.species_names, wxi)
-    probe_x = snapshotToInputTensor(probe_snap, cfg.data.channels, norm)
-    in_base = probe_x.shape[0]
-    out_names   = outputChannelNames(cfg.data.channels)
+    out_names = outputChannelNames(cfg.data.channels)
     out_indices = outputChannelIndices(cfg.data.channels)
-    out_channels = len(out_names)
-    dim = probe_x.ndim - 1
+    probe = FactorPairDataset(all_pairs[:1], reader, cfg.data.channels,
+                              norm, cache=False, prefill=False,
+                              warpx_input=warpx_input)[0]
+    in_channels = probe.input_tensor.shape[0]
+    dim = probe.input_tensor.ndim - 1
+    model = buildModel(cfg.model, in_channels=in_channels,
+                       out_channels=len(out_names),
+                       out_indices=out_indices, dim=dim).to(dev.device)
+    model.load_state_dict(ckpt["model"])
+    model.eval()
 
-    patch_dataset = None
-    aux_chans = 0
-    if args.cli == "local":
-        from denoiseCore.data.dataset import PairedPICDataset
-        from localParticleDenoiser.data import PatchDataset
-        aux_chans = (len(cfg.data.boundary_spec)
-                     if cfg.data.boundary_channels else 0)
-        base = PairedPICDataset(groups, reader, cfg.data.channels, norm,
-                                cache=cfg.data.cache_snapshots,
-                                cache_max_gib=cfg.data.cache_max_gib,
-                                warpx_input=wxi)
-        patch_dataset = PatchDataset(
-            base, patch_size=cfg.model.patch_size,
-            boundary_spec=cfg.data.boundary_spec,
-            boundary_channels=cfg.data.boundary_channels)
-    in_channels = in_base + aux_chans
+    # Group pairs by (ppc_in, ppc_out).
+    by_tier_pair: Dict[tuple, list] = {}
+    for p in all_pairs:
+        by_tier_pair.setdefault((p.ppc_in, p.ppc_out), []).append(p)
 
-    model, fwd = buildModelAndForwarder(
-        args.cli, cfg, ckpt, dev,
-        in_channels=in_channels, out_channels=out_channels,
-        out_indices=out_indices,
-        dim=dim, patch_dataset=patch_dataset,
-    )
+    # Which tier pairs to render.
+    if args.pairs:
+        wanted = []
+        for tok in args.pairs.split(","):
+            a, b = tok.split(":")
+            wanted.append((int(a), int(b)))
+    else:
+        top = max(t.ppc for t in tiers)
+        wanted = sorted(k for k in by_tier_pair if k[1] == top)
 
-    out_dir = Path(args.out_dir).expanduser().resolve()
-    out_dir.mkdir(parents=True, exist_ok=True)
+    want_steps = ([int(s) for s in args.steps.split(",")]
+                  if args.steps else None)
 
-    step_to_group = {g.step: g for g in groups}
-    field_names   = cfg.data.channels.output_fields
-    moment_names  = cfg.data.channels.output_species_moments
-    species_names = cfg.data.channels.species_names
+    derived_species = cfg.data.channels.species_names
+    can_derive = warpx_input is not None
+    out_dir = Path(args.out_dir)
 
-    # Step 1: for each (tier, step) collect the input, prediction, and
-    # GT *physical-units* arrays per (raw output channel) and recompute
-    # the derived (P, T) per species on each side.
-    # Cache by (tier, step) so we can stack across phases per channel.
-    Snap = dict  # type alias for clarity
-    cache: dict[str, dict[int, Snap]] = {t: {} for t in tiers_wanted}
-
-    for step in steps_wanted:
-        if step not in step_to_group:
-            print(f"  skipping step {step}: not in any pair group")
+    for (ppc_in, ppc_out) in wanted:
+        group = sorted(by_tier_pair.get((ppc_in, ppc_out), []),
+                       key=lambda p: p.step)
+        if not group:
+            print(f"  no pairs for ppc {ppc_in} -> {ppc_out}, skipping")
             continue
-        g = step_to_group[step]
-        # Ground truth (load all moments needed for derived).
-        gt_info = g.tier_infos[gt_name]
-        gt_snap = reader.load(gt_info, cfg.data.channels.fields,
-                              full_mom, cfg.data.channels.species_names)
-        _augmentSnapshotDerived(gt_snap, cfg.data.channels.species,
-                                cfg.data.channels.species_names, wxi)
-        gt_derived = deriveSpeciesPandT(gt_snap, wxi)
+        if want_steps is not None:
+            group = [p for p in group if p.step in want_steps]
+        elif len(group) > args.max_steps:
+            idx = np.linspace(0, len(group) - 1, args.max_steps)
+            group = [group[int(round(i))] for i in idx]
+        if not group:
+            continue
 
-        for tier in tiers_wanted:
-            if tier not in g.tier_infos:
-                print(f"  skipping tier {tier} step {step}: not present")
-                continue
-            lo_info = g.tier_infos[tier]
-            lo_snap = reader.load(lo_info, cfg.data.channels.fields,
-                                  full_mom,
-                                  cfg.data.channels.species_names)
-            _augmentSnapshotDerived(lo_snap, cfg.data.channels.species,
-                                    cfg.data.channels.species_names,
-                                    wxi)
-            lo_derived = deriveSpeciesPandT(lo_snap, wxi)
+        # Per-channel row stacks, plus per-step derived-moment dicts.
+        raw_rows: Dict[str, list] = {n: [] for n in out_names}
+        labels: list[str] = []
+        derived_in: list = []
+        derived_pred: list = []
+        derived_tgt: list = []
 
-            # Inference.
-            x_norm = torch.from_numpy(
-                snapshotToInputTensor(lo_snap, cfg.data.channels, norm))
-            pred_norm = fwd(x_norm)
-            pred_arr = pred_norm.numpy()
+        for pair in group:
+            ds = FactorPairDataset([pair], reader, cfg.data.channels,
+                                   norm, cache=False, prefill=False,
+                                   warpx_input=warpx_input)
+            s = ds[0]
+            x = s.input_tensor.unsqueeze(0).to(dev.device)
+            s2i = torch.tensor([s.sigma2_in], device=dev.device)
+            s2o = torch.tensor([s.sigma2_out], device=dev.device)
+            with torch.no_grad():
+                pred = model(x, s2i, s2o).squeeze(0)
 
-            # Build a prediction snapshot: deep copy lo_snap, then
-            # overwrite output channels with denormalized predictions.
-            pred_snap = deepcopy(lo_snap)
-            n_field = len(field_names)
-            for k, ch in enumerate(out_names):
-                phys = norm.invert(ch, pred_arr[k])
-                if k < n_field:
-                    pred_snap.fields[field_names[k]] = phys
-                else:
-                    j = k - n_field
-                    sp_idx, mom_idx = divmod(j, len(moment_names))
-                    sp  = species_names[sp_idx]
-                    mom = moment_names[mom_idx]
-                    pred_snap.species[sp][mom] = phys
-            pred_derived = deriveSpeciesPandT(pred_snap, wxi)
+            inp_oc = s.input_tensor[out_indices]
+            phys_in = denormChannels(inp_oc, out_names, norm)
+            phys_pred = denormChannels(pred, out_names, norm)
+            phys_tgt = denormChannels(s.target_tensor, out_names, norm)
 
-            # Stash per-channel physical arrays for this (tier, step).
-            phys: dict[str, dict[str, np.ndarray]] = {
-                "input": {}, "pred": {}, "gt": {},
-            }
-            # Raw output channels.
-            for k, ch in enumerate(out_names):
-                if k < n_field:
-                    phys["input"][ch] = lo_snap.fields[field_names[k]]
-                    phys["pred"][ch]  = pred_snap.fields[field_names[k]]
-                    phys["gt"][ch]    = gt_snap.fields[field_names[k]]
-                else:
-                    j = k - n_field
-                    sp_idx, mom_idx = divmod(j, len(moment_names))
-                    sp  = species_names[sp_idx]
-                    mom = moment_names[mom_idx]
-                    phys["input"][ch] = lo_snap.species[sp][mom]
-                    phys["pred"][ch]  = pred_snap.species[sp][mom]
-                    phys["gt"][ch]    = gt_snap.species[sp][mom]
-            # Derived channels (per species).
-            for sp in species_names:
-                for q in ("Pxx", "Pyy", "Pzz", "Tx", "Ty", "Tz"):
-                    name = f"{q}_{sp}"
-                    phys["input"][name] = lo_derived[sp][q]
-                    phys["pred"][name]  = pred_derived[sp][q]
-                    phys["gt"][name]    = gt_derived[sp][q]
-            cache[tier][step] = phys
-            print(f"  inferred {tier} step {step}")
+            for n in out_names:
+                raw_rows[n].append({"input": phys_in[n],
+                                     "pred": phys_pred[n],
+                                     "target": phys_tgt[n]})
+            labels.append(f"step {pair.step}")
+            if can_derive:
+                derived_in.append(
+                    deriveSpeciesPandT(phys_in, derived_species, warpx_input))
+                derived_pred.append(
+                    deriveSpeciesPandT(phys_pred, derived_species, warpx_input))
+                derived_tgt.append(
+                    deriveSpeciesPandT(phys_tgt, derived_species, warpx_input))
 
-    # Step 2: assemble per-(tier, channel) 4x4 plots.
-    all_channels = list(out_names) + list(DERIVED_CHANNELS)
-    phase_labels = [f"{lab} (step {st})" for st, lab in PHASES]
+        # Raw output channels.
+        for n in out_names:
+            out_path = out_dir / f"comparison_ppc{ppc_in}_to_ppc{ppc_out}_{n}.png"
+            plotComparisonGrid(out_path, n, raw_rows[n], labels,
+                               ppc_in, ppc_out)
 
-    n_written = 0
-    for tier in tiers_wanted:
-        for ch in all_channels:
-            rows = []
-            step_labels = []
-            for st, lab in PHASES:
-                step = int(st)
-                if step not in cache[tier]:
-                    continue
-                rows.append({
-                    "input": cache[tier][step]["input"][ch],
-                    "pred":  cache[tier][step]["pred"][ch],
-                    "gt":    cache[tier][step]["gt"][ch],
-                })
-                step_labels.append(f"{lab}\n(step {st})")
-            if not rows:
-                continue
-            out_path = out_dir / (
-                f"comparison_{args.variant_id}_{tier}_{ch}.png")
-            plotComparisonGrid(out_path, channel_name=ch,
-                               rows=rows, phase_labels=step_labels)
-            n_written += 1
-    print(f"wrote {n_written} comparison grids -> {out_dir}")
+        # Derived pressure / temperature channels.
+        if can_derive:
+            for sp in derived_species:
+                for moment in ("Pxx", "Pyy", "Pzz", "Tx", "Ty", "Tz"):
+                    rows = [{"input": di[sp][moment],
+                             "pred": dp[sp][moment],
+                             "target": dt[sp][moment]}
+                            for di, dp, dt in
+                            zip(derived_in, derived_pred, derived_tgt)]
+                    units = "eV" if moment.startswith("T") else "Pa"
+                    name = f"{moment}_{sp}"
+                    out_path = (out_dir /
+                                f"comparison_ppc{ppc_in}_to_ppc{ppc_out}_{name}.png")
+                    plotComparisonGrid(out_path, name, rows, labels,
+                                       ppc_in, ppc_out, units=units)
+
+        print(f"  ppc {ppc_in} -> {ppc_out}: "
+              f"{len(out_names) + (12 if can_derive else 0)} channels, "
+              f"{len(group)} steps")
+
+    print(f"comparison panels written to {out_dir}/")
     return 0
 
 
