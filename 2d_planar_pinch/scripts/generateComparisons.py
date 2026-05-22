@@ -26,8 +26,8 @@ Output filenames are flat under <out-dir>:
     comparison_ppc<N>_to_ppc<M>_<channel>.png
 
 Usage:
-    generateComparisons.py --config denoise/cfg_charbonnier.yaml \\
-        --checkpoint models/.run_pdn_charbonnier.<plat>/best.pt \\
+    generateComparisons.py --config denoise/cfg_globalcnn_charbonnier.yaml \\
+        --checkpoint models/.run_pdn_globalcnn_charbonnier.<plat>/best.pt \\
         --out-dir comparisons
 """
 from __future__ import annotations

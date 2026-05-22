@@ -32,7 +32,7 @@
 #                          Example: -o /path/to/custom/output
 #
 #   -k, --checkpoint=FILE  Checkpoint file for evaluate (required for that action)
-#                          Example: -k models/.run_pdn_unet.matrix/best.pt
+#                          Example: -k models/.run_pdn_globalcnn_charbonnier.matrix/best.pt
 #                          Example: -k /path/to/checkpoint.pt
 #
 #   -n, --ntasks=N         Override number of MPI tasks (for multi-GPU)
@@ -78,25 +78,25 @@
 #      ./run_denoise.sh -l
 #
 #   2. Run all steps (inspect, train, evaluate) in interactive mode:
-#      ./run_denoise.sh -c unet all
+#      ./run_denoise.sh -c globalcnn_charbonnier all
 #
 #   3. Submit batch job to run all steps:
-#      ./run_denoise.sh -m batch -c unet all
+#      ./run_denoise.sh -m batch -c globalcnn_charbonnier all
 #
 #   4. Train with custom learning rate (interactive):
-#      ./run_denoise.sh -c unet train train.lr=1e-4
+#      ./run_denoise.sh -c globalcnn_charbonnier train train.lr=1e-4
 #
 #   5. Train in batch mode with 8 GPUs and 2-hour walltime:
-#      ./run_denoise.sh -m batch -n 8 -t 2:00:00 -c unet train
+#      ./run_denoise.sh -m batch -n 8 -t 2:00:00 -c globalcnn_charbonnier train
 #
 #   6. Evaluate with specific checkpoint:
-#      ./run_denoise.sh -c unet -k models/.run_pdn_unet.matrix/best.pt evaluate
+#      ./run_denoise.sh -c globalcnn_charbonnier -k models/.run_pdn_globalcnn_charbonnier.matrix/best.pt evaluate
 #
 #   7. Dry-run to see commands without executing:
-#      ./run_denoise.sh -d -c unet train
+#      ./run_denoise.sh -d -c globalcnn_charbonnier train
 #
 #   8. Submit batch job to debug queue with verbose output:
-#      ./run_denoise.sh -v -m batch -q debug -c unet inspect
+#      ./run_denoise.sh -v -m batch -q debug -c globalcnn_charbonnier inspect
 #
 
 set -e
