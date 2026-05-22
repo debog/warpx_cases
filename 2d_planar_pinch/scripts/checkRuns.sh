@@ -360,9 +360,7 @@ check_run() {
         pass "no fatal-error lines in the log"
     fi
     if (( n_conv > 0 )); then
-        warnln "log contains $n_conv non-convergence line(s) (newton.require_convergence=false tolerates these)"
-        grep -iE 'did not converge|failed to converge|DIVERGED|not converged' <<<"$hits" \
-            | grep -vi 'Picard solver for' | head -3 | sed 's/^/      | /'
+        warnln "$n_conv solver non-convergence line(s) in the log (tolerated; newton.require_convergence=false)"
     else
         pass "no solver non-convergence reported (Picard non-convergence ignored)"
     fi
@@ -397,18 +395,23 @@ check_run() {
         elif (( n_other <= 0 )); then
             pass "WarpX warning summary: only Picard non-convergence warnings (ignored)"
         else
-            warnln "WarpX raised $n_other non-Picard warning(s) -- review:"
-            # Print the header plus each "-->" entry block, dropping the
-            # Picard-solver blocks.
+            warnln "WarpX raised $n_other non-Picard warning(s):"
+            # One line per warning topic: "<count> x [topic]". The
+            # topic is the second bracketed field on a "-->" line;
+            # Picard-solver entries are skipped.
             awk '
-                /\*\*\*\* WARNINGS|GLOBAL warning list/ {print; next}
-                /-->/      {if (blk != "" && blk !~ /Picard solver for/)
-                                printf "%s", blk;
-                            blk = $0 ORS; next}
-                blk != ""  {blk = blk $0 ORS}
-                END        {if (blk != "" && blk !~ /Picard solver for/)
-                                printf "%s", blk}
-            ' <<<"$warnbox" | sed 's/^/      | /' | head -40
+                /-->/ {
+                    if (h != "" && blk !~ /Picard solver for/) {
+                        split(h, p, /[][]/); cnt[p[4]]++ }
+                    h = $0; blk = $0 ORS; next
+                }
+                h != "" { blk = blk $0 ORS }
+                END {
+                    if (h != "" && blk !~ /Picard solver for/) {
+                        split(h, p, /[][]/); cnt[p[4]]++ }
+                    for (t in cnt) printf "%d x [%s]\n", cnt[t], t
+                }
+            ' <<<"$warnbox" | sort -rn | sed 's/^/      | /'
         fi
     fi
 
