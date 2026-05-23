@@ -129,12 +129,10 @@ deuterium.uy_th = sqrt(T0*q_e/mD)/clight
 deuterium.uz_th = sqrt(T0*q_e/mD)/clight
 
 ###   Diagnostics
-diagnostics.diags_names = diag1_ em_fields species_moms checkpoint
-diag1_.intervals = 225
-diag1_.diag_type = Full
-diag1_.fields_to_plot = part_per_cell Ex Ey Ez Bx By Bz jx jy jz rho divE
-diag1_.electrons.variables = x z w ux uy uz
-diag1_.deuterium.variables = x z w ux uy uz
+# diag1_ removed: it duplicated em_fields under diags/, was never used
+# by post-processing or the denoiser training pipeline (which reads
+# only mesh_data/), and inflated I/O time per step.
+diagnostics.diags_names = em_fields species_moms checkpoint
 
 checkpoint.format = checkpoint
 checkpoint.diag_type = Full

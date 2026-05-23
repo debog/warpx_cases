@@ -164,11 +164,13 @@ check_run() {
     # waste disk; remove them unless --dry-run is set.
     #
     # -maxdepth 2: plotfile leftovers all live at depth 2
-    # (mesh_data/<...>.old.<ts>, diags/<diag>_<...>.old.<ts>).
-    # Descending into Level_0/ would stat every Cell_D file and is
-    # painfully slow on a parallel filesystem.
+    # (mesh_data/<...>.old.<ts>). Descending into Level_0/ would stat
+    # every Cell_D file and is painfully slow on Lustre. The diags/
+    # tree is excluded -- it is not consumed by the training pipeline
+    # and is wiped by post-processing.
     local -a olds
-    mapfile -t olds < <(find "$dir" -maxdepth 2 -name '*.old.*' 2>/dev/null)
+    mapfile -t olds < <(find "$dir" -maxdepth 2 -name '*.old.*' \
+                              -not -path "$dir/diags/*" 2>/dev/null)
     if (( ${#olds[@]} > 0 )); then
         if (( DRY_RUN )); then
             info "would remove ${#olds[@]} .old.* entry/ies (re-run without -n to delete)"
@@ -316,6 +318,10 @@ check_run() {
         [[ "$fmt" == "checkpoint" ]] && continue
         prefix=$(resolved_value "$used" "${d//./\\.}\.file_prefix")
         [[ -z "$prefix" ]] && prefix="diags/$d"
+        # The diags/ tree (legacy diag1_, reduced files, checkpoints) is
+        # not consumed by the denoiser pipeline and is wiped after
+        # post-processing -- skip without touching it.
+        [[ "$prefix" == diags/* ]] && continue
         interval=$(last_int "$(resolved_value "$used" "${d//./\\.}\.intervals")")
         [[ -z "$interval" || "$interval" -le 0 ]] && continue
 
@@ -324,12 +330,8 @@ check_run() {
                  | grep -vc '\.old\.')
 
         if (( actual == 0 )); then
-            if [[ "$prefix" == diags/* ]]; then
-                info "$d: 0 plotfiles under ${prefix}* (diags/ is cleared post-run; skipped)"
-            else
-                failln "$d: 0 plotfiles under ${prefix}*  (expected output is missing)"
-                problems=$((problems+1))
-            fi
+            failln "$d: 0 plotfiles under ${prefix}*  (expected output is missing)"
+            problems=$((problems+1))
             continue
         fi
 
