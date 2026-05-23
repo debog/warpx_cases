@@ -67,21 +67,27 @@ def deriveSpeciesPandT(moments: Dict[str, np.ndarray],
     for sp in species_names:
         mass = float(warpx_input.species_mass(sp))
         num = np.asarray(moments[f"num_{sp}"], dtype=np.float64)
-        # `num` may briefly be 0 in sparse cells; floor the divisor.
-        num_safe = np.where(num > 0.0, num, 1.0)
+        # Vacuum cells have num ~ 0, where p/num and ene/num are
+        # numerically meaningless and would feed huge variance into
+        # T. Floor `num` at a small fraction of the snapshot's peak;
+        # cells below the floor are then masked to zero on output so
+        # vacuum reads as a uniform background in the plots.
+        num_max = float(np.nanmax(num)) if np.any(np.isfinite(num)) else 0.0
+        floor = num_max * 1.0e-3 if num_max > 0 else 1.0
+        num_safe = np.where(num > floor, num, floor)
+        plasma  = num > floor
         P, T = {}, {}
         for ax in ("x", "y", "z"):
-            p_i = np.asarray(moments[f"p{ax}_{sp}"], dtype=np.float64)
+            p_i   = np.asarray(moments[f"p{ax}_{sp}"],  dtype=np.float64)
             ene_i = np.asarray(moments[f"ene{ax}_{sp}"], dtype=np.float64)
-            mean_v = p_i / (mass * num_safe)
+            mean_v  = p_i  / (mass * num_safe)
             mean_v2 = 2.0 * ene_i / (mass * num_safe)
             var = np.clip(mean_v2 - mean_v * mean_v, 0.0, None)
-            P_ii = (mass / vcell) * num * var
-            T_ii = P_ii * vcell / np.where(num > 0.0, num, np.nan)
-            T_ii_eV = np.where(np.isfinite(T_ii * EV_PER_JOULE),
-                               T_ii * EV_PER_JOULE, 0.0)
-            P[ax] = P_ii
-            T[ax] = T_ii_eV
+            P_ii = (mass / vcell) * num_safe * var
+            T_ii = P_ii * vcell / num_safe
+            T_ii_eV = T_ii * EV_PER_JOULE
+            P[ax] = np.where(plasma, P_ii, 0.0)
+            T[ax] = np.where(plasma, T_ii_eV, 0.0)
         out[sp] = {
             "Pxx": P["x"], "Pyy": P["y"], "Pzz": P["z"],
             "Tx":  T["x"], "Ty":  T["y"], "Tz":  T["z"],
