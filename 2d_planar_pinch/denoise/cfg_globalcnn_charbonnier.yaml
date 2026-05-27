@@ -34,6 +34,22 @@ data:
   training_data: training_data
   val_fraction: 0.15
 
+  # Persistent on-disk cache of normalised input tensors. First run
+  # builds it; subsequent runs (restart, hyperparameter sweep,
+  # retrain) reload in seconds instead of re-prefilling for ~1.5 h.
+  # Path is relative to the cwd from which `particle-denoise` runs.
+  cache_path: training_data/.normalised_cache.pt
+  # Parallel snapshot loading during the prefill phase. Matrix gives
+  # us 28 CPUs / task; 16 is a safe pick that keeps Lustre happy
+  # without saturating the process-pool overhead.
+  prefill_workers: 16
+  # Per-rank cache budget. With DDP the four ranks each claim their
+  # own RAM cache; the auto default (~50% of MemAvailable) would
+  # over-commit. 80 GiB / rank x 4 ranks ~ 320 GiB on a 256-GB-class
+  # Matrix node still fits because each rank's working set is the
+  # train shard, not the whole dataset.
+  cache_max_gib: 80
+
   channels:
     fields:
       - By
@@ -109,3 +125,7 @@ train:
   lr: 1.0e-3
   amp: true
   early_stop_patience: 30
+  # DataLoader background workers per rank. With --cpu-bind=cores
+  # exposing the full 28 CPUs of --cpus-per-task, 8 is comfortably
+  # within budget and keeps GPU step time fed.
+  num_workers: 8

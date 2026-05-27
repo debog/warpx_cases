@@ -394,21 +394,22 @@ EOF
     fi
 
     # Build srun prefix command with GPU support if needed.
-    # --cpu-bind=none: by default srun on Matrix (and many SLURM
-    # clusters) pins each task to a single core via --cpu-bind=cores,
-    # which makes os.sched_getaffinity() return a 1-CPU mask even
-    # when --cpus-per-task allocates many. PyTorch's DataLoader
-    # then clamps num_workers to 1, regardless of how many cores
-    # the cgroup grants. --cpu-bind=none lifts the kernel-level
-    # binding so the task can use all cores in its cgroup.
+    # --cpu-bind=cores: spreads each task's affinity across the full
+    # --cpus-per-task allocation. The earlier --cpu-bind=none on
+    # Matrix's SLURM did NOT release binding -- it kept the default
+    # 1-CPU-per-GPU layout, which made os.sched_getaffinity() return
+    # a 1-CPU mask and made PyTorch's DataLoader clamp num_workers
+    # to 1. With =cores, the task sees all 28 CPUs that
+    # --cpus-per-task asked for and DataLoader / prefill_workers /
+    # OMP can scale.
     local srun_prefix=""
     local cpu_arg=""
     [[ -n "$CPUS_PER_TASK" ]] && cpu_arg=" -c ${CPUS_PER_TASK}"
     if [[ "$GPU_SUPPORT" == "true" ]]; then
         local total_gpus=$((NTASKS * GPUS_PER_TASK))
-        srun_prefix="srun --exclusive --cpu-bind=none -N ${NNODES} -G ${total_gpus} -n ${NTASKS}${cpu_arg}"
+        srun_prefix="srun --exclusive --cpu-bind=cores -N ${NNODES} -G ${total_gpus} -n ${NTASKS}${cpu_arg}"
     else
-        srun_prefix="srun --cpu-bind=none -N ${NNODES} -n ${NTASKS}${cpu_arg}"
+        srun_prefix="srun --cpu-bind=cores -N ${NNODES} -n ${NTASKS}${cpu_arg}"
     fi
 
     echo "" >> "$jobfile"
@@ -599,7 +600,7 @@ generate_run_script() {
     case "$scheduler" in
         slurm)
             local debug_queue=$(get_config "$PLATFORM" "debug_queue" "pdebug")
-            runcmd="srun --exclusive --cpu-bind=none -N $NNODES -n $NTASKS -p $debug_queue --export=ALL"
+            runcmd="srun --exclusive --cpu-bind=cores -N $NNODES -n $NTASKS -p $debug_queue --export=ALL"
             [[ -n "$CPUS_PER_TASK" ]] && runcmd="$runcmd -c $CPUS_PER_TASK"
             if [[ "$GPU_SUPPORT" == "true" ]]; then
                 local total_gpus=$((NTASKS * GPUS_PER_TASK))
@@ -832,7 +833,7 @@ run_interactive() {
 
     case "$scheduler" in
         slurm)
-            local runcmd="srun --exclusive --cpu-bind=none -N $NNODES -n $NTASKS -p $debug_queue --export=ALL"
+            local runcmd="srun --exclusive --cpu-bind=cores -N $NNODES -n $NTASKS -p $debug_queue --export=ALL"
             [[ -n "$CPUS_PER_TASK" ]] && runcmd="$runcmd -c $CPUS_PER_TASK"
             if [[ "$GPU_SUPPORT" == "true" ]]; then
                 local total_gpus=$((NTASKS * GPUS_PER_TASK))
