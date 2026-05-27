@@ -4,8 +4,8 @@
 Consumes the JSON written by `particle-denoise evaluate` and, for each
 output channel, draws a 2-D heatmap:
 
-    x-axis : input ppc N
-    y-axis : denoising factor f = sqrt(ppc_out / ppc_in)
+    x-axis : input per-dimension ppc, sqrt(N)
+    y-axis : denoising factor f = sqrt(ppc_out / ppc_in) (also per-dim)
     colour : validation RMSE for that channel at (N, f), in
              channel-stddev units
 
@@ -35,16 +35,19 @@ import numpy as np                       # noqa: E402
 from matplotlib.colors import TwoSlopeNorm   # noqa: E402
 
 
-def _buildGrid(pairs, channel_idx, ppcs, factors):
-    """Return an (n_factors, n_ppc) array of RMSE for one channel,
-    NaN where the (N, f) tier pair does not exist."""
-    ppc_idx = {n: i for i, n in enumerate(ppcs)}
-    f_idx = {f: i for i, f in enumerate(factors)}
-    grid = np.full((len(factors), len(ppcs)), np.nan)
+def _buildGrid(pairs, channel_idx, ppcs_in, ppcs_out):
+    """Return an (n_ppc_out, n_ppc_in) array of RMSE for one channel,
+    NaN where the (N, M) tier pair does not exist. Plotted with N on
+    the x-axis and M on the y-axis; the denoising factor f = sqrt(M/N)
+    is the off-diagonal distance."""
+    ic = {n: i for i, n in enumerate(ppcs_in)}
+    io = {n: i for i, n in enumerate(ppcs_out)}
+    grid = np.full((len(ppcs_out), len(ppcs_in)), np.nan)
     for p in pairs:
-        r = f_idx[round(p["factor"], 4)]
-        c = ppc_idx[p["ppc_in"]]
-        grid[r, c] = p["per_channel_rmse"][channel_idx]
+        if p["ppc_in"] not in ic or p["ppc_out"] not in io:
+            continue
+        grid[io[p["ppc_out"]], ic[p["ppc_in"]]] = \
+            p["per_channel_rmse"][channel_idx]
     return grid
 
 
@@ -58,16 +61,18 @@ def _norm(grid):
                         vmax=max(hi, 1.01))
 
 
-def _drawHeatmap(ax, grid, ppcs, factors, title, annotate=True):
+def _drawHeatmap(ax, grid, ppcs_in, ppcs_out, title, annotate=True):
     masked = np.ma.masked_invalid(grid)
     im = ax.imshow(masked, origin="lower", aspect="auto",
                    cmap="RdBu_r", norm=_norm(grid))
-    ax.set_xticks(range(len(ppcs)))
-    ax.set_xticklabels([str(n) for n in ppcs])
-    ax.set_yticks(range(len(factors)))
-    ax.set_yticklabels([f"{f:g}" for f in factors])
-    ax.set_xlabel("input ppc  N")
-    ax.set_ylabel("denoising factor  f")
+    ax.set_xticks(range(len(ppcs_in)))
+    ax.set_xticklabels([f"{int(round(n ** 0.5))}" for n in ppcs_in],
+                       fontsize=8)
+    ax.set_yticks(range(len(ppcs_out)))
+    ax.set_yticklabels([f"{int(round(n ** 0.5))}" for n in ppcs_out],
+                       fontsize=8)
+    ax.set_xlabel("input ppc per dimension  $\\sqrt{N}$")
+    ax.set_ylabel("output ppc per dimension  $\\sqrt{M}$")
     ax.set_title(title, fontsize=10)
     if annotate:
         for r in range(grid.shape[0]):
@@ -75,7 +80,7 @@ def _drawHeatmap(ax, grid, ppcs, factors, title, annotate=True):
                 v = grid[r, c]
                 if np.isfinite(v):
                     ax.text(c, r, f"{v:.2f}", ha="center", va="center",
-                            fontsize=7,
+                            fontsize=6,
                             color="white" if abs(v - 1.0) > 0.6 else "black")
     return im
 
@@ -96,17 +101,18 @@ def main() -> int:
         print("no pairs in the RMSE JSON; nothing to plot")
         return 1
 
-    ppcs = sorted({p["ppc_in"] for p in pairs})
-    factors = sorted({round(p["factor"], 4) for p in pairs})
+    ppcs_in  = sorted({p["ppc_in"]  for p in pairs})
+    ppcs_out = sorted({p["ppc_out"] for p in pairs})
     out_dir = Path(args.out_dir).expanduser().resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # Per-channel PNGs.
     for ci, ch in enumerate(channels):
-        grid = _buildGrid(pairs, ci, ppcs, factors)
-        fig, ax = plt.subplots(figsize=(1.1 * len(ppcs) + 2.5,
-                                        0.7 * len(factors) + 2.0))
-        im = _drawHeatmap(ax, grid, ppcs, factors,
+        grid = _buildGrid(pairs, ci, ppcs_in, ppcs_out)
+        fig, ax = plt.subplots(
+            figsize=(0.55 * len(ppcs_in) + 2.5,
+                     0.55 * len(ppcs_out) + 2.0))
+        im = _drawHeatmap(ax, grid, ppcs_in, ppcs_out,
                           f"{ch}: validation RMSE (channel-stddev units)")
         fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04,
                      label="RMSE  (1 = constant-mean baseline)")
@@ -125,11 +131,11 @@ def main() -> int:
                              squeeze=False)
     for ci, ch in enumerate(channels):
         ax = axes[ci // ncol][ci % ncol]
-        grid = _buildGrid(pairs, ci, ppcs, factors)
-        _drawHeatmap(ax, grid, ppcs, factors, ch, annotate=False)
+        grid = _buildGrid(pairs, ci, ppcs_in, ppcs_out)
+        _drawHeatmap(ax, grid, ppcs_in, ppcs_out, ch, annotate=False)
     for k in range(n, nrow * ncol):
         axes[k // ncol][k % ncol].axis("off")
-    fig.suptitle(f"{args.variant_id}: per-channel (N, f) validation RMSE",
+    fig.suptitle(f"{args.variant_id}: per-channel (N, M) validation RMSE",
                  fontsize=12)
     fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.98))
     fig.savefig(str(out_dir / f"heatmap_{args.variant_id}_overview.png"),
