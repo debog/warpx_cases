@@ -38,7 +38,24 @@ NOISE  = ("jx", "jy",
           "eney_electrons", "enez_electrons",
           "eney_deuterium", "enez_deuterium")
 
-def _renderOverview(pairs, channels, names, out_path, title):
+
+def _debiasGrid(g: np.ndarray, ppcs_out) -> np.ndarray:
+    """Subtract per-M target-noise floor (`K_c / M`, calibrated from
+    the channel's cleanest cell) from RMSE^2. See
+    generateErrorHeatmaps._debiasGrid for the rationale."""
+    ppcs_arr = np.asarray(ppcs_out, dtype=np.float64)
+    rmsesq = g.astype(np.float64) ** 2
+    cal = rmsesq * ppcs_arr[:, None]
+    finite = cal[np.isfinite(cal)]
+    if not finite.size:
+        return g.copy()
+    K_c = float(np.nanmin(cal))
+    floor_sq = K_c / ppcs_arr[:, None]
+    return np.sqrt(np.maximum(0.0, rmsesq - floor_sq))
+
+
+def _renderOverview(pairs, channels, names, out_path, title,
+                    debias=True):
     ppcs_in  = sorted({p["ppc_in"]  for p in pairs})
     ppcs_out = sorted({p["ppc_out"] for p in pairs})
     name_to_idx = {n: i for i, n in enumerate(channels)}
@@ -55,6 +72,8 @@ def _renderOverview(pairs, channels, names, out_path, title):
         for p in pairs:
             g[io[p["ppc_out"]], ic[p["ppc_in"]]] = \
                 p["per_channel_rmse"][cidx]
+        if debias:
+            g = _debiasGrid(g, ppcs_out)
         grids[name] = g
     all_finite = np.concatenate(
         [g[np.isfinite(g)].ravel() for g in grids.values()])
@@ -91,8 +110,10 @@ def _renderOverview(pairs, channels, names, out_path, title):
     # spans the full panel grid.
     fig.tight_layout(rect=(0.03, 0.04, 0.92, 0.96))
     cbar_ax = fig.add_axes([0.93, 0.10, 0.013, 0.80])
-    fig.colorbar(im_handle, cax=cbar_ax,
-                 label="RMSE  (1 = constant-mean baseline)")
+    label = ("RMSE  (1 = constant-mean baseline)" if not debias else
+             "systematic RMSE  (target noise floor subtracted; "
+             "1 = constant-mean baseline)")
+    fig.colorbar(im_handle, cax=cbar_ax, label=label)
     fig.savefig(out_path, dpi=110, bbox_inches="tight")
     plt.close(fig)
     print(f"wrote {out_path}")
@@ -102,17 +123,25 @@ def main():
     ap.add_argument("--rmse-json", required=True)
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--variant-id", default="factor")
+    ap.add_argument("--raw", action="store_true",
+                    help="report raw RMSE against the noisy target; "
+                         "default subtracts the per-M target-noise "
+                         "floor.")
     args = ap.parse_args()
     data = json.loads(Path(args.rmse_json).read_text())
     pairs = data["pairs"]
     channels = data["channels"]
     out = Path(args.out_dir)
+    metric = "validation RMSE" if args.raw else \
+             "systematic validation RMSE (target-noise debiased)"
     _renderOverview(pairs, channels, SIGNAL,
                     out / f"heatmap_{args.variant_id}_overview_signal.png",
-                    "Signal-carrying channels: per-(N,f) validation RMSE")
+                    f"Signal-carrying channels: per-(N,M) {metric}",
+                    debias=not args.raw)
     _renderOverview(pairs, channels, NOISE,
                     out / f"heatmap_{args.variant_id}_overview_noise.png",
-                    "Noise-dominated channels: per-(N,f) validation RMSE")
+                    f"Noise-dominated channels: per-(N,M) {metric}",
+                    debias=not args.raw)
 
 if __name__ == "__main__":
     main()

@@ -51,6 +51,39 @@ def _buildGrid(pairs, channel_idx, ppcs_in, ppcs_out):
     return grid
 
 
+def _debiasGrid(grid: np.ndarray, ppcs_out: list[int]) -> np.ndarray:
+    """Subtract the per-output-tier target-noise floor from each
+    cell's squared RMSE, then sqrt back. Returns the model's
+    *systematic* error, with the unavoidable Monte-Carlo noise
+    contribution of the validation target removed.
+
+    The raw RMSE compares the prediction to the *noisy* snapshot at
+    `M` particles per cell, not to the underlying signal: even a
+    perfect denoiser sits at RMSE^2 = sigma^2_noise_M / sigma^2_chan
+    just because the target itself carries 1/M noise. Target-noise
+    variance scales as `K_c / M` per channel; `K_c` is calibrated
+    empirically from the channel's cleanest cell (smallest
+    `RMSE^2 * M`), under the assumption that the model's systematic
+    contribution is smallest there. The debiased value at that cell
+    is 0 by construction; every other cell shows how much *extra*
+    error the model added beyond the target-noise floor.
+
+    Because `sigma^2_channel ~ sigma^2_signal` after top-tier
+    normalisation, RMSE = 1 still means the constant-mean baseline
+    in debiased units (1 + noise_floor reduces back to 1 when the
+    noise floor is subtracted)."""
+    g = grid.astype(np.float64, copy=False)
+    ppcs_arr = np.asarray(ppcs_out, dtype=np.float64)
+    rmsesq = g ** 2
+    cal = rmsesq * ppcs_arr[:, None]   # RMSE^2 * M per cell
+    finite_cal = cal[np.isfinite(cal)]
+    if not finite_cal.size:
+        return g.copy()
+    K_c = float(np.nanmin(cal))
+    floor_sq = K_c / ppcs_arr[:, None]
+    return np.sqrt(np.maximum(0.0, rmsesq - floor_sq))
+
+
 def _norm(grid):
     """Diverging norm centred on RMSE = 1, padded so vmin < 1 < vmax
     even when every cell is on one side of the baseline."""
@@ -92,6 +125,12 @@ def main() -> int:
     ap.add_argument("--variant-id", required=True,
                     help="short name used in output filenames")
     ap.add_argument("--out-dir", required=True)
+    ap.add_argument("--raw", action="store_true",
+                    help="report raw RMSE against the noisy target "
+                         "snapshot (default subtracts the per-M "
+                         "target-noise floor and reports model "
+                         "systematic error in the same channel-stddev "
+                         "units; 1 = constant-mean baseline either way)")
     args = ap.parse_args()
 
     data = json.loads(Path(args.rmse_json).read_text())
@@ -106,16 +145,27 @@ def main() -> int:
     out_dir = Path(args.out_dir).expanduser().resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    metric_label = ("RMSE  (1 = constant-mean baseline)"
+                    if args.raw else
+                    "systematic RMSE  (target noise floor subtracted; "
+                    "1 = constant-mean baseline)")
+    title_metric = "validation RMSE" if args.raw else \
+                   "systematic validation RMSE (target-noise debiased)"
+
+    def _gridFor(ci):
+        g = _buildGrid(pairs, ci, ppcs_in, ppcs_out)
+        return g if args.raw else _debiasGrid(g, ppcs_out)
+
     # Per-channel PNGs.
     for ci, ch in enumerate(channels):
-        grid = _buildGrid(pairs, ci, ppcs_in, ppcs_out)
+        grid = _gridFor(ci)
         fig, ax = plt.subplots(
             figsize=(0.55 * len(ppcs_in) + 2.5,
                      0.55 * len(ppcs_out) + 2.0))
         im = _drawHeatmap(ax, grid, ppcs_in, ppcs_out,
-                          f"{ch}: validation RMSE (channel-stddev units)")
+                          f"{ch}: {title_metric} (channel-stddev units)")
         fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04,
-                     label="RMSE  (1 = constant-mean baseline)")
+                     label=metric_label)
         fig.tight_layout()
         fig.savefig(str(out_dir / f"heatmap_{args.variant_id}_{ch}.png"),
                     dpi=100, pil_kwargs={"optimize": True,
@@ -131,12 +181,13 @@ def main() -> int:
                              squeeze=False)
     for ci, ch in enumerate(channels):
         ax = axes[ci // ncol][ci % ncol]
-        grid = _buildGrid(pairs, ci, ppcs_in, ppcs_out)
-        _drawHeatmap(ax, grid, ppcs_in, ppcs_out, ch, annotate=False)
+        _drawHeatmap(ax, _gridFor(ci), ppcs_in, ppcs_out, ch,
+                     annotate=False)
     for k in range(n, nrow * ncol):
         axes[k // ncol][k % ncol].axis("off")
-    fig.suptitle(f"{args.variant_id}: per-channel (N, M) validation RMSE",
-                 fontsize=12)
+    fig.suptitle(
+        f"{args.variant_id}: per-channel (N, M) {title_metric}",
+        fontsize=12)
     fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.98))
     fig.savefig(str(out_dir / f"heatmap_{args.variant_id}_overview.png"),
                 dpi=90, pil_kwargs={"optimize": True, "compress_level": 9})
