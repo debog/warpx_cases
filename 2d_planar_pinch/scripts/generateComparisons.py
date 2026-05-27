@@ -53,7 +53,9 @@ EV_PER_JOULE = 1.0 / 1.602176634e-19
 
 def deriveSpeciesPandT(moments: Dict[str, np.ndarray],
                        species_names: list[str],
-                       warpx_input) -> Dict[str, Dict[str, np.ndarray]]:
+                       warpx_input,
+                       num_ref: Dict[str, np.ndarray] | None = None,
+                       ) -> Dict[str, Dict[str, np.ndarray]]:
     """Return {species: {Pxx, Pyy, Pzz, Tx, Ty, Tz}} from a flat dict
     of physical-unit moment arrays keyed `<moment>_<species>`
     (num, px, py, pz, enex, eney, enez).
@@ -61,31 +63,50 @@ def deriveSpeciesPandT(moments: Dict[str, np.ndarray],
     Pressure tensor diagonal: P_ii = (m/V) * num * (<v_i^2> - <v_i>^2)
     with <v_i>   = p_i / (m * num),  <v_i^2> = 2 * ene_i / (m * num).
     Temperature : T_i = P_i * V / num, converted to eV.
+
+    `num_ref` (optional) supplies the per-species `num` array used to
+    decide which cells are plasma vs vacuum. The denoiser's
+    prediction can carry noisy positive `num` in cells that are
+    physically vacuum, which would unmask cells where T blows up.
+    Pass the target's `num` arrays here so the input / prediction /
+    target derivations share a consistent mask.
     """
     vcell = float(warpx_input.cell_volume())
     out: Dict[str, Dict[str, np.ndarray]] = {}
     for sp in species_names:
         mass = float(warpx_input.species_mass(sp))
         num = np.asarray(moments[f"num_{sp}"], dtype=np.float64)
-        # Vacuum cells have num ~ 0, where p/num and ene/num are
-        # numerically meaningless and would feed huge variance into
-        # T. Floor `num` at a small fraction of the snapshot's peak;
-        # cells below the floor are then masked to zero on output so
-        # vacuum reads as a uniform background in the plots.
-        num_max = float(np.nanmax(num)) if np.any(np.isfinite(num)) else 0.0
-        floor = num_max * 1.0e-3 if num_max > 0 else 1.0
-        num_safe = np.where(num > floor, num, floor)
-        plasma  = num > floor
+        ref = (np.asarray(num_ref[f"num_{sp}"], dtype=np.float64)
+               if num_ref is not None else num)
+        ref_max = float(np.nanmax(ref)) if np.any(np.isfinite(ref)) else 0.0
+        # Mask threshold at 1% of the reference peak: tight enough
+        # that a noisy prediction can't unmask vacuum cells, loose
+        # enough that the slab interior stays unmasked at every step.
+        floor = ref_max * 1.0e-2 if ref_max > 0 else 1.0
+        plasma = ref > floor
+        # Denominator floor avoids /0 in cells that happen to be masked
+        # anyway.
+        num_safe = np.where(num > 0.0, num,
+                            floor if floor > 0 else 1.0)
         P, T = {}, {}
         for ax in ("x", "y", "z"):
+            # The output channel `p_x = (m/V_cell) * Sum_p v_x` is
+            # momentum density (mass kg / area m^2 / time s in 2D).
+            # The output channel `enex = Sum_p (v_x^2 / 2 * gamma^-1)`
+            # is a *velocity^2 * N* deposit (no mass factor in the
+            # WarpX particle_fields formula). Combining:
+            #   <v_x>   = p_x * V_cell / (m * num)        [m/s]
+            #   <v_x^2> = 2 * enex / num                  [m^2/s^2]
+            #   kT_x    = m * (<v_x^2> - <v_x>^2)         [J]
+            #   P_ii    = (num / V_cell) * kT_x           [Pa]
             p_i   = np.asarray(moments[f"p{ax}_{sp}"],  dtype=np.float64)
             ene_i = np.asarray(moments[f"ene{ax}_{sp}"], dtype=np.float64)
-            mean_v  = p_i  / (mass * num_safe)
-            mean_v2 = 2.0 * ene_i / (mass * num_safe)
+            mean_v  = p_i * vcell / (mass * num_safe)
+            mean_v2 = 2.0 * ene_i / num_safe
             var = np.clip(mean_v2 - mean_v * mean_v, 0.0, None)
-            P_ii = (mass / vcell) * num_safe * var
-            T_ii = P_ii * vcell / num_safe
-            T_ii_eV = T_ii * EV_PER_JOULE
+            kT = mass * var
+            T_ii_eV = kT * EV_PER_JOULE
+            P_ii = (num_safe / vcell) * kT
             P[ax] = np.where(plasma, P_ii, 0.0)
             T[ax] = np.where(plasma, T_ii_eV, 0.0)
         out[sp] = {
@@ -234,8 +255,14 @@ def main() -> int:
         warpx_input = loadWarpXInput(cfg.data.warpx_input)
 
     all_pairs = enumerateFactorPairs(reader, tiers, cfg.data.steps)
-    norm = fitNormalizer(reader, all_pairs, cfg.data.channels,
-                         cfg.data.normalization, warpx_input)
+    if ckpt.get("norm") is not None:
+        norm = ckpt["norm"]
+        print("[generateComparisons] using normalizer from checkpoint")
+    else:
+        print("[generateComparisons] normalizer not in checkpoint, "
+              "refitting (top-ppc tier only)")
+        norm = fitNormalizer(reader, all_pairs, cfg.data.channels,
+                             cfg.data.normalization, warpx_input)
 
     out_names = outputChannelNames(cfg.data.channels)
     out_indices = outputChannelIndices(cfg.data.channels)
@@ -315,12 +342,19 @@ def main() -> int:
                                      "target": phys_tgt[n]})
             labels.append(f"step {pair.step}")
             if can_derive:
-                derived_in.append(
-                    deriveSpeciesPandT(phys_in, derived_species, warpx_input))
-                derived_pred.append(
-                    deriveSpeciesPandT(phys_pred, derived_species, warpx_input))
+                # Mask comes from the target's num arrays so all three
+                # derivations (input / prediction / target) are masked
+                # consistently and prediction artifacts in vacuum
+                # cells cannot blow up T.
                 derived_tgt.append(
-                    deriveSpeciesPandT(phys_tgt, derived_species, warpx_input))
+                    deriveSpeciesPandT(phys_tgt, derived_species,
+                                       warpx_input))
+                derived_in.append(
+                    deriveSpeciesPandT(phys_in, derived_species,
+                                       warpx_input, num_ref=phys_tgt))
+                derived_pred.append(
+                    deriveSpeciesPandT(phys_pred, derived_species,
+                                       warpx_input, num_ref=phys_tgt))
 
         # Raw output channels.
         for n in out_names:
