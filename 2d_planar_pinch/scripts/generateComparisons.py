@@ -46,6 +46,18 @@ sys.path.insert(0, "/home/ghosh/Codes/particle-denoise")
 
 EV_PER_JOULE = 1.0 / 1.602176634e-19
 
+# Canonical comparison frames -- same four (step, time, regime) tuples
+# the baseline page (status_baseline.html) shows. Picked so each
+# panel lands on a distinct physics regime of the implosion.
+_DEFAULT_PHASES = [
+    (11025,  22.05, "ramp-up"),
+    (54900, 109.80, "mid-snowplow"),
+    (76950, 153.90, "peak compression"),
+    (105300, 210.60, "rebound"),
+]
+_PHASE_LABEL = {step: f"{name}\nstep {step}  (t = {t:g} ns)"
+                for step, t, name in _DEFAULT_PHASES}
+
 
 # ---------------------------------------------------------------------
 # Derived pressure / temperature
@@ -225,9 +237,13 @@ def main() -> int:
                     help="comma-separated ppc_in:ppc_out pairs to render; "
                          "default = every tier denoised to the top tier")
     ap.add_argument("--steps", default=None,
-                    help="comma-separated step list; default = up to "
-                         "--max-steps evenly spaced across the pair")
-    ap.add_argument("--max-steps", type=int, default=4)
+                    help="comma-separated step list; default = the four "
+                         "canonical baseline-page phases "
+                         "(ramp-up, mid-snowplow, peak compression, "
+                         "rebound). Pass 'auto' for max-steps evenly "
+                         "spaced across the pair instead.")
+    ap.add_argument("--max-steps", type=int, default=4,
+                    help="only used with --steps=auto")
     args = ap.parse_args()
 
     from denoiseCore.config import load as loadConfig
@@ -292,8 +308,15 @@ def main() -> int:
         top = max(t.ppc for t in tiers)
         wanted = sorted(k for k in by_tier_pair if k[1] == top)
 
-    want_steps = ([int(s) for s in args.steps.split(",")]
-                  if args.steps else None)
+    # `--steps`: None or "" -> use the canonical baseline phases;
+    # "auto" -> evenly-spaced fallback;
+    # comma-list -> exact set.
+    if args.steps is None or args.steps == "":
+        want_steps = [s for s, _, _ in _DEFAULT_PHASES]
+    elif args.steps.strip().lower() == "auto":
+        want_steps = None
+    else:
+        want_steps = [int(s) for s in args.steps.split(",")]
 
     derived_species = cfg.data.channels.species_names
     can_derive = warpx_input is not None
@@ -340,7 +363,8 @@ def main() -> int:
                 raw_rows[n].append({"input": phys_in[n],
                                      "pred": phys_pred[n],
                                      "target": phys_tgt[n]})
-            labels.append(f"step {pair.step}")
+            labels.append(_PHASE_LABEL.get(pair.step,
+                                           f"step {pair.step}"))
             if can_derive:
                 # Mask comes from the target's num arrays so all three
                 # derivations (input / prediction / target) are masked
