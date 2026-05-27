@@ -1,0 +1,22 @@
+# Factor-conditioned diffusion denoiser case config. Same channel
+# set, normaliser and per-channel weights as
+# cfg_globalcnn_charbonnier.yaml -- the only differences are the
+# model name and the noise-schedule inference budget. Lets us train
+# both architectures on identical data + identical loss for a fair
+# comparison.
+#
+# Run as `run_denoise.sh -c diffusion_charbonnier all`. The DDP
+# wiring, persistent normalised cache, parallel prefill, and per-PID
+# tmp file handling all apply unchanged.
+
+base: cfg_globalcnn_charbonnier.yaml
+
+model:
+  name: diffusionUNet
+  # Number of forward passes per snapshot at inference time. 8 is a
+  # good middle ground for the EDM-style log-spaced sampler: large
+  # enough to follow the trained denoising trajectory closely, small
+  # enough to keep deployment cost within ~10x of the single-shot
+  # UNet (which itself is well under one PIC step's worth of work
+  # for a 2D 256x32 grid).
+  diffusion_steps: 8

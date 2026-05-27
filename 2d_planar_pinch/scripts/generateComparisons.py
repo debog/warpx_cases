@@ -253,8 +253,9 @@ def main() -> int:
                                           outputChannelNames,
                                           outputChannelIndices)
     from denoiseCore.device import getDevice
-    from particleDenoiser.models import buildModel
+    from particleDenoiser.models import buildModel, isDiffusion
     from particleDenoiser.training import fitNormalizer
+    from particleDenoiser.sampler import multiStepSample
 
     cfg = loadConfig(args.config)
     dev = getDevice()
@@ -352,7 +353,12 @@ def main() -> int:
             s2i = torch.tensor([s.sigma2_in], device=dev.device)
             s2o = torch.tensor([s.sigma2_out], device=dev.device)
             with torch.no_grad():
-                pred = model(x, s2i, s2o).squeeze(0)
+                if isDiffusion(cfg.model):
+                    pred = multiStepSample(
+                        model, x, s2i, s2o,
+                        n_steps=cfg.model.diffusion_steps).squeeze(0)
+                else:
+                    pred = model(x, s2i, s2o).squeeze(0)
 
             inp_oc = s.input_tensor[out_indices]
             phys_in = denormChannels(inp_oc, out_names, norm)
