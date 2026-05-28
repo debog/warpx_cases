@@ -244,6 +244,10 @@ def main() -> int:
                          "spaced across the pair instead.")
     ap.add_argument("--max-steps", type=int, default=4,
                     help="only used with --steps=auto")
+    ap.add_argument("--variant-id", default="",
+                    help="optional prefix for filenames: "
+                         "comparison_<variant>_ppc<N>_to_ppc<M>_<ch>.png. "
+                         "Defaults to empty -> comparison_ppc<N>_to_ppc<M>_<ch>.png.")
     args = ap.parse_args()
 
     from denoiseCore.config import load as loadConfig
@@ -322,6 +326,8 @@ def main() -> int:
     derived_species = cfg.data.channels.species_names
     can_derive = warpx_input is not None
     out_dir = Path(args.out_dir)
+    # `comparison_<variant>_` if --variant-id set, else `comparison_`.
+    prefix = f"comparison_{args.variant_id}_" if args.variant_id else "comparison_"
 
     for (ppc_in, ppc_out) in wanted:
         group = sorted(by_tier_pair.get((ppc_in, ppc_out), []),
@@ -388,7 +394,7 @@ def main() -> int:
 
         # Raw output channels.
         for n in out_names:
-            out_path = out_dir / f"comparison_ppc{ppc_in}_to_ppc{ppc_out}_{n}.png"
+            out_path = out_dir / f"{prefix}ppc{ppc_in}_to_ppc{ppc_out}_{n}.png"
             plotComparisonGrid(out_path, n, raw_rows[n], labels,
                                ppc_in, ppc_out)
 
@@ -404,7 +410,7 @@ def main() -> int:
                     units = "eV" if moment.startswith("T") else "Pa"
                     name = f"{moment}_{sp}"
                     out_path = (out_dir /
-                                f"comparison_ppc{ppc_in}_to_ppc{ppc_out}_{name}.png")
+                                f"{prefix}ppc{ppc_in}_to_ppc{ppc_out}_{name}.png")
                     plotComparisonGrid(out_path, name, rows, labels,
                                        ppc_in, ppc_out, units=units)
 
