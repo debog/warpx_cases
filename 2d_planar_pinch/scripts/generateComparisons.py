@@ -132,6 +132,24 @@ def deriveSpeciesPandT(moments: Dict[str, np.ndarray],
 # Grid plot
 # ---------------------------------------------------------------------
 
+def _zAverage(arr: np.ndarray) -> np.ndarray:
+    """Average a per-step field over the z (axial) direction, leaving a
+    1-D profile along x (the compression axis).
+
+    The planar-pinch grid is (nx, nz) = (256, 32): x is the long
+    256-cell compression axis, z is the short 32-cell axial axis along
+    which the slab is statistically uniform. z is array axis 1, so the
+    z-average is `mean(axis=1)` and the resulting profile runs along x
+    -- the same horizontal axis the 2-D maps are displayed on (they use
+    `arr.T`, so their horizontal axis is array axis 0 = x). Falls back
+    to the flattened array for non-2-D inputs (other geometries)."""
+    a = np.asarray(arr, dtype=np.float64)
+    if a.ndim == 2:
+        with np.errstate(invalid="ignore"):
+            return np.nanmean(a, axis=1)
+    return a.ravel()
+
+
 def plotComparisonGrid(out_path: Path,
                        channel_name: str,
                        rows: list,
@@ -140,21 +158,30 @@ def plotComparisonGrid(out_path: Path,
                        ppc_out: int,
                        units: str = "",
                        percentile: float = 2.0) -> None:
-    """One PNG: N rows (one per step) x 4 columns (input, prediction,
-    target, relative error).
+    """One PNG: N rows (one per step) x 8 columns.
+
+    Left 4 columns are the 2-D maps (input, prediction, target,
+    relative error). Right 4 columns mirror them as z-averaged 1-D
+    profiles of the *same* quantities in the *same* units: the three
+    value profiles share the row's 2-D colour-scale y-limits (lo, hi)
+    so the 1-D and 2-D halves are directly comparable, and the error
+    profile uses the symmetric +/- RMS scale. z is the short axial
+    axis; the profile runs along x (see `_zAverage`).
 
     `rows` is a list of dicts with keys 'input', 'pred', 'target'
     holding the per-step 2-D arrays. Relative error is computed per row
     as `(pred - target) / max(RMS(target), eps)`.
     """
     n_rows = len(rows)
-    fig, axes = plt.subplots(n_rows, 4, figsize=(10.0, 2.2 * n_rows),
+    fig, axes = plt.subplots(n_rows, 8, figsize=(19.0, 2.3 * n_rows),
                              squeeze=False)
 
     col_titles = (f"input  (ppc {ppc_in})", "prediction",
-                  f"target  (ppc {ppc_out})", "error / RMS(target)")
+                  f"target  (ppc {ppc_out})", "error / RMS(target)",
+                  "input  (z-avg)", "prediction  (z-avg)",
+                  "target  (z-avg)", "error  (z-avg)")
     for ax, title in zip(axes[0], col_titles):
-        ax.set_title(title, fontsize=10)
+        ax.set_title(title, fontsize=9)
 
     for ridx, row in enumerate(rows):
         inp = np.asarray(row["input"])
@@ -190,6 +217,7 @@ def plotComparisonGrid(out_path: Path,
         else:
             rmax = 1.0
 
+        # --- left 4 columns: 2-D maps ---
         for cidx, (arr, vmin, vmax, cmap) in enumerate([
             (inp,     lo,    hi,   "viridis"),
             (prd,     lo,    hi,   "viridis"),
@@ -205,12 +233,42 @@ def plotComparisonGrid(out_path: Path,
             if cidx == 0:
                 ax.set_ylabel(row_labels[ridx], fontsize=9)
 
+        # --- right 4 columns: z-averaged 1-D profiles ---
+        for jcol, (arr, ylo, yhi, color, is_err) in enumerate([
+            (inp,     lo,    hi,   "C0", False),
+            (prd,     lo,    hi,   "C0", False),
+            (tgt,     lo,    hi,   "C0", False),
+            (rel_err, -rmax, rmax, "C3", True),
+        ]):
+            ax = axes[ridx][4 + jcol]
+            prof = _zAverage(arr)
+            xx = np.arange(prof.shape[0])
+            ax.plot(xx, prof, color=color, linewidth=1.0)
+            ax.set_xlim(0, max(1, prof.shape[0] - 1))
+            ax.set_ylim(ylo, yhi)
+            if is_err:
+                ax.axhline(0.0, color="0.6", linewidth=0.6)
+            ax.tick_params(labelsize=6)
+            ax.grid(True, alpha=0.25, linewidth=0.4)
+            # y-ticks only on the first value profile and the error
+            # profile (the middle two share the first's scale).
+            if jcol in (1, 2):
+                ax.set_yticklabels([])
+            if jcol == 0 and units:
+                ax.set_ylabel(units, fontsize=7)
+            # x-ticks only on the bottom row to cut clutter.
+            if ridx == n_rows - 1:
+                ax.set_xlabel("x cell", fontsize=7)
+            else:
+                ax.set_xticklabels([])
+
     suffix = f"  [{units}]" if units else ""
     fig.suptitle(f"{channel_name}{suffix}   "
-                 f"ppc {ppc_in} -> {ppc_out}", fontsize=12)
+                 f"ppc {ppc_in} -> {ppc_out}    "
+                 f"(right half: z-averaged profiles along x)", fontsize=12)
     fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.97))
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(str(out_path), dpi=80,
+    fig.savefig(str(out_path), dpi=90,
                 pil_kwargs={"optimize": True, "compress_level": 9})
     plt.close(fig)
 
