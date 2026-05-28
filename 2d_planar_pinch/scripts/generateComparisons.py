@@ -162,24 +162,30 @@ def plotComparisonGrid(out_path: Path,
 
     Left 4 columns are the 2-D maps (input, prediction, target,
     relative error). Right 4 columns mirror them as z-averaged 1-D
-    profiles of the *same* quantities in the *same* units: the three
-    value profiles share the row's 2-D colour-scale y-limits (lo, hi)
-    so the 1-D and 2-D halves are directly comparable, and the error
-    profile uses the symmetric +/- RMS scale. z is the short axial
-    axis; the profile runs along x (see `_zAverage`).
+    profiles of the *same* quantities in the *same* units: all four
+    profiles -- including the error -- share the row's 2-D colour-scale
+    y-limits (lo, hi), so the error profile is the *absolute*
+    (pred - target) plotted on the value axis and its magnitude is read
+    directly against the signal. z is the short axial axis; the profile
+    runs along x (see `_zAverage`).
+
+    Each subpanel is ~2.5 x 2.2 in (8 columns -> 20 in wide), matching
+    the per-panel size of the earlier 4-column layout; the page CSS
+    widens the content column so the figure renders at native size.
 
     `rows` is a list of dicts with keys 'input', 'pred', 'target'
-    holding the per-step 2-D arrays. Relative error is computed per row
-    as `(pred - target) / max(RMS(target), eps)`.
+    holding the per-step 2-D arrays. The 2-D error column is the
+    relative error `(pred - target) / max(RMS(target), eps)`; the 1-D
+    error profile is the absolute error `pred - target`.
     """
     n_rows = len(rows)
-    fig, axes = plt.subplots(n_rows, 8, figsize=(19.0, 2.3 * n_rows),
+    fig, axes = plt.subplots(n_rows, 8, figsize=(20.0, 2.2 * n_rows),
                              squeeze=False)
 
     col_titles = (f"input  (ppc {ppc_in})", "prediction",
                   f"target  (ppc {ppc_out})", "error / RMS(target)",
                   "input  (z-avg)", "prediction  (z-avg)",
-                  "target  (z-avg)", "error  (z-avg)")
+                  "target  (z-avg)", "pred - target  (z-avg)")
     for ax, title in zip(axes[0], col_titles):
         ax.set_title(title, fontsize=9)
 
@@ -234,25 +240,28 @@ def plotComparisonGrid(out_path: Path,
                 ax.set_ylabel(row_labels[ridx], fontsize=9)
 
         # --- right 4 columns: z-averaged 1-D profiles ---
-        for jcol, (arr, ylo, yhi, color, is_err) in enumerate([
-            (inp,     lo,    hi,   "C0", False),
-            (prd,     lo,    hi,   "C0", False),
-            (tgt,     lo,    hi,   "C0", False),
-            (rel_err, -rmax, rmax, "C3", True),
+        # All four share the (lo, hi) value axis; the error profile is
+        # the absolute (pred - target) so its size reads directly
+        # against the signal, not a separate +/- scale.
+        for jcol, (arr, color, is_err) in enumerate([
+            (inp,       "C0", False),
+            (prd,       "C0", False),
+            (tgt,       "C0", False),
+            (prd - tgt, "C3", True),
         ]):
             ax = axes[ridx][4 + jcol]
             prof = _zAverage(arr)
             xx = np.arange(prof.shape[0])
             ax.plot(xx, prof, color=color, linewidth=1.0)
             ax.set_xlim(0, max(1, prof.shape[0] - 1))
-            ax.set_ylim(ylo, yhi)
+            ax.set_ylim(lo, hi)
             if is_err:
                 ax.axhline(0.0, color="0.6", linewidth=0.6)
             ax.tick_params(labelsize=6)
             ax.grid(True, alpha=0.25, linewidth=0.4)
-            # y-ticks only on the first value profile and the error
-            # profile (the middle two share the first's scale).
-            if jcol in (1, 2):
+            # All four profiles share the first's (lo, hi) scale, so
+            # only the first carries y-ticks.
+            if jcol in (1, 2, 3):
                 ax.set_yticklabels([])
             if jcol == 0 and units:
                 ax.set_ylabel(units, fontsize=7)
