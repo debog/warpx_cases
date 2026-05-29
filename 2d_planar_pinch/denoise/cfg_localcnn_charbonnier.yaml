@@ -1,11 +1,14 @@
-# Local CNN with the physics-informed loss bundle. Inherits the loss
-# block + positivity head from cfg_globalcnn_physics.yaml; overrides
-# only the model section to the local CNN (RF 17x17). Mirrors
-# cfg_localcnn_charbonnier.yaml's model section.
+# Local CNN denoiser (small receptive field). Inherits data, channels,
+# training schedule, recon weights, and the physics-informed loss
+# bundle from base.yaml; this file sets only the model section.
 #
-# Run as `run_denoise.sh -c localcnn_physics all`.
+# depth 4 stacked FiLM conv blocks (each = two 3x3 convs) give a
+# receptive field of 4*4 + 1 = 17 cells -- well below the slab width
+# (~150 cells), so the network cannot reach across the plasma column.
+#
+# Run as `run_denoise.sh -c localcnn_charbonnier all`.
 
-base: cfg_globalcnn_physics.yaml
+base: base.yaml
 
 model:
   name: localCNN

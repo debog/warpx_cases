@@ -1,7 +1,6 @@
-# Diffusion U-Net with the physics-informed loss bundle. Inherits the
-# loss block + positivity head from cfg_globalcnn_physics.yaml;
-# overrides only the model section. Mirrors
-# cfg_diffusion_charbonnier.yaml's model section.
+# Diffusion U-Net denoiser. Inherits data, channels, training
+# schedule, recon weights, and the physics-informed loss bundle from
+# base.yaml; this file sets only the model section.
 #
 # The physics terms act on (pred, target) on the output-channel subset,
 # identically to the single-shot path: in the diffusion branch the
@@ -10,9 +9,9 @@
 # unchanged. The K-step sampler at inference clamps positivity at each
 # step.
 #
-# Run as `run_denoise.sh -c diffusion_physics all`.
+# Run as `run_denoise.sh -c diffusion_charbonnier all`.
 
-base: cfg_globalcnn_physics.yaml
+base: base.yaml
 
 model:
   name: diffusionUNet

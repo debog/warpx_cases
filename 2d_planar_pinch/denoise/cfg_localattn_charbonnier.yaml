@@ -1,11 +1,10 @@
-# Local cross-attention with the physics-informed loss bundle.
-# Inherits the loss block + positivity head from
-# cfg_globalcnn_physics.yaml; overrides only the model section. Mirrors
-# cfg_localattention_charbonnier.yaml's model section.
+# Local cross-attention denoiser. Inherits data, channels, training
+# schedule, recon weights, and the physics-informed loss bundle from
+# base.yaml; this file sets only the model section.
 #
-# Run as `run_denoise.sh -c localattention_physics all`.
+# Run as `run_denoise.sh -c localattn_charbonnier all`.
 
-base: cfg_globalcnn_physics.yaml
+base: base.yaml
 
 model:
   name: localAttention

@@ -1,0 +1,181 @@
+# Shared root config for the factor-conditioned planar-pinch denoiser.
+# Every model config (cfg_globalcnn_charbonnier.yaml,
+# cfg_localcnn_charbonnier.yaml, cfg_diffusion_charbonnier.yaml,
+# cfg_localattn_charbonnier.yaml) inherits THIS file via `base:` and
+# overrides only its model section. The data, channels, training
+# schedule, recon weights, and the physics-informed loss bundle all
+# live here, so no model config depends on another.
+#
+# Not a runnable case itself (no `cfg_` prefix, so run_denoise.sh's
+# `cfg_*.yaml` discovery skips it; it has no model.name of its own).
+#
+# The denoiser takes a moment snapshot at ppc N plus a denoising
+# factor f and predicts the snapshot at ppc f^2*N. ppc tiers are
+# discovered by scanning training_data/ for run directories named
+# .run_<case>.<platform>.ppc<NNNN>.nproc<NNNNN>; the YAML no longer
+# lists them. Every ordered tier pair is a training example.
+#
+# Channel set (from the signal-to-noise audit, Angus et al. 2022
+# equipartition analysis, with bulk-velocity moments replaced by
+# per-species momentum density p_a = m_a * u_a / V_cell):
+#
+#   * Input fields: By (Z-pinch dominant component), the three J
+#     components, part_per_cell. Ex/Ey/Ez/Bx/Bz/rho are excluded --
+#     equipartition or quasi-neutral cancellation puts them below the
+#     deposition-noise floor.
+#   * Input species moments: number, the three momentum-density
+#     components, the three kinetic-energy moments, and the
+#     closure-derived pressure-tensor diagonal (Pxx, Pyy, Pzz) and
+#     per-direction temperature (Tx, Ty, Tz, in eV). The P/T channels
+#     are computed in the data loader and give the network direct
+#     access to the moment closure.
+#   * Outputs: J = (jx, jy, jz) consumed by the implicit field
+#     solver, plus per-species num, p_{x,y,z}, ene_{x,y,z}. P/T are
+#     input-only.
+#   * Per-channel reconstruction weights: jz=5 (dominant in-plane
+#     current), jx=jy=1 (zero physical mean by symmetry), num=p_x=1,
+#     the weakly-structured p_{y,z} and the energies at 0.3.
+
+data:
+  reader: warpxPlotfile
+  warpx_input: inputs/planar_pinch_2d.in
+  training_data: training_data
+  val_fraction: 0.15
+
+  # Persistent on-disk cache of normalised input tensors. First run
+  # builds it; subsequent runs (restart, hyperparameter sweep,
+  # retrain) reload in seconds instead of re-prefilling for ~1.5 h.
+  # Path is relative to the cwd from which `particle-denoise` runs.
+  cache_path: training_data/.normalised_cache.pt
+  # Parallel snapshot loading during the prefill phase. Matrix gives
+  # us 28 CPUs / task; 16 is a safe pick that keeps Lustre happy
+  # without saturating the process-pool overhead.
+  prefill_workers: 16
+  # Per-rank cache budget. With DDP the four ranks each claim their
+  # own RAM cache; the auto default (~50% of MemAvailable) would
+  # over-commit. 80 GiB / rank x 4 ranks ~ 320 GiB on a 256-GB-class
+  # Matrix node still fits because each rank's working set is the
+  # train shard, not the whole dataset.
+  cache_max_gib: 80
+
+  channels:
+    fields:
+      - By
+      - jx
+      - jy
+      - jz
+      - part_per_cell
+    species:
+      - num
+      - px
+      - py
+      - pz
+      - enex
+      - eney
+      - enez
+      - Pxx
+      - Pyy
+      - Pzz
+      - Tx
+      - Ty
+      - Tz
+    species_names:
+      - electrons
+      - deuterium
+    output_fields:
+      - jx
+      - jy
+      - jz
+    output_species_moments:
+      - num
+      - px
+      - py
+      - pz
+      - enex
+      - eney
+      - enez
+
+model:
+  # Shared model setting (the per-model name / depth / kernel live in
+  # the child configs). Clamp num / ene / part_per_cell at physical
+  # zero: no-op at construction (deposited inputs are >= 0, so the
+  # zero-init identity holds) and for the log-zscored num; binds the
+  # zscored energy moments.
+  enforce_positivity: true
+
+loss:
+  # Reconstruction. Charbonnier: rho(x) = sqrt(x^2 + eps^2) - eps
+  # -- smooth at 0, L1 in the tails; a robust drop-in for L2 that
+  # resists the "collapse to channel mean" failure mode. eps in
+  # channel-stddev units, so 1e-3 puts the L1 regime over essentially
+  # all non-trivial residuals.
+  recon_kind: charbonnier
+  recon_eps: 1.0e-3
+  recon_weights:
+    jx:              1.0
+    jy:              1.0
+    jz:              5.0
+    num_electrons:   1.0
+    num_deuterium:   1.0
+    px_electrons:    1.0
+    px_deuterium:    1.0
+    py_electrons:    0.3
+    py_deuterium:    0.3
+    pz_electrons:    0.3
+    pz_deuterium:    0.3
+    enex_electrons:  0.3
+    eney_electrons:  0.3
+    enez_electrons:  0.3
+    enex_deuterium:  0.3
+    eney_deuterium:  0.3
+    enez_deuterium:  0.3
+
+  # --- Physics-informed terms -------------------------------------------
+  # Weighted relative to the recon weight of 1.0. Recon stays on every
+  # channel (Noise2Noise: an unbiased estimator of the signal even for
+  # the ~zero-mean noisy channels), and the physics terms are layered
+  # on top.
+
+  # Charge continuity, turned up: the implicit PIC algorithm is charge-
+  # AND energy-conserving, so div(J) = -d(rho)/dt holds EXACTLY for the
+  # deposited fields. This is a hard physical constraint, not a soft
+  # prior, and it is exactly what the JFNK field solver needs from the
+  # denoised current: it couples the noisy, ~zero-mean in-plane currents
+  # (jx, and jz) to the well-resolved jz / density via
+  # d(jx)/dx ~ -d(jz)/dz. Weighted comparably to the dominant jz recon
+  # weight; tune down if it over-constrains.
+  charge_continuity: 5.0
+  # Restrict to |k| < 0.5*Nyquist: continuity holds exactly for the
+  # deposited fields *including* their deposition noise, so the high-k
+  # tail of div(J_GT) is noise we do not want the prediction to match.
+  charge_continuity_cutoff: 0.5
+
+  # Moment-closure self-consistency: predicted (num, p_i, ene_i) must
+  # satisfy P_i = n m Var(v_i). Ties the density / momentum / energy
+  # channels together under the closure.
+  closure_consistency: 1.0
+
+  # Anti-collapse / band-limit / no constant-offset drift.
+  gradient: 0.2
+  gradient_kind: l2
+  spectral: 0.1
+  spectral_cutoff: 0.5
+  conservation: 0.1
+
+  # Energy conservation: the algorithm conserves energy, so the term is
+  # physically valid, but it needs consecutive-step snapshot pairs
+  # (W_kin at step n and n+1) and the factor dataset yields same-step
+  # (N, M) pairs only. Left at 0 (dormant) until that data is wired;
+  # turning it up would only log a warning and contribute zero.
+  energy_conservation: 0.0
+
+train:
+  batch_size: 16
+  epochs: 500
+  lr: 1.0e-3
+  amp: true
+  early_stop_patience: 30
+  # DataLoader background workers per rank. With --cpu-bind=cores
+  # exposing the full 28 CPUs of --cpus-per-task, 8 is comfortably
+  # within budget and keeps GPU step time fed.
+  num_workers: 8
