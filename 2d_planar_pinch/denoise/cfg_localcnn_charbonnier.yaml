@@ -1,24 +1,13 @@
-# Factor-conditioned small-receptive-field CNN case config.
-# Inherits everything from cfg_globalcnn_charbonnier.yaml (channels,
-# normaliser, recon weights, training schedule, cache, prefill
-# workers, DDP plumbing). Only the model section differs.
+# Local CNN with the physics-informed loss bundle. Inherits the loss
+# block + positivity head from cfg_globalcnn_physics.yaml; overrides
+# only the model section to the local CNN (RF 17x17). Mirrors
+# cfg_localcnn_charbonnier.yaml's model section.
 #
-# `depth: 4` stacked FiLM conv blocks (each = two 3x3 convs) give a
-# receptive field of 4*4 + 1 = 17 cells -- well below the slab
-# width (~150 cells) so the network has no capacity to reach across
-# the plasma column. That is the point of the local denoiser: the
-# Monte-Carlo deposition noise we are removing is independent
-# per-cell, and the signal-to-recover is local-smooth, so a
-# tight-RF network exactly matches the statistical structure.
-#
-# Run as `run_denoise.sh -c local_charbonnier all`.
+# Run as `run_denoise.sh -c localcnn_physics all`.
 
-base: cfg_globalcnn_charbonnier.yaml
+base: cfg_globalcnn_physics.yaml
 
 model:
   name: localCNN
-  base_channels: 32       # channel width inside the stack
-  depth: 4                # stacked _FiLMConvBlocks -> RF = 17x17
-  # `kernel`, `activation`, `time_embed_dim` inherited from the
-  # framework default. `diffusion_steps` ignored on the single-shot
-  # path.
+  base_channels: 32
+  depth: 4                # RF = 4*4 + 1 = 17x17

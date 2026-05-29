@@ -1,22 +1,19 @@
-# Factor-conditioned diffusion denoiser case config. Same channel
-# set, normaliser and per-channel weights as
-# cfg_globalcnn_charbonnier.yaml -- the only differences are the
-# model name and the noise-schedule inference budget. Lets us train
-# both architectures on identical data + identical loss for a fair
-# comparison.
+# Diffusion U-Net with the physics-informed loss bundle. Inherits the
+# loss block + positivity head from cfg_globalcnn_physics.yaml;
+# overrides only the model section. Mirrors
+# cfg_diffusion_charbonnier.yaml's model section.
 #
-# Run as `run_denoise.sh -c diffusion_charbonnier all`. The DDP
-# wiring, persistent normalised cache, parallel prefill, and per-PID
-# tmp file handling all apply unchanged.
+# The physics terms act on (pred, target) on the output-channel subset,
+# identically to the single-shot path: in the diffusion branch the
+# network's recovered estimate is compared to the clean target at every
+# training step, so charge continuity / closure / spectral apply
+# unchanged. The K-step sampler at inference clamps positivity at each
+# step.
+#
+# Run as `run_denoise.sh -c diffusion_physics all`.
 
-base: cfg_globalcnn_charbonnier.yaml
+base: cfg_globalcnn_physics.yaml
 
 model:
   name: diffusionUNet
-  # Number of forward passes per snapshot at inference time. 8 is a
-  # good middle ground for the EDM-style log-spaced sampler: large
-  # enough to follow the trained denoising trajectory closely, small
-  # enough to keep deployment cost within ~10x of the single-shot
-  # UNet (which itself is well under one PIC step's worth of work
-  # for a 2D 256x32 grid).
   diffusion_steps: 8
