@@ -31,9 +31,12 @@
 #   -o, --out-dir=DIR      Output directory for training (default: WORKDIR)
 #                          Example: -o /path/to/custom/output
 #
-#   -k, --checkpoint=FILE  Checkpoint file for evaluate (required for that action)
-#                          Example: -k models/.run_pdn_globalcnn_charbonnier.matrix/best.pt
-#                          Example: -k /path/to/checkpoint.pt
+#   -k, --checkpoint=FILE  Checkpoint file for evaluate. Defaults to this
+#                          run's best.pt, i.e.
+#                          models/.run_pdn_<case>.<platform>/best.pt
+#                          (<case> from -c, <platform> auto-detected),
+#                          so it need not be given for a standard eval.
+#                          Example: -k /path/to/other/checkpoint.pt
 #
 #   -n, --ntasks=N         Override number of MPI tasks (for multi-GPU)
 #                          Example: -n 8 (use 8 GPUs)
@@ -1121,6 +1124,19 @@ fi
 
 DENOISE_EXEC="particle-denoise"
 
+# Run directory (logs + outputs) for this case + platform. Set here,
+# before validate(), so the evaluate checkpoint can default to it.
+# <platform> is the auto-detected PLATFORM (from $LCHOST etc.); the
+# run-dir name is derived from -c <case>.
+WORKDIR="$ROOT_DIR/models/.run_pdn_${CASE_NAME}.${PLATFORM}"
+
+# Default the evaluate checkpoint to this run's best.pt when the user
+# did not pass -k/--checkpoint, so it need not be respecified per case.
+if [[ "$ACTION" == "evaluate" && -z "$CHECKPOINT" ]]; then
+    CHECKPOINT="$WORKDIR/best.pt"
+    debug "Defaulting checkpoint to $CHECKPOINT"
+fi
+
 # Validate inputs and environment
 validate
 
@@ -1140,10 +1156,10 @@ debug "  scheduler=$SCHEDULER ntasks=$NTASKS nnodes=$NNODES"
 debug "  queue=$QUEUE walltime=$WALLTIME gpu=$GPU_SUPPORT"
 debug "Using $DENOISE_EXEC for case: $CASE_NAME"
 
-# Create working directory for logs and job scripts. Run directories
+# WORKDIR (models/.run_pdn_<case>.<platform>) was set above, before
+# validate(), so the checkpoint could default to it. Run directories
 # live under models/ so they do not clutter the case working directory
 # (training_data/ holds the inputs, models/ holds the outputs).
-WORKDIR="$ROOT_DIR/models/.run_pdn_${CASE_NAME}.${PLATFORM}"
 
 # Only delete existing directory for actions that create fresh output.
 # evaluate needs existing files (the checkpoint), and --resume is the
