@@ -1,0 +1,14 @@
+# Local cross-attention with the physics-informed loss bundle.
+# Inherits the loss block + positivity head from
+# cfg_globalcnn_physics.yaml; overrides only the model section. Mirrors
+# cfg_localattention_charbonnier.yaml's model section.
+#
+# Run as `run_denoise.sh -c localattention_physics all`.
+
+base: cfg_globalcnn_physics.yaml
+
+model:
+  name: localAttention
+  base_channels: 32       # d_model -- token embedding width
+  depth: 2                # cross-attention layers
+  kernel: 11              # patch size K -- receptive field is K x K cells
