@@ -45,8 +45,8 @@ Case Format: <SemiImpl|ThetaImpl>_<pc_option>.<solver_option>
   or: <SemiImpl|ThetaImpl>_<pc_option>_mmw<N>.<solver_option> (for PCs with mass matrix width)
 
 Time Integrators:
-  SemiImpl  - Semi-implicit time integrator (warpx_evolve.scheme = semi_implicit_em)
-  ThetaImpl - Theta-implicit time integrator (warpx_evolve.scheme = theta_implicit_em)
+  SemiImpl  - Semi-implicit time integrator (algo.evolve_scheme = semi_implicit_em)
+  ThetaImpl - Theta-implicit time integrator (algo.evolve_scheme = theta_implicit_em)
 
 PC Options:
   noPC                   - No preconditioner (all solvers, both integrators)
@@ -449,10 +449,10 @@ run_case() {
     # Add integrator-specific options
     if [ "$INTEGRATOR_TYPE" == "SemiImpl" ]; then
         warpx_params="$warpx_params \\
-        warpx_evolve.scheme = semi_implicit_em"
+        algo.evolve_scheme = semi_implicit_em"
     elif [ "$INTEGRATOR_TYPE" == "ThetaImpl" ]; then
         warpx_params="$warpx_params \\
-        warpx_evolve.scheme = theta_implicit_em"
+        algo.evolve_scheme = theta_implicit_em"
     fi
 
     # Add solver-specific options

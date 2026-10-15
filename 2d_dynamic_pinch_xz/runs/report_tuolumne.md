@@ -31,6 +31,11 @@ Analysis generated on: Thu Mar 26 17:22:19 PDT 2026
 | SOR    | petsc_ksp       | 2   | 12          | 2           | 6             | 2.1          |
 
 ## Theta-Implicit (4 MPI ranks on Dane)
+
+Note (2026-10-15): these runs used `semi_implicit_em`. `common/run.sh` set
+`warpx_evolve.scheme`, which WarpX does not read, so the scheme of the base input
+applied (`warpx_used_inputs` of each run confirm it). `run.sh` now sets
+`algo.evolve_scheme`. Theta-implicit reruns: `.run_ThetaImpl/<case>/pr7433.<machine>/`.
 ----------------
 
 | PC     | Solver          | MMW | Linear/Step | Newton/Step | Linear/Newton | Walltime (s) |
