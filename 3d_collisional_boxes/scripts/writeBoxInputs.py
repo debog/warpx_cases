@@ -13,7 +13,7 @@ The 8 cells along z are replicas: same settings, independent samples.
 
 Output: the raw velocity moments up to order 4 (35 monomials of the normalised momentum
 u = gamma v / c) summed with the particle weights over each half of each cell's particles.
-The halves are set by the parity of a fine digit of u_x, fmod(floor(abs(ux)*1e12), 2):
+The halves are set by the parity of a fine digit of u_x, fmod(floor(abs(ux)*1e12),2):
 stripes of 3e-4 m/s in velocity, far below any thermal speed, and abs(ux)*1e12 < 2^53.
 
 Usage: python3 writeBoxInputs.py {output file} [{particles per cell} {steps} {moment interval}]
@@ -23,9 +23,12 @@ import itertools
 import sys
 
 SCALE = "1e12"
-# No spaces: WarpX reads a particle_fields filter with a plain ParmParse query, which keeps
-# only the first whitespace-separated token (Source/Diagnostics/Diagnostics.cpp).
-FILTERS = {"A": f"fmod(floor(abs(ux)*{SCALE}),2)<1", "B": f"fmod(floor(abs(ux)*{SCALE}),2)>=1"}
+# Filters without spaces and without "=": WarpX reads a particle_fields filter with a plain
+# ParmParse query, which keeps only the first whitespace-separated token
+# (Source/Diagnostics/Diagnostics.cpp), and ParmParse takes an "=" inside an unspaced value
+# (as in ">=") as the start of a new definition. A particle is kept where the filter is
+# nonzero: half A has an even digit, half B an odd one.
+FILTERS = {"A": f"1-fmod(floor(abs(ux)*{SCALE}),2)", "B": f"fmod(floor(abs(ux)*{SCALE}),2)"}
 
 
 def monomials(order=4):
