@@ -21,6 +21,7 @@ boundary.field_lo = periodic periodic periodic
 boundary.field_hi = periodic periodic periodic
 
 warpx.verbose = 1
+warpx.random_seed = 1
 warpx.const_dt = dt
 algo.maxwell_solver = none
 algo.particle_shape = 1

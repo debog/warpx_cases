@@ -16,7 +16,12 @@ u = gamma v / c) summed with the particle weights over each half of each cell's 
 The halves are set by the parity of a fine digit of u_x, fmod(floor(abs(ux)*1e12),2):
 stripes of 3e-4 m/s in velocity, far below any thermal speed, and abs(ux)*1e12 < 2^53.
 
-Usage: python3 writeBoxInputs.py {output file} [{particles per cell} {steps} {moment interval}]
+Random seed: WarpX seeds MPI rank r with (r + 1) n for warpx.random_seed = n, so two runs with
+the same n are identical (test runs 1 and 2 matched particle for particle), and two different
+values can still share a stream (n = 2 on rank 0 equals n = 1 on rank 1). Every repeat or extra
+run gets its own prime n larger than the number of ranks; n = 1 is WarpX's default.
+
+Usage: python3 writeBoxInputs.py {output file} [{particles per cell} {steps} {moment interval} [{seed}]]
 """
 
 import itertools
@@ -50,7 +55,7 @@ def stdFunction(axis):
     return f"sqrt(3*T0*{weight}/({a}+{sb}+1/{sb})*q_e/mD)/clight"
 
 
-def deck(ppc, steps, interval):
+def deck(ppc, steps, interval, seed=1):
     """! @brief The input deck as a string."""
     names = []
     lines = []
@@ -86,6 +91,7 @@ boundary.field_lo = periodic periodic periodic
 boundary.field_hi = periodic periodic periodic
 
 warpx.verbose = 1
+warpx.random_seed = {seed}
 warpx.const_dt = dt
 algo.maxwell_solver = none
 algo.particle_shape = 1
@@ -128,5 +134,6 @@ checkpoint.format = checkpoint
 if __name__ == "__main__":
     out = sys.argv[1]
     ppc, steps, interval = (int(v) for v in sys.argv[2:5]) if len(sys.argv) > 4 else (10000, 400, 4)
+    seed = int(sys.argv[5]) if len(sys.argv) > 5 else 1
     with open(out, "w") as f:
-        f.write(deck(ppc, steps, interval))
+        f.write(deck(ppc, steps, interval, seed))
