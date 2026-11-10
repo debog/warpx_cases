@@ -21,11 +21,21 @@ the same n are identical (test runs 1 and 2 matched particle for particle), and 
 values can still share a stream (n = 2 on rank 0 equals n = 1 on rank 1). Every repeat or extra
 run gets its own prime n larger than the number of ranks; n = 1 is WarpX's default.
 
-Usage: python3 writeBoxInputs.py {output file} [{particles per cell} {steps} {moment interval} [{seed}]]
+Designs:
+- grid (test runs): the anisotropy is set by the x and y cell indices as above; all cells
+  along z are replicas.
+- hash (ensembles): every setting draws its own pseudo-random anisotropy, log-uniform in
+  a in [1/3, 3] and b in [1/2, 2], from a hash of (ix, iy, floor(iz / replicas)) evaluated by
+  the WarpX parser: h = abs(fmod(sin(ix c1 + iy c2 + k c3) c4, 1)). The cells along z form
+  groups of `replicas` copies of one setting (twins for the independence check); the number
+  of distinct settings is nx ny nz / replicas.
+
+Usage: python3 writeBoxInputs.py {output file} [--cells NX NY NZ] [--design grid|hash]
+       [--replicas R] [--ppc N] [--steps N] [--intervals SPEC] [--seed N] [--max-grid-size N]
 """
 
+import argparse
 import itertools
-import sys
 
 SCALE = "1e12"
 # Filters without spaces and without "=": WarpX reads a particle_fields filter with a plain
@@ -47,15 +57,28 @@ def expression(exponents):
     return "*".join(terms) if terms else "1"
 
 
-def stdFunction(axis):
+HASH = {"a": ("12.9898", "78.233", "37.719", "43758.5453"), "b": ("39.3468", "11.1351", "83.155", "24634.6345")}
+
+
+def hashExpression(key, replicas):
+    """! @brief Parser expression of a pseudo-random number in [0, 1) per setting (cell indices)."""
+    c1, c2, c3, c4 = HASH[key]
+    return f"abs(fmod(sin(floor(x/dx)*{c1}+floor(y/dx)*{c2}+floor(floor(z/dx)/{replicas})*{c3})*{c4},1))"
+
+
+def stdFunction(axis, design="grid", replicas=1):
     """! @brief Parser expression of the thermal spread of u along one axis, constant in each cell."""
-    a = "pow(3,(floor(x/dx)-3)/4)"
-    sb = "pow(2,(floor(y/dx)-3)/8)"
+    if design == "grid":
+        a = "pow(3,(floor(x/dx)-3)/4)"
+        sb = "pow(2,(floor(y/dx)-3)/8)"
+    else:
+        a = f"pow(3,2*{hashExpression('a', replicas)}-1)"
+        sb = f"pow(2,{hashExpression('b', replicas)}-0.5)"
     weight = {"x": a, "y": sb, "z": f"(1/{sb})"}[axis]
     return f"sqrt(3*T0*{weight}/({a}+{sb}+1/{sb})*q_e/mD)/clight"
 
 
-def deck(ppc, steps, interval, seed=1):
+def deck(ppc, steps, intervals, seed=1, cells=(8, 8, 8), design="grid", replicas=1, max_grid_size=2):
     """! @brief The input deck as a string."""
     names = []
     lines = []
@@ -80,13 +103,13 @@ my_constants.dx = 1.0e-5         # cell size [m]; irrelevant without pushes
 my_constants.dt = 0.5e-12        # about 1/60 of the deuterium collision time
 
 max_step = {steps}
-amr.n_cell = 8 8 8
-amr.max_grid_size = 2
-amr.blocking_factor = 2
+amr.n_cell = {cells[0]} {cells[1]} {cells[2]}
+amr.max_grid_size = {max_grid_size}
+amr.blocking_factor = {max_grid_size}
 amr.max_level = 0
 geometry.dims = 3
 geometry.prob_lo = 0. 0. 0.
-geometry.prob_hi = 8*dx 8*dx 8*dx
+geometry.prob_hi = {cells[0]}*dx {cells[1]}*dx {cells[2]}*dx
 boundary.field_lo = periodic periodic periodic
 boundary.field_hi = periodic periodic periodic
 
@@ -105,9 +128,9 @@ deuterium.profile = constant
 deuterium.density = n0
 deuterium.momentum_distribution_type = maxwellian
 deuterium.maxwellian_u_std_distribution_type = parser
-deuterium.ux_std_function(x,y,z) = {stdFunction("x")}
-deuterium.uy_std_function(x,y,z) = {stdFunction("y")}
-deuterium.uz_std_function(x,y,z) = {stdFunction("z")}
+deuterium.ux_std_function(x,y,z) = {stdFunction("x", design, replicas)}
+deuterium.uy_std_function(x,y,z) = {stdFunction("y", design, replicas)}
+deuterium.uz_std_function(x,y,z) = {stdFunction("z", design, replicas)}
 deuterium.do_not_push = 1
 deuterium.do_not_deposit = 1
 
@@ -116,7 +139,7 @@ dd.species = deuterium deuterium
 dd.CoulombLog = 10.0
 
 diagnostics.diags_names = moments checkpoint
-moments.intervals = 0:{steps}:{interval}
+moments.intervals = {intervals}
 moments.diag_type = Full
 moments.format = plotfile
 moments.write_species = 0
@@ -132,8 +155,17 @@ checkpoint.format = checkpoint
 
 
 if __name__ == "__main__":
-    out = sys.argv[1]
-    ppc, steps, interval = (int(v) for v in sys.argv[2:5]) if len(sys.argv) > 4 else (10000, 400, 4)
-    seed = int(sys.argv[5]) if len(sys.argv) > 5 else 1
-    with open(out, "w") as f:
-        f.write(deck(ppc, steps, interval, seed))
+    ap = argparse.ArgumentParser(description="WarpX deck of the collisional relaxation boxes")
+    ap.add_argument("output")
+    ap.add_argument("--cells", type=int, nargs=3, default=(8, 8, 8))
+    ap.add_argument("--design", choices=("grid", "hash"), default="grid")
+    ap.add_argument("--replicas", type=int, default=1, help="cells per setting along z (hash design)")
+    ap.add_argument("--ppc", type=int, default=10000)
+    ap.add_argument("--steps", type=int, default=400)
+    ap.add_argument("--intervals", default=None, help="moment output steps (WarpX intervals syntax)")
+    ap.add_argument("--seed", type=int, default=1, help="warpx.random_seed: a prime above the rank count per run")
+    ap.add_argument("--max-grid-size", type=int, default=2)
+    o = ap.parse_args()
+    intervals = o.intervals or f"0:{o.steps}:4"
+    with open(o.output, "w") as f:
+        f.write(deck(o.ppc, o.steps, intervals, o.seed, tuple(o.cells), o.design, o.replicas, o.max_grid_size))
